@@ -3,14 +3,13 @@
 #
 
 if ($args[0] -eq "/?") {
-	".\PowerWash.ps1 [/all] [/noinstalls] [/noscans] [/keepacpi] [/autorestart]"
+	".\PowerWash.ps1 [/all] [/noinstalls] [/noscans] [/autorestart]"
 	exit
 }
 
 $global:do_all="/all" -in $args
 $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
-$keepacpi="/keepacpi" -in $args
 $autorestart="/autorestart" -in $args
 
 function RegistryPut ($Path, $Key, $Value, $ValueType) {
@@ -49,7 +48,7 @@ if ($disable_hpet) {
 }
 
 # Disable automatic updates
-$disable_autoupdate=(-not $keepacpi) -and (Confirm "Do you want to disable automatic Windows updates?")
+$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?"
 if ($disable_autoupdate) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
 	"Automatic Windows updates disabled"
