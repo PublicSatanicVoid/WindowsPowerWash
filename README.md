@@ -24,6 +24,7 @@ Current features include:
 - Disabling Windows telemetry (can waste resources)
 - Applying more aggressive multimedia settings (can improve performance of pro audio tasks)
 - Enabling Microsoft's "Ultimate" performance power plan along with additional highly aggressive performance settings
+- Disabling Fast Startup (can cause problems with some drivers since some initialization is skipped)
 - Enabling message-signaled interrupts on all devices that support them (can improve ISR latency)
 - Enabling interrupts from ACPI devices to be spread across all processors (can improve DPC latency from `acpi.sys`)
 - Prioritizing interrupts from devices like GPU and PCIe controller (may improve DPC/ISR latency)
