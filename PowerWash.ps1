@@ -3,13 +3,14 @@
 #
 
 if ($args[0] -eq "/?") {
-	".\PowerWash.ps1 [/all] [/noinstalls] [/noscans] [/autorestart]"
+	".\PowerWash.ps1 [/all] [/noinstalls] [/noscans] [/keepacpi] [/autorestart]"
 	exit
 }
 
 $global:do_all="/all" -in $args
 $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
+$keepacpi="/keepacpi" -in $args
 $autorestart="/autorestart" -in $args
 
 function RegistryPut ($Path, $Key, $Value, $ValueType) {
@@ -47,15 +48,8 @@ if ($disable_hpet) {
 	"High-precision event timer disabled"
 }
 
-# Disable Packet Coalescing
-$disable_rsc=Confirm "Do you want to disable packet coalescing? (May improve network driver latency)"
-if ($disable_rsc) {
-	Disable-NetAdapterRsc -Name '*' -IncludeHidden
-	"Packet coalescing disabled"
-}
-
 # Disable automatic updates
-$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?"
+$disable_autoupdate=(-not $keepacpi) -and (Confirm "Do you want to disable automatic Windows updates?")
 if ($disable_autoupdate) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
 	"Automatic Windows updates disabled"
@@ -74,7 +68,7 @@ if ($disable_telemetry) {
 # Multimedia related settings to prioritize audio
 $opt_mmcss=Confirm "Do you want to optimize multimedia settings for pro audio?"
 if ($do_all -or $opt_mmcss -eq 'y') {
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "System Responsiveness" -Value 0x14 -ValueType "DWord"
+	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "SystemResponsiveness" -Value 0x14 -ValueType "DWord"
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "NoLazyMode" -Value 1 -ValueType "DWord"
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "Priority" -Value 1 -ValueType "DWord"
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "Scheduling Category" -Value "High" -ValueType "String"
@@ -86,6 +80,7 @@ $redline=Confirm "Redline power settings for maximum performance? (May reduce la
 if ($redline) {
 	$scheme=((powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61) -ireplace '.*GUID: (\w+-\w+-\w+-\w+-\w+).*', '$1')
 	powercfg /setacvalueindex $scheme 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0  # Disable usb selective suspend
+	powercfg /setacvalueindex $scheme 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 0  # Disable wake timers
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR LATENCYHINTPERF1 99
 	powercfg /setacvalueindex $scheme SUB_VIDEO VIDEOIDLE 0
 	# Below are documented at https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning
@@ -100,10 +95,25 @@ if ($redline) {
 	
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" -Key "PowerThrottlingOff" -Value 1 -ValueType "DWord"
 	
-	Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden
-	Restart-NetAdapter -Name '*' -IncludeHidden
-	
 	"High performance power settings installed"
+}
+
+# Prioritize low latency on network adapters
+$net=Confirm "Optimize network adapter settings for low latency?"
+if ($net) {
+	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "NetworkThrottlingIndex" -Value 0xFFFFFFFF -ValueType "DWord"
+	Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -erroraction 'silentlycontinue'
+	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -erroraction 'silentlycontinue'
+	Disable-NetAdapterRsc -Name '*' -IncludeHidden -erroraction 'silentlycontinue'
+	Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -erroraction 'silentlycontinue'
+	Restart-NetAdapter -Name '*' -IncludeHidden -erroraction 'silentlycontinue'
+	"Network adapter settings optimized"
+}
+
+$disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)"
+if ($disable_faststartup) {
+	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key "HiberbootEnabled" -Value 0 -ValueType "DWord"
+	"Fast Startup disabled"
 }
 
 # Enable MSI mode for devices that support it
@@ -179,6 +189,6 @@ if ($av_product -ne "Windows Defender") {
 ""
 
 "PowerWash complete, a restart is recommended."
-if ($autorestart -or (Confirm "Restart now?")) {
+if ($autorestart) {
 	Restart-Computer
 }
