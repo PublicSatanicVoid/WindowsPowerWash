@@ -50,7 +50,7 @@ if ($disable_hpet) {
 # Disable automatic updates
 $disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?"
 if ($disable_autoupdate) {
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
+	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
 	"Automatic Windows updates disabled"
 }
 
