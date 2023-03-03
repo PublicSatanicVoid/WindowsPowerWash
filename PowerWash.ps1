@@ -42,8 +42,8 @@ function RegistryPut ($Path, $Key, $Value, $ValueType) {
 
 function TryDisableTask ($TaskName) {
 	try {
-		$task = Get-ScheduledTask $TaskName -erroraction silentlycontinue
-		Disable-ScheduledTask $task -erroraction silentlycontinue
+		$task = Get-ScheduledTask $TaskName -ErrorAction SilentlyContinue
+		Disable-ScheduledTask $task -ErrorAction SilentlyContinue
 	} catch {}
 }
 
@@ -93,7 +93,7 @@ $disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $
 if ($disable_telemetry) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value 0 -ValueType "DWord"
 	
-	# disable inking and typing recognition
+	# Disable inking and typing recognition
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Input\TIPC" -Key "Enabled" -Value 0 -ValueType "DWord"
 	
 	$gp_changed=$true
@@ -102,7 +102,6 @@ if ($disable_telemetry) {
 	sc.exe config dmwappushservice start=disabled
 	
 	TryDisableTask "Consolidator"
-	TryDisableTask "CreateObjectTask"
 	TryDisableTask "FamilySafetyMonitor"
 	TryDisableTask "FamilySafetyRefreshTask"
 	TryDisableTask "Intel Telemetry 2"
@@ -111,6 +110,8 @@ if ($disable_telemetry) {
 	TryDisableTask "OfficeTelemetryAgentFallBack"
 	TryDisableTask "OfficeTelemetryAgentLogOn"
 	TryDisableTask "UsbCeip"
+	TryDisableTask "KernelCeipTask"
+	Disable-ScheduledTask -TaskName "CreateObjectTask" -TaskPath "\Microsoft\Windows\CloudExperienceHost" -ErrorAction SilentlyContinue
 	
 	"Microsoft telemetry disabled"
 }
@@ -184,11 +185,11 @@ if ($net) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "NetworkThrottlingIndex" -Value 0xFFFFFFFF -ValueType "DWord"
 	RegistryPut -Path "HKLM:\SYSTEM\ControlSet001\Services\Ndu" -Key "Start" -Value 0x4 -ValueType "DWord"
 	# Below settings may fail depending on network adapter's capabilities. This isn't a problem, so fail silently
-	Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -erroraction 'silentlycontinue'
-	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -erroraction 'silentlycontinue'
-	Disable-NetAdapterRsc -Name '*' -IncludeHidden -erroraction 'silentlycontinue'  # Disables packet coalescing
-	Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -erroraction 'silentlycontinue'
-	Restart-NetAdapter -Name '*' -IncludeHidden -erroraction 'silentlycontinue'
+	Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -ErrorAction 'SilentlyContinue'
+	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -ErrorAction 'SilentlyContinue'
+	Disable-NetAdapterRsc -Name '*' -IncludeHidden -ErrorAction 'SilentlyContinue'  # Disables packet coalescing
+	Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -ErrorAction 'SilentlyContinue'
+	Restart-NetAdapter -Name '*' -IncludeHidden -ErrorAction 'SilentlyContinue'
 	"Network adapter settings optimized"
 }
 
