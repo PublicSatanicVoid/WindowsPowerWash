@@ -224,6 +224,14 @@ if ($disable_preinstalled) {
 	"Preinstalled apps disabled"
 }
 
+$scan_idle_only=Confirm "Configure Windows Defender to run scans only when computer is idle?" -Auto $true
+if ($scan_idle_only) {
+	$wait = New-TimeSpan -Minutes 10
+	$settings = New-ScheduledTaskSettingsSet -RunOnlyIfIdle -IdleWaitTimeout $wait -RestartOnIdle
+	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Scheduled Scan" -Settings $settings
+	"Defender will only perform scans when computer is idle."
+}
+
 $disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true
 if ($disable_faststartup) {
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key "HiberbootEnabled" -Value 0 -ValueType "DWord"
