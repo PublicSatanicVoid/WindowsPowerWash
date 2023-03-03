@@ -10,14 +10,28 @@
 #
 
 if ($args[0] -eq "/?") {
-	".\PowerWash.ps1 [/all] [/noinstalls] [/noscans] [/autorestart]"
+	".\PowerWash.ps1 [/all | /auto] [/noinstalls] [/noscans] [/autorestart]"
+	"	/all			Runs all PowerWash features without prompting"
+	"	/auto			Runs a default subset of PowerWash features, without prompting"
+	"	/noinstalls		Disables PowerWash features that would install software (overrides other flags)"
+	"	/noscans		Disables PowerWash features that perform lengthy scans (overrides other flags)"
+	"	/autorestart		Restarts computer when done"
 	exit
 }
 
 $global:do_all="/all" -in $args
+$global:do_all_auto="/auto" -in $args
 $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
 $autorestart="/autorestart" -in $args
+
+if ($global:do_all -and $global:do_all_auto) {
+	"Error: Can only specify one of /all or /auto"
+	"Do '.\PowerWash.ps1 /?' for help"
+	exit
+}
+
+$gp_changed=$false
 
 function RegistryPut ($Path, $Key, $Value, $ValueType) {
 	If (-NOT (Test-Path "$Path")) {
@@ -26,23 +40,26 @@ function RegistryPut ($Path, $Key, $Value, $ValueType) {
 	New-ItemProperty -Path "$Path" -Name "$Key" -Value "$Value" -PropertyType "$ValueType" -Force | Out-Null
 }
 
-function Confirm ($Prompt) {
+function Confirm ($Prompt, $Auto=$false) {
 	if ($global:do_all) {
 		return $true
+	}
+	if ($global:do_all_auto) {
+		return $Auto
 	}
 	return (Read-Host "$Prompt y/n") -eq "y"
 }
 
 # Check system file integrity
-$do_sfc=(-not $noscan) -and (Confirm "Run system file integrity checks? (May take a few minutes)")
+$do_sfc=(-not $noscan) -and (Confirm "Run system file integrity checks? (May take a few minutes)" -Auto $false)
 if ($do_sfc) {
-	sfc /scannow
-	dism /online /cleanup-image /restorehealth
+	sfc.exe /scannow
+	dism.exe /online /cleanup-image /restorehealth
 }
 
 # Install Group Policy editor, which isn't installed by default on Home editions
 # Allows easy tweaking of a wide range of settings without needing to edit registry
-$do_gpedit=(-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)")
+$do_gpedit=(-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true)
 if ($do_gpedit) {
 	cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
 	cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
@@ -50,34 +67,34 @@ if ($do_gpedit) {
 
 # Disable HPET (high precision event timer)
 # Some systems will benefit from this, some will suffer. Only way is to benchmark and see
-$disable_hpet=Confirm "Do you want to disable the high-precision event timer? (May not improve performance on all systems)"
+$disable_hpet=Confirm "Do you want to disable the high-precision event timer? (May not improve performance on all systems)" -Auto $false
 if ($disable_hpet) {
 	Get-PnpDevice -FriendlyName "High precision event timer" | Disable-Pnpdevice -Confirm:$false
 	"High-precision event timer disabled"
 }
 
 # Disable automatic updates
-$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?"
+$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" -Auto $true
 if ($disable_autoupdate) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
+	$gp_changed=$true
 	"Automatic Windows updates disabled"
 }
 
 # Disable Microsoft telemetry
-$disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?"
+$disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $true
 if ($disable_telemetry) {
-	# Unclear whether or not this should have spaces
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "Allow Telemetry" -Value 0 -ValueType "DWord"
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value 0 -ValueType "DWord"
+	$gp_changed=$true
 	
-	cmd /c "sc config DiagTrack start=disabled"
-	cmd /c "sc config dmwappushservice start=disabled"
+	sc.exe config DiagTrack start=disabled
+	sc.exe config dmwappushservice start=disabled
 	
 	"Microsoft telemetry disabled"
 }
 
 # Multimedia related settings to prioritize audio
-$opt_mmcss=Confirm "Do you want to optimize multimedia settings for pro audio?"
+$opt_mmcss=Confirm "Do you want to optimize multimedia settings for pro audio?" -Auto $true
 if ($do_all -or $opt_mmcss -eq 'y') {
 	# Scheduling algorithm will reserve 10% (default is 20%) of CPU for low-priority tasks
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "SystemResponsiveness" -Value 10 -ValueType "DWord"
@@ -93,9 +110,12 @@ if ($do_all -or $opt_mmcss -eq 'y') {
 }
 
 # Power management settings for high performance - "Ultimate" power scheme bundled with newer Windows versions
-$redline=Confirm "Redline power settings for maximum performance? (May reduce latency, but will use more power)"
+$redline=Confirm "Redline power settings for maximum performance? (May reduce latency, but will use more power)" -Auto $true
 if ($redline) {
-	$scheme=((powercfg /duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61) -ireplace '.*GUID: (\w+-\w+-\w+-\w+-\w+).*', '$1')
+	$guid_match=".*GUID: (\w+-\w+-\w+-\w+-\w+).*"
+	$default_ultimate_guid="e9a42b02-d5df-448d-aa00-03f14749eb61"
+	$active_scheme=((powercfg /getactivescheme) -ireplace $guid_match, '$1')
+	$scheme=((powercfg /duplicatescheme $default_ultimate_guid) -ireplace $guid_match, '$1')
 	powercfg /setacvalueindex $scheme 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0  # Disable usb selective suspend
 	powercfg /setacvalueindex $scheme 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 0  # Disable wake timers
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR LATENCYHINTPERF1 99  # Latency sensitive tasks will raise performance level
@@ -114,16 +134,33 @@ if ($redline) {
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR PERFBOOSTMODE 2  # Aggressive turbo boosting
 	powercfg /setactive $scheme
 	
+	# Delete old profiles from this script being run multiple times
+	foreach ($line in powercfg /list) {
+		if (-not ($line -match $guid_match)) {
+			continue
+		}
+		$guid=(($line) -ireplace ".*GUID: (\w+-\w+-\w+-\w+-\w+).*", '$1')
+		if (($guid -eq $active_scheme) -or ($guid -eq $default_ultimate_guid)) {
+			continue
+		}
+		if ($line -match "\(Ultimate Performance\)") {
+			"Deleting old profile $guid..."
+			powercfg /delete $guid
+		}			
+	}
+	
 	# Disable power throttling
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" -Key "PowerThrottlingOff" -Value 1 -ValueType "DWord"
+	$gp_changed=$true
 	
 	"High performance power settings installed"
 }
 
 # Prioritize low latency on network adapters
-$net=Confirm "Optimize network adapter settings for low latency?"
+$net=Confirm "Optimize network adapter settings for low latency?" -Auto $true
 if ($net) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "NetworkThrottlingIndex" -Value 0xFFFFFFFF -ValueType "DWord"
+	RegistryPut -Path "HKLM:\SYSTEM\ControlSet001\Services\Ndu" -Key "Start" -Value 0x4 -ValueType "DWord"
 	# Below settings may fail depending on network adapter's capabilities. This isn't a problem, so fail silently
 	Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -erroraction 'silentlycontinue'
 	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -erroraction 'silentlycontinue'
@@ -133,24 +170,60 @@ if ($net) {
 	"Network adapter settings optimized"
 }
 
-$disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)"
+$disable_cortana=Confirm "Disable Cortana?" -Auto $true
+if ($disable_cortana) {
+	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "AllowCortana" -Value 0 -ValueType "DWord"
+	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "DisableWebSearch" -Value 1 -ValueType "DWord"
+	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWeb" -Value 0 -ValueType "DWord"
+	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWebOverMeteredConnections" -Value 0 -ValueType "DWord"
+	$gp_changed=$true
+	"Cortana disabled"
+}
+
+$disable_consumer_features=Confirm "Disable Windows consumer features?" -Auto $true
+if ($disable_consumer_features) {
+	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableWindowsConsumerFeatures" -Value 1 -ValueType "DWord"
+	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -ValueType "DWord"
+	$gp_changed=$true
+	"Consumer features disabled"
+}
+
+$disable_preinstalled=Confirm "Disable preinstalled apps?" -Auto $true
+if ($disable_preinstalled) {
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "FeatureManagementEnabled" -Value 0 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "OemPreInstalledAppsEnabled" -Value 0 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "PreInstalledAppsEnabled" -Value 0 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "ContentDeliveryAllowed" -Value 0 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "SilentInstalledAppsEnabled" -Value 0 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "PreInstalledAppsEverEnabled" -Value 0 -ValueType "DWord"
+	"Preinstalled apps disabled"
+}
+
+$disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true
 if ($disable_faststartup) {
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key "HiberbootEnabled" -Value 0 -ValueType "DWord"
+	$gp_changed=$true
 	"Fast Startup disabled"
+}
+
+$disable_startupdelay=Confirm "Disable app startup delay?" -Auto $true
+if ($disable_startupdelay) {
+	RegistryPut -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize" -Key "StartupDelayInMSec" -Value 0 -ValueType "DWord"
+	"Startup delay disabled"
 }
 
 # Enable MSI mode for devices that support it
 # Message-signaled interrupts are an alternative to line-based interrupts,
 # supporting a larger number of interrupts and lower latencies.
-$do_msi=Confirm "Do you want to enable Message-Signaled Interrupts for all devices that support them?"
+$do_msi=Confirm "Do you want to enable Message-Signaled Interrupts for all devices that support them?" -Auto $true
 if ($do_msi) {
-	$do_acpi_spread=Confirm "--> Do you also want to spread ACPI interrupts across all processors?"
-	$do_priority=Confirm "--> Do you also want to prioritize interrupts from certain devices like the GPU and PCIe controller?"
+	$do_priority=Confirm "--> Do you also want to prioritize interrupts from certain devices like the GPU and PCIe controller?" -Auto $true
 	
 	"Applying interrupt policies..."
 	
 	$N_MSI = 0
-	$N_ACPI = 0
 	$N_Prio = 0
 	$Devices = Get-CimInstance -ClassName Win32_PnPEntity
 	foreach ($Device in $Devices) {
@@ -159,13 +232,6 @@ if ($do_msi) {
 		
 		$DeviceDesc = ($Properties | Where-Object {$_.KeyName -eq 'DEVPKEY_Device_DeviceDesc'}).Data
 		$InstanceId = ($Properties | Where-Object {$_.KeyName -eq 'DEVPKEY_Device_InstanceId'}).Data
-		
-		# Spread interrupts across multiple cores
-		if ($do_acpi_spread -and $DeviceDesc -like "*ACPI*") {
-			"- Enabling interrupt spreading for $DeviceDesc..."
-			RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\Affinity Policy" -Key "DevicePolicy" -Value 5 -ValueType "DWord"
-			$N_ACPI++
-		}
 		
 		# Prioritize interrupts from PCIe controller and graphics card
 		if ($do_priority -and ($DeviceDesc -like "*PCIe Controller*" -or $DeviceDesc -like "*NVIDIA GeForce*")) {
@@ -187,12 +253,11 @@ if ($do_msi) {
 		}
 	}
 	"MSI mode enabled for all $N_MSI supported devices. Restart required to take effect"
-	"Interrupt spreading enabled for $N_ACPI supported devices. Restart required to take effect"
 	"Interrupts prioritized for $N_Prio devices. Restart required to take effect"
 }
 
 # Checks for IRQ conflicts
-$check_irq=Confirm "Do you want to check for IRQ conflicts?"
+$check_irq=Confirm "Do you want to check for IRQ conflicts?" -Auto $true
 if ($check_irq) {
 	"Checking for IRQ conflicts..."
 	Get-CimInstance Win32_PNPAllocatedResource | Out-File -FilePath "IRQDump.txt"
@@ -207,6 +272,12 @@ if ($check_irq) {
 	}
 }
 
+$show_secs=Confirm "Do you want to show seconds in the taskbar clock?" -Auto $false
+if ($show_secs) {
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "ShowSecondsInSystemClock" -Value 1 -ValueType "DWord"
+	"Seconds will now be shown in the taskbar clock"
+}
+
 # Checks for third-party antivirus products (generally not needed)
 $av_product=(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct).displayName
 if ($av_product -ne "Windows Defender") {
@@ -214,6 +285,11 @@ if ($av_product -ne "Windows Defender") {
 	if ($av_product -like "*McAffee*") {
 		"Warning: McAffee software is especially notorious for bloating your system and providing low-quality protection!"
 	}
+}
+
+if ($gp_changed) {
+	"Registry settings that affect group policy were changed. Updating group policy..."
+	gpupdate /force
 }
 
 ""
