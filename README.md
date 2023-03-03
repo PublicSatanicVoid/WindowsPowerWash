@@ -8,7 +8,10 @@ Remove bloatware from Windows and optimize for low latency and high performance
 ## Usage
 - Open a PowerShell prompt as an Administrator
 - `cd` to the directory containing `PowerWash.ps1`
-- Run `.\PowerWash.ps1 /?` to see usage information, or `.\PowerWash.ps1 /all /autorestart` to run the full PowerWash suite and restart when done.
+- **To see usage information:** `.\PowerWash.ps1 /?`
+- **To run PowerWash interactively (choose Y/N for each step):** `.\PowerWash.ps1`
+- **To run the full PowerWash suite and restart when done:** `.\PowerWash.ps1 /all /autorestart`
+- **To run the main PowerWash suite (without checking OS file integrity or installing gpedit):** `.\PowerWash.ps1 /all /noinstalls /noscans`
 
 ## How It Works
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc.
@@ -16,8 +19,8 @@ The default Windows installation has to cater to a very wide variety of users, a
 PowerWash modifies various aspects of your Windows installation. Instead of compromising performance for power efficiency, it configures your system to compromise power efficiency for low latency and high performance. (Note: Many of the changes intentionally do not apply when on battery)
 
 Current features include:
-- Running Microsoft's built-in system file integrity checks to repair any corrupted system files
-- Installing Group Policy editor, which presents a straightforward and well-documented interface to make system changes without manually editing the registry. Group Policy editor is a Microsoft product but does not come installed by default on Home editions of Windows.
+- Running Microsoft's built-in [system file integrity checks](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e) to repair any corrupted system files
+- Installing [Group Policy editor](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/dn265982(v=ws.11)), which presents a straightforward and well-documented interface to make system changes without manually editing the registry. Group Policy editor is a Microsoft product but does not come installed by default on Home editions of Windows.
 - Disabling the high precision event timer (may improve DPC latency on some systems)
 - Disabling network adapter packet coalescing (can improve DPC latency for `ndis.sys`/`tcpip.sys`)
 - Disabling automatic Windows updates (background updates can consume resources and automatic install/restart is often not wanted)
