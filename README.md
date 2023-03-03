@@ -30,6 +30,7 @@ Current features include:
 - Disabling Cortana
 - Disabling Windows consumer features (e.g. third-party suggestions)
 - Disabling preinstalled applications
+- Only running Windows Defender scans when the computer is idle
 - Disabling Fast Startup (can fix problems with some devices since Fast Startup skips some initialization)
 - Enabling [message-signaled interrupts](https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-message-signaled-interrupts) on all devices that support them (can improve interrupt latency)
 - Prioritizing interrupts from devices like GPU and PCIe controller (may improve DPC/ISR latency)
