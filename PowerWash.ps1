@@ -40,6 +40,13 @@ function RegistryPut ($Path, $Key, $Value, $ValueType) {
 	New-ItemProperty -Path "$Path" -Name "$Key" -Value "$Value" -PropertyType "$ValueType" -Force | Out-Null
 }
 
+function TryDisableTask ($TaskName) {
+	try {
+		$task = Get-ScheduledTask $TaskName -erroraction silentlycontinue
+		Disable-ScheduledTask $task -erroraction silentlycontinue
+	} catch {}
+}
+
 function Confirm ($Prompt, $Auto=$false) {
 	if ($global:do_all) {
 		return $true
@@ -85,10 +92,25 @@ if ($disable_autoupdate) {
 $disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $true
 if ($disable_telemetry) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value 0 -ValueType "DWord"
+	
+	# disable inking and typing recognition
+	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Input\TIPC" -Key "Enabled" -Value 0 -ValueType "DWord"
+	
 	$gp_changed=$true
 	
 	sc.exe config DiagTrack start=disabled
 	sc.exe config dmwappushservice start=disabled
+	
+	TryDisableTask "Consolidator"
+	TryDisableTask "CreateObjectTask"
+	TryDisableTask "FamilySafetyMonitor"
+	TryDisableTask "FamilySafetyRefreshTask"
+	TryDisableTask "Intel Telemetry 2"
+	TryDisableTask "Microsoft Compatibility Appraiser"
+	TryDisableTask "ProgramDataUpdater"
+	TryDisableTask "OfficeTelemetryAgentFallBack"
+	TryDisableTask "OfficeTelemetryAgentLogOn"
+	TryDisableTask "UsbCeip"
 	
 	"Microsoft telemetry disabled"
 }
