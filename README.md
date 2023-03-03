@@ -22,14 +22,16 @@ Current features include:
 - Running Microsoft's built-in [system file integrity checks](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e) to repair any corrupted system files
 - Installing [Group Policy editor](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/dn265982(v=ws.11)), which presents a straightforward and well-documented interface to make system changes without manually editing the registry. Group Policy editor is a Microsoft product but does not come installed by default on Home editions of Windows.
 - Disabling the high precision event timer (may improve DPC latency on some systems)
-- Disabling network adapter packet coalescing (can improve DPC latency for `ndis.sys`/`tcpip.sys`)
 - Disabling automatic Windows updates (background updates can consume resources and automatic install/restart is often not wanted)
 - Disabling Windows telemetry (telemetry can waste resources)
-- Applying more aggressive multimedia settings (can improve performance of pro audio tasks)
+- Applying more aggressive [multimedia settings](https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service) (can improve performance of pro audio tasks)
 - Enabling Microsoft's "Ultimate" performance power plan along with additional highly aggressive performance settings
+- Disabling network adapter packet coalescing (can improve DPC latency for `ndis.sys`/`tcpip.sys`)
+- Disabling Cortana
+- Disabling Windows consumer features (e.g. third-party suggestions)
+- Disabling preinstalled applications
 - Disabling Fast Startup (can fix problems with some devices since Fast Startup skips some initialization)
-- Enabling message-signaled interrupts on all devices that support them (can improve interrupt latency)
-- Enabling interrupts from ACPI devices to be spread across all processors (may improve DPC latency for `acpi.sys`)
+- Enabling [message-signaled interrupts](https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-message-signaled-interrupts) on all devices that support them (can improve interrupt latency)
 - Prioritizing interrupts from devices like GPU and PCIe controller (may improve DPC/ISR latency)
 - Checking for IRQ conflicts (these cannot be resolved automatically, though)
 - Checking if a third-party antivirus is installed (Windows Defender is faster and better - third party antivirus must be uninstalled manually, though)
