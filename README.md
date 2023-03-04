@@ -8,10 +8,6 @@ Remove bloatware from Windows and optimize for low latency and high performance
 ## Usage
 - Open a PowerShell prompt as an Administrator
 - `cd` to the directory containing `PowerWash.ps1`
-- **To see usage information:** `.\PowerWash.ps1 /?`
-- **To run PowerWash interactively (choose Y/N for each step):** `.\PowerWash.ps1`
-- **To run the full PowerWash suite and restart when done:** `.\PowerWash.ps1 /all /autorestart`
-- **To run the main PowerWash suite (without checking OS file integrity or installing gpedit):** `.\PowerWash.ps1 /all /noinstalls /noscans`
 - **Suggested workflow:**
   - Ensure your system is in a state you can roughly replicate, eg same programs open, same devices connected
   - Run `.\PowerWash.ps1 /stats` to get a baseline reading of performance stats. (These are still in the works, but can already provide useful information!)
@@ -19,6 +15,12 @@ Remove bloatware from Windows and optimize for low latency and high performance
   - Restart your computer and put it back into as close a state as it was before
   - Run `.\PowerWash.ps1 /stats` to get a new reading of performance stats. A comparison table between baseline and current will be shown, with absolute and percent change.
   - Retain settings that improve performance, whether by the displayed metrics or others such as LatencyMon (see below) or your impression of system responsiveness.
+
+Other options
+- **To see usage information:** `.\PowerWash.ps1 /?`
+- **To run PowerWash interactively (choose Y/N for each step):** `.\PowerWash.ps1`
+- **To run the full PowerWash suite and restart when done:** `.\PowerWash.ps1 /all /autorestart`
+- **To run the main PowerWash suite (without checking OS file integrity or installing gpedit):** `.\PowerWash.ps1 /all /noinstalls /noscans`
 
 
 ## How It Works
