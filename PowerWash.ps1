@@ -9,13 +9,79 @@
 # USE AT YOUR OWN RISK. BACKUP SYSTEM BEFORE USING.
 #
 
-if ($args[0] -eq "/?") {
+if ("/?" -in $args) {
 	".\PowerWash.ps1 [/all | /auto] [/noinstalls] [/noscans] [/autorestart]"
 	"	/all			Runs all PowerWash features without prompting"
 	"	/auto			Runs a default subset of PowerWash features, without prompting"
+	"	/stats			Shows current performance stats and exits"
 	"	/noinstalls		Disables PowerWash features that would install software (overrides other flags)"
 	"	/noscans		Disables PowerWash features that perform lengthy scans (overrides other flags)"
 	"	/autorestart		Restarts computer when done"
+	exit
+}
+
+if ("/stats" -in $args) {
+	"Collecting current performance stats, please be patient..."
+	"It's recommended to run this before and after applying PowerWash (remember to restart)"
+	$NumSamples = 5
+	$SampleInterval = 1
+	$HistoryFile = "PowerWash_LastStats.csv"
+	$HasPrev = Test-Path -Path $HistoryFile
+	if ($HasPrev) {
+		$PrevStats = Import-Csv $HistoryFile
+	}
+	$CounterSets = @("Processor", "Thermal Zone Information", "Memory")
+	foreach ($CounterSet in $CounterSets) {
+		"- Collecting performance stats from $CounterSet set..."
+		$Paths = (Get-Counter -ListSet $CounterSet).Paths
+		$Samples += (Get-Counter -Counter $Paths -SampleInterval $SampleInterval -MaxSamples $NumSamples) `
+			| Select-Object -ExpandProperty CounterSamples `
+			| Group-Object -Property Path `
+			| ForEach-Object { 
+					$_ | Select-Object -Property Name, @{n='Average';e={($_.Group.CookedValue | Measure-Object -Average).Average}};
+				}
+	}
+	"# PowerWash performance stats: $(Get-Date)" | Out-File -FilePath $HistoryFile
+	"label,average" | Out-File -Append -FilePath $HistoryFile
+	$Results = @()
+	foreach ($Entry in $Samples) {
+		if ((-not ($Entry.Name -match "Processor")) -or ($Entry.Name -match "Processor" -and $Entry.Name -match "_total")) {
+			$Label = $Entry.Name.Split("\")[-1]
+			
+			if ($Label -in @("high precision temperature")) {
+				$Entry.Average = $Entry.Average / 10 - 273.15  # 10*Kelvin to Celsius
+			}
+			if ($Label -in @("throttle reasons", "% passive limit", "temperature")) {
+				continue
+			}
+			if (($Entry.Name -match "memory") -and $Label -NotIn @("page faults/sec", "cache faults/sec", "% committed bytes in use")) {
+				continue
+			}
+			
+			"$Label,$($Entry.Average)" | Out-File -Append -FilePath $HistoryFile
+			if ($HasPrev) {
+				$Prev = ($PrevStats | Where { $_.label -eq $Label }).average
+				$Row = "" | Select Label, Prev, Curr, Delta, PercentDelta
+				$Row.Label = $Label
+				$Row.Prev = $Prev
+				$Row.Curr = $Entry.Average
+				$Row.Delta = $Entry.Average - $Prev
+				$Row.PercentDelta = 100 * ($Entry.Average - $Prev) / $Prev
+				if ($Entry.Average -eq $Prev) {
+					$Row.PercentDelta = 0
+				}
+				$Results += $Row
+			}
+			else {
+				$Results += @{ Label = $Label; Average = $Entry.Average }
+			}
+		}
+	}
+	$Results | Format-Table -AutoSize
+	if (-not $HasPrev) {
+		"NOTE: Run this script with '/stats' again to display a comparison table!"
+		"Typically this would be to see how the stats changed from before to after you made a change."
+	}
 	exit
 }
 
@@ -228,7 +294,10 @@ $scan_idle_only=Confirm "Configure Windows Defender to run scans only when compu
 if ($scan_idle_only) {
 	$wait = New-TimeSpan -Minutes 10
 	$settings = New-ScheduledTaskSettingsSet -RunOnlyIfIdle -IdleWaitTimeout $wait -RestartOnIdle
+	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Cache Maintenance" -Settings $settings
+	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Cleanup" -Settings $settings
 	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Scheduled Scan" -Settings $settings
+	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Verification" -Settings $settings
 	"Defender will only perform scans when computer is idle."
 }
 
