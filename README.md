@@ -12,6 +12,14 @@ Remove bloatware from Windows and optimize for low latency and high performance
 - **To run PowerWash interactively (choose Y/N for each step):** `.\PowerWash.ps1`
 - **To run the full PowerWash suite and restart when done:** `.\PowerWash.ps1 /all /autorestart`
 - **To run the main PowerWash suite (without checking OS file integrity or installing gpedit):** `.\PowerWash.ps1 /all /noinstalls /noscans`
+- **Suggested workflow:**
+  - Ensure your system is in a state you can roughly replicate, eg same programs open, same devices connected
+  - Run `.\PowerWash.ps1 /stats` to get a baseline reading of performance stats. (These are still in the works, but can already provide useful information!)
+  - Run `.\PowerWash.ps1` and interactively select the changes you want to make. (To be completely thorough you would change only one, and repeat this workflow for each change)
+  - Restart your computer and put it back into as close a state as it was before
+  - Run `.\PowerWash.ps1 /stats` to get a new reading of performance stats. A comparison table between baseline and current will be shown, with absolute and percent change.
+  - Retain settings that improve performance, whether by the displayed metrics or others such as LatencyMon (see below) or your impression of system responsiveness.
+
 
 ## How It Works
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc.
