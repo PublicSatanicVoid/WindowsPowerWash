@@ -34,10 +34,10 @@ if ("/stats" -in $args) {
 	foreach ($CounterSet in $CounterSets) {
 		"- Collecting performance stats from $CounterSet set..."
 		$Paths = (Get-Counter -ListSet $CounterSet).Paths
-		$Samples += (Get-Counter -Counter $Paths -SampleInterval $SampleInterval -MaxSamples $NumSamples) `
+		$Samples += (Get-Counter -Counter $Paths -SampleInterval $SampleInterval -MaxSamples $NumSamples -ErrorAction SilentlyContinue) `
 			| Select-Object -ExpandProperty CounterSamples `
 			| Group-Object -Property Path `
-			| ForEach-Object { 
+			| ForEach-Object {
 					$_ | Select-Object -Property Name, @{n='Average';e={($_.Group.CookedValue | Measure-Object -Average).Average}};
 				}
 	}
