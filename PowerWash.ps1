@@ -179,6 +179,8 @@ if ($disable_telemetry) {
 	TryDisableTask "KernelCeipTask"
 	Disable-ScheduledTask -TaskName "CreateObjectTask" -TaskPath "\Microsoft\Windows\CloudExperienceHost" -ErrorAction SilentlyContinue
 	
+	Set-MpPreference -DisableNetworkProtectionPerfTelemetry $true
+	
 	"Microsoft telemetry disabled"
 }
 
@@ -290,6 +292,13 @@ if ($disable_preinstalled) {
 	"Preinstalled apps disabled"
 }
 
+$disable_realtime_monitoring=Confirm "Disable real-time protection from Windows Defender?" -Auto $false
+if ($disable_realtime_monitoring) {
+	Set-MpPreference -DisableRealtimeMonitoring $true
+	
+	"Defender real-time monitoring disabled."
+}
+
 $scan_idle_only=Confirm "Configure Windows Defender to run scans only when computer is idle?" -Auto $true
 if ($scan_idle_only) {
 	$wait = New-TimeSpan -Minutes 10
@@ -298,8 +307,18 @@ if ($scan_idle_only) {
 	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Cleanup" -Settings $settings
 	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Scheduled Scan" -Settings $settings
 	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Verification" -Settings $settings
+	Set-MpPreference -ScanOnlyIfIdleEnabled $true
 	"Defender will only perform scans when computer is idle."
 }
+
+$defender_low_priority=Confirm "Run Defender tasks at a lower priority?" -Auto $true
+if ($defender_low_priority) {
+	Set-MpPreference -EnableLowCpuPriority $true
+	Set-MpPreference -ScanAvgCPULoadFactor 10
+	
+	"Defender tasks will operate at a lower priority."
+}
+
 
 $disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true
 if ($disable_faststartup) {
