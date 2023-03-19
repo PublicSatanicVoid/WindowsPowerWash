@@ -93,6 +93,7 @@ $autorestart="/autorestart" -in $args
 
 $edition = (Get-WindowsEdition -online).Edition
 $has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Edu*") -or ($edition -Like "*Enterprise*")
+$has_win_enterprise = ($edition -Like "*Enterprise*")
 "Windows Edition: $edition (pro=$has_win_pro)"
 
 if ($global:do_all -and $global:do_all_auto) {
@@ -136,7 +137,7 @@ if ($do_sfc) {
 
 # Install Group Policy editor, which isn't installed by default on Home editions
 # Allows easy tweaking of a wide range of settings without needing to edit registry
-if (-not $has_pro) {
+if (-not $has_win_pro) {
 	$do_gpedit=(-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true)
 	if ($do_gpedit) {
 		cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
@@ -156,6 +157,7 @@ if ($disable_hpet) {
 $disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" -Auto $true
 if ($disable_autoupdate) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
+	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "AUOptions" -Value 2 -ValueType "DWord"
 	$gp_changed=$true
 	"Automatic Windows updates disabled"
 }
@@ -163,7 +165,15 @@ if ($disable_autoupdate) {
 # Disable Microsoft telemetry
 $disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $true
 if ($disable_telemetry) {
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value 0 -ValueType "DWord"
+	# Windows has 4 levels of telemetry: Security, Required, Enhanced, Optional
+	# Only Enterprise supports Security as min telemetry level, other platforms only support Required
+	if ($has_win_enterprise) {
+		$min_telemetry = 0
+	}
+	else {
+		$min_telemetry = 1
+	}
+	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value $min_telemetry -ValueType "DWord"
 	
 	# Disable inking and typing recognition
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Input\TIPC" -Key "Enabled" -Value 0 -ValueType "DWord"
