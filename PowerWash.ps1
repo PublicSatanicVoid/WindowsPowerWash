@@ -91,6 +91,10 @@ $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
 $autorestart="/autorestart" -in $args
 
+$edition = (Get-WindowsEdition -online).Edition
+$has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Edu*") -or ($edition -Like "*Enterprise*")
+"Windows Edition: $edition (pro=$has_win_pro)"
+
 if ($global:do_all -and $global:do_all_auto) {
 	"Error: Can only specify one of /all or /auto"
 	"Do '.\PowerWash.ps1 /?' for help"
@@ -132,10 +136,12 @@ if ($do_sfc) {
 
 # Install Group Policy editor, which isn't installed by default on Home editions
 # Allows easy tweaking of a wide range of settings without needing to edit registry
-$do_gpedit=(-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true)
-if ($do_gpedit) {
-	cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
-	cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
+if (-not $has_pro) {
+	$do_gpedit=(-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true)
+	if ($do_gpedit) {
+		cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
+		cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
+	}
 }
 
 # Disable HPET (high precision event timer)
@@ -295,7 +301,6 @@ if ($disable_preinstalled) {
 $disable_realtime_monitoring=Confirm "Disable real-time protection from Windows Defender?" -Auto $false
 if ($disable_realtime_monitoring) {
 	Set-MpPreference -DisableRealtimeMonitoring $true
-	
 	"Defender real-time monitoring disabled."
 }
 
@@ -314,8 +319,7 @@ if ($scan_idle_only) {
 $defender_low_priority=Confirm "Run Defender tasks at a lower priority?" -Auto $true
 if ($defender_low_priority) {
 	Set-MpPreference -EnableLowCpuPriority $true
-	Set-MpPreference -ScanAvgCPULoadFactor 10
-	
+	Set-MpPreference -ScanAvgCPULoadFactor 5
 	"Defender tasks will operate at a lower priority."
 }
 
