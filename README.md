@@ -35,6 +35,7 @@ Current features include:
 - Disabling Windows telemetry (telemetry can waste resources)
 - Applying more aggressive [multimedia settings](https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service) (can improve performance of pro audio tasks)
 - Enabling Microsoft's "Ultimate" performance power plan along with additional highly aggressive performance settings
+- Enabling hardware-accelerated GPU scheduling (can reduce graphics latency)
 - Disabling network adapter packet coalescing (can improve DPC latency for `ndis.sys`/`tcpip.sys`)
 - Disabling Cortana
 - Disabling Windows consumer features (e.g. third-party suggestions)
@@ -52,6 +53,6 @@ Current features include:
 - Adequate thermal management is imperative to stable device functioning. Make sure your device is being cooled adequately.
 - You can also overclock CPU/GPU/RAM if needed, but this is a "brute force" approach and you should try to get performance as high as possible before resorting to this. May also compromise thermals, so make sure to use long-running stability tests like [Prime95](https://www.mersenne.org/download/) (CPU, RAM), [Kombustor](https://geeks3d.com/furmark/kombustor/) (CPU, GPU), and [Memtest86](https://www.memtest86.com/) (RAM).
 - Using SSD instead of HDD, and NVMe instead of SATA, can drastically improve system responsiveness and application load times, though likely won't help with interrupt latency.
-- Make sure all drivers are up to date. Perform clean installs where possible.
+- Make sure all drivers are up to date. When installing or reinstalling, __perform clean installs where possible__.
 - Always back up your system before running PowerWash or making any other system configuration changes.
 - Obviously, all of this is "use at your own risk"
