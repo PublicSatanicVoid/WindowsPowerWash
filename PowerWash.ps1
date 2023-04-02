@@ -158,6 +158,7 @@ $disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" 
 if ($disable_autoupdate) {
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "AUOptions" -Value 2 -ValueType "DWord"
+	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" -Key "AutoDownload" -Value 5 -ValueType "DWord"
 	$gp_changed=$true
 	"Automatic Windows updates disabled"
 }
@@ -166,17 +167,25 @@ if ($disable_autoupdate) {
 $disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $true
 if ($disable_telemetry) {
 	# Windows has 4 levels of telemetry: Security, Required, Enhanced, Optional
-	# Only Enterprise supports Security as min telemetry level, other platforms only support Required
-	if ($has_win_enterprise) {
-		$min_telemetry = 0
-	}
-	else {
-		$min_telemetry = 1
-	}
+	# According to Microsoft, only Enterprise supports Security as min telemetry level, other platforms only support Required
+	# However, the Security (minimum) level does seem to work as expected on Windows 10 Pro as well.
+	# Accordingly, the below logic does not appear to be required.
+	#if ($has_win_enterprise) {
+	#	$min_telemetry = 0
+	#}
+	#else {
+	#	$min_telemetry = 1
+	#}
+	#"Minimum supported telemetry is $min_telemetry"
+	
+	$min_telemetry = 0
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value $min_telemetry -ValueType "DWord"
 	
 	# Disable inking and typing recognition
 	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Input\TIPC" -Key "Enabled" -Value 0 -ValueType "DWord"
+	
+	# Disable application telemetry
+	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Key "AITEnable" -Value 0 -ValueType "DWord"
 	
 	$gp_changed=$true
 	
@@ -260,7 +269,16 @@ if ($redline) {
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" -Key "PowerThrottlingOff" -Value 1 -ValueType "DWord"
 	$gp_changed=$true
 	
+	# Enable hibernate option
+	powercfg /hibernate on
+	
 	"High performance power settings installed"
+}
+
+$hwsch=Confirm "Enable hardware-accelerated GPU scheduling?" -Auto $true
+if ($hwsch) {
+	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Key "HwSchMode" -Value 2 -ValueType "DWord"
+	"Hardware-accelerated GPU scheduling enabled (will take effect after reboot)"
 }
 
 # Prioritize low latency on network adapters
