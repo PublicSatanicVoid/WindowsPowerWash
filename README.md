@@ -33,19 +33,19 @@ PowerWash modifies various aspects of your Windows installation. Instead of comp
 Current features include:
 - Running Microsoft's built-in [system file integrity checks](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e) to repair any corrupted system files
 - Installing [Group Policy editor](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/dn265982(v=ws.11)), which presents a straightforward and well-documented interface to make system changes without manually editing the registry. Group Policy editor is a Microsoft product but does not come installed by default on Home editions of Windows.
-- Disabling the high precision event timer (may improve DPC latency on some systems)
+- Disabling the [high precision event timer](https://en.wikipedia.org/wiki/High_Precision_Event_Timer) (may improve DPC latency on some systems)
 - Disabling automatic Windows updates (background updates can consume resources and automatic install/restart is often not wanted) (Note: These can't fully be disabled on Home editions without disabling updates completely)
 - Disabling Windows telemetry (telemetry can waste resources)
 - Applying more aggressive [multimedia settings](https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service) (can improve performance of pro audio tasks)
-- Enabling Microsoft's "Ultimate" performance power plan along with additional highly aggressive performance settings
-- Enabling hardware-accelerated GPU scheduling (can reduce graphics latency)
+- Enabling Microsoft's ["Ultimate" performance power plan](https://social.technet.microsoft.com/wiki/contents/articles/52059.windows-10-the-ultimate-performance-power-policy.aspx) along with additional [highly aggressive performance settings](https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning)
+- Enabling [hardware-accelerated GPU scheduling](https://devblogs.microsoft.com/directx/hardware-accelerated-gpu-scheduling/) (can reduce graphics latency)
 - Disabling network adapter packet coalescing (can improve DPC latency for `ndis.sys`/`tcpip.sys`)
 - Disabling Cortana
-- Disabling Windows consumer features (e.g. third-party suggestions) (Works on Enterprise/Education only)
+- Disabling [Windows consumer features](https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.CloudContent::DisableWindowsConsumerFeatures) (e.g. third-party suggestions) (Works on Enterprise/Education only)
 - Disabling and/or removing preinstalled applications
 - Only running Windows Defender scans when the computer is idle; reducing priority of Defender tasks; optionally disabling Defender real-time protection
 - Disabling Windows Defender Real-Time Protection, or disabling Windows Defender entirely (antivirus can reduce performance) (CAUTION: This WILL make your device less secure. This is also a highly experimental feature! All features here are use-at-your-own-risk, but this one especially!)
-- Disabling Fast Startup (can fix problems with some devices since Fast Startup skips some initialization)
+- Disabling [Fast Startup](https://www.makeuseof.com/what-is-windows-fast-startup-why-disable-it) (can fix problems with some devices since Fast Startup skips some initialization)
 - Enabling [message-signaled interrupts](https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-message-signaled-interrupts) on all devices that support them (can improve interrupt latency)
 - Prioritizing interrupts from devices like GPU and PCIe controller (may improve DPC/ISR latency)
 - Checking for IRQ conflicts (these cannot be resolved automatically, though)
