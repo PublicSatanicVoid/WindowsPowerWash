@@ -26,10 +26,8 @@
 		"Microsoft.BingWeather",
 		"Microsoft.Advertising.Xaml",
 		"Microsoft.Wallet",
-		"Microsoft.549981C3F5F10"
 	],   "<-- Some packages like Edge and ContentDeliveryManager can't be uninstalled this way": {},
-		 "^^^ The 'Microsoft.5499...' package is Cortana": {},
-	"RemoveEdge": false,
+	"RemoveEdge": false,   "<-- Still in alpha": {},
 	
 	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
 	"InstallWinget": false,
