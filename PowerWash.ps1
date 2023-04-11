@@ -458,6 +458,21 @@ if ($remove_edge) {
 	}
 }
 
+$install_winget=Confirm "Install Winget package manager?" -Auto $false -ConfigKey "InstallWinget"
+if ($install_winget) {
+	# https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
+	Add-AppxPackage -Path https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx
+
+	Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3 -OutFile .\microsoft.ui.xaml.2.7.3.zip
+	Expand-Archive .\microsoft.ui.xaml.2.7.3.zip
+	Add-AppxPackage .\microsoft.ui.xaml.2.7.3\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx
+
+	Invoke-WebRequest -Uri https://github.com/microsoft/winget-cli/releases/download/v1.4.10173/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle -OutFile .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+	Add-AppxPackage .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+	
+	"Winget installed"
+}
+
 try {
 	Get-Command winget | Out-Null
 	$install_configured=Confirm "Install configured applications?" -Auto $false -ConfigKey "InstallConfigured"
@@ -607,6 +622,6 @@ if ($gp_changed) {
 ""
 
 "PowerWash complete, a restart is recommended."
-if ($autorestart -or $global:config_map.AutoRestart) {
+if ($autorestart -or ($global:do_config -and $global:config_map.AutoRestart)) {
 	Restart-Computer
 }
