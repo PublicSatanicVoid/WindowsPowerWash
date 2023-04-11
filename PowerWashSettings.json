@@ -1,13 +1,15 @@
 {
 	"CheckIntegrity": true,
-	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
-	"DisableHpet": true,
+	
 	"DisableAutoUpdate": true,   "<-- Requires Pro or Enterprise/Edu": {},
 	"DisableTelemetry": true,
+	
+	"DisableHpet": true,
 	"MultimediaResponsiveness": true,
 	"PowerSettingsMaxPerformance": true,
 	"HwGpuScheduling": true,
 	"NetworkResponsiveness": true,
+	
 	"DisableCortana": true,
 	"DisableConsumerFeatures": true,   "<-- Requires Enterprise/Edu": {},
 	"DisablePreinstalled": true,   "<-- Requires Enterprise/Edu": {},
@@ -24,9 +26,12 @@
 		"Microsoft.BingWeather",
 		"Microsoft.Advertising.Xaml",
 		"Microsoft.Wallet",
-		"Microsoft.Windows.Cortana"
+		"Microsoft.549981C3F5F10"
 	],   "<-- Some packages like Edge and ContentDeliveryManager can't be uninstalled this way": {},
+		 "^^^ The 'Microsoft.5499...' package is Cortana": {},
 	"RemoveEdge": false,
+	
+	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
 	"InstallWinget": false,
 	"InstallConfigured": false,   "<-- Installs applications below using Winget": {},
 	"InstallConfiguredList": [
@@ -37,16 +42,21 @@
 		"Microsoft.Sysinternals.ProcessMonitor",
 		"Git.Git"
 	],   "<-- Passes these as arguments to `winget install`. REQUIRES WINGET": {},
+	
 	"DisableRealtimeMonitoringCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DisableAllDefenderCAUTIONCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DefenderScanOnlyWhenIdle": true,
 	"DefenderScanLowPriority": true,
+	
 	"DisableFastStartup": true,
 	"DisableStartupDelay": true,
+	
 	"EnableDriverMsi": true,
 	"EnableDriverPrio": true,
+	
 	"ShowSecondsInTaskbar": false,
 	"ShowRunAsDifferentUser": true,
 	"ShowHiddenExplorer": true,
+	
 	"AutoRestart": true
 }
