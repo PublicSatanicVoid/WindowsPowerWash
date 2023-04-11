@@ -1,6 +1,8 @@
 # PowerWash (PowerShell script)
 Remove bloatware from Windows and optimize for low latency and high performance
 
+**NOTE:** This script is NOT designed to repair a broken/corrupted Windows installation! It is designed to run on a fully functioning system and further optimize it for high-performance use cases. A clean install prior to using this is ideal!
+
 ## Setup
 - Download [`PowerWash.ps1`](https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/PowerWash.ps1) and [`PowerWashSettings.json`](https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/PowerWashSettings.json)
 - Make sure your [`ExecutionPolicy`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.3) allows scripts to run
@@ -49,14 +51,16 @@ Current features include:
 - Checking for IRQ conflicts (these cannot be resolved automatically, though)
 - Checking if a third-party antivirus is installed (Windows Defender is faster and better - third party antivirus must be uninstalled manually, though)
 
-There are some additional "nice-to-have"s that aren't regularly available through the Windows Settings UI, like showing seconds in the taskbar clock and showing "Run as different user" in the Start menu.
+There are some additional "nice-to-have"s that aren't regularly available through the Windows Settings UI, like showing seconds in the taskbar clock, showing "Run as different user" in the Start menu, and showing file extensions and hidden items in Explorer. This script can optionally also install [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and a configurable list of applications available through it.
+
+All of the above features are configurable using the provided `PowerWashSettings.json`. To apply the settings in that file, run PowerWash with the `/config` flag. Otherwise, those settings will not be used!
 
 ## Suggestions and Tips
 - I recommend you use programs like [LatencyMon](https://www.resplendence.com/latencymon) and [WhySoSlow](https://www.resplendence.com/whysoslow) to benchmark your system before and after running PowerWash and any other optimizations.
 - This script should be accompanied by a manual review of preinstalled programs, devices, services, etc. to disable or uninstall unwanted software.
 - Adequate thermal management is imperative to stable device functioning. Make sure your device is being cooled adequately.
 - You can also overclock CPU/GPU/RAM if needed, but this is a "brute force" approach and you should try to get performance as high as possible before resorting to this. May also compromise thermals, so make sure to use long-running stability tests like [Prime95](https://www.mersenne.org/download/) (CPU, RAM), [Kombustor](https://geeks3d.com/furmark/kombustor/) (CPU, GPU), and [Memtest86](https://www.memtest86.com/) (RAM).
-- Using SSD instead of HDD, and NVMe instead of SATA, can drastically improve system responsiveness and application load times, though likely won't help with interrupt latency.
+- Using SSD instead of HDD, and NVMe instead of SATA, can drastically improve system responsiveness and application load times, though likely won't help with most causes of high interrupt latency.
 - Make sure all drivers are up to date. When installing or reinstalling, __perform clean installs where possible__.
 - Always back up your system before running PowerWash or making any other system configuration changes.
 - Obviously, all of this is "use at your own risk"
