@@ -121,10 +121,15 @@ $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
 $autorestart="/autorestart" -in $args
 
+# Check Windows edition; some editions don't support certain features
 $edition = (Get-WindowsEdition -online).Edition
 $has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Edu*") -or ($edition -Like "*Enterprise*")
 $has_win_enterprise = ($edition -Like "*Enterprise*") -or ($edition -Like "*Edu*")
 "Windows Edition: $edition (pro=$has_win_pro) (enterprise=$has_win_enterprise)"
+
+# Check if we have Winget already
+Get-Command winget 2>$null | Out-Null
+$has_winget = $?
 
 if ("/warnconfig" -in $args) {
 	"Showing potentially destructive configured operations:"
@@ -150,12 +155,15 @@ if ("/warnconfig" -in $args) {
 	if ($global:config_map.InstallGpEdit) {
 		"* Will install Group Policy Editor if Windows edition is Home"
 	}
+	if ($global:config_map.InstallWinget) {
+		"* Will install Winget if needed"
+	}
 	try {
 		Get-Command winget | Out-Null
 		if ($global:config_map.RemovePreinstalled) {
 			"* Will install the following via Winget:"
 			foreach ($app in $global:config_map.InstallConfiguredList) {
-				"  - winget install $app"
+				"  - $app"
 			}
 		}
 	} catch {
@@ -188,7 +196,7 @@ function RunScriptAsSystem ($Path, $ArgString) {
 	$Job = $Task | Start-ScheduledTask -AsJob -ErrorAction Stop
 	$Job | Wait-Job | Remove-Job -Force -Confirm:$False
 	While (($Task | Get-ScheduledtaskInfo).LastTaskResult -eq 267009) { Start-Sleep -Milliseconds 200 }
-	$Task | Unregister-ScheduledTask
+	$Task | Unregister-ScheduledTask -Force -Confirm:$false
 	"System level script completed successfully"
 }
 
@@ -453,35 +461,38 @@ if ($remove_edge) {
 		$setup = "$edge_base\$item\Installer\setup.exe"
 		if (Test-Path "$setup") {
 			"Removing Edge installation: $setup"
-			& "$setup" --uninstall --system-level --force-uninstall
+			& "$setup" --uninstall --system-level --verbose-logging --force-uninstall
 		}
 	}
 }
 
-$install_winget=Confirm "Install Winget package manager?" -Auto $false -ConfigKey "InstallWinget"
-if ($install_winget) {
-	# https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
-	Add-AppxPackage -Path https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx
+if (-not $has_winget) {
+	$install_winget=Confirm "Install Winget package manager?" -Auto $false -ConfigKey "InstallWinget"
+	if ($install_winget) {
+		# https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
+		Add-AppxPackage -Path https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx
 
-	Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3 -OutFile .\microsoft.ui.xaml.2.7.3.zip
-	Expand-Archive .\microsoft.ui.xaml.2.7.3.zip
-	Add-AppxPackage .\microsoft.ui.xaml.2.7.3\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx
+		Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3 -OutFile .\microsoft.ui.xaml.2.7.3.zip
+		Expand-Archive .\microsoft.ui.xaml.2.7.3.zip
+		Add-AppxPackage .\microsoft.ui.xaml.2.7.3\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx
 
-	Invoke-WebRequest -Uri https://github.com/microsoft/winget-cli/releases/download/v1.4.10173/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle -OutFile .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
-	Add-AppxPackage .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
-	
-	"Winget installed"
+		Invoke-WebRequest -Uri https://github.com/microsoft/winget-cli/releases/download/v1.4.10173/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle -OutFile .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+		Add-AppxPackage .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+		
+		$has_winget = $true
+		
+		"Winget installed"
+	}
 }
 
-try {
-	Get-Command winget | Out-Null
+if ($has_winget) {
 	$install_configured=Confirm "Install configured applications?" -Auto $false -ConfigKey "InstallConfigured"
 	if ($install_configured) {
 		foreach ($params in $global:config_map.InstallConfiguredList) {
 			& "winget" "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
 		}
 	}
-} catch {
+} else {
 	"Skipping install of configured applications: Winget not installed"
 }
 
