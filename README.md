@@ -2,7 +2,7 @@
 Remove bloatware from Windows and optimize for low latency and high performance
 
 ## Setup
-- Download `PowerWash.ps1`
+- Download `PowerWash.ps1` and `PowerWashSettings.json`
 - Make sure your [`ExecutionPolicy`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.3) allows scripts to run
 
 ## Usage
