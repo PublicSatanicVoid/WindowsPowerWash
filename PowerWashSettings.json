@@ -25,7 +25,7 @@
 		"Microsoft.WindowsSoundRecorder",
 		"Microsoft.BingWeather",
 		"Microsoft.Advertising.Xaml",
-		"Microsoft.Wallet",
+		"Microsoft.Wallet"
 	],   "<-- Some packages like Edge and ContentDeliveryManager can't be uninstalled this way": {},
 	"RemoveEdge": false,   "<-- Still in alpha": {},
 	
