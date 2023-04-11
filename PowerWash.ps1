@@ -525,7 +525,6 @@ if ($defender_low_priority) {
 	"Defender tasks will operate at a lower priority."
 }
 
-
 $disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true -ConfigKey "DisableFastStartup"
 if ($disable_faststartup) {
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key "HiberbootEnabled" -Value 0 -ValueType "DWord"
