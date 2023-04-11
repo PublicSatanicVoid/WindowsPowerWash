@@ -5,3 +5,5 @@ On my to-do list: (feel free to suggest more!)
 - More extensive validation
   - admx.help has lots of good info on registry values that are otherwise undocumented
   - before/after comparisons across more devices
+- Ability to uninstall Edge
+- Ability to install configured set of apps via winget, like Notepad++, Chrome, VSCode, Discord, Windows Terminal, PowerToys, Git
