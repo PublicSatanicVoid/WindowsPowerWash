@@ -1,6 +1,6 @@
 {
 	"CheckIntegrity": true,
-	"InstallGpEdit": true,
+	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
 	"DisableHpet": true,
 	"DisableAutoUpdate": true,   "<-- Requires Pro or Enterprise/Edu": {},
 	"DisableTelemetry": true,
@@ -15,8 +15,8 @@
 	"RemovePreinstalledList": [
 		"Microsoft.SkypeApp",
 		"Microsoft.People",
-		"Microsoft.CommsPhone",
-		"Microsoft.WindowsPhone",
+		"Microsoft.WindowsCommunicationsApps",
+		"Microsoft.YourPhone",
 		"Microsoft.XboxApp",
 		"Microsoft.Messaging",
 		"Microsoft.OneConnect",
@@ -26,6 +26,17 @@
 		"Microsoft.Wallet",
 		"Microsoft.Windows.Cortana"
 	],   "<-- Some packages like Edge and ContentDeliveryManager can't be uninstalled this way": {},
+	"RemoveEdge": false,
+	"InstallWinget": false,
+	"InstallConfigured": false,   "<-- Installs applications below using Winget": {},
+	"InstallConfiguredList": [
+		"Notepad++.Notepad++",
+		"Microsoft.VisualStudioCode",
+		"Microsoft.WindowsTerminal",
+		"Microsoft.PowerToys",
+		"Microsoft.Sysinternals.ProcessMonitor",
+		"Git.Git"
+	],   "<-- Passes these as arguments to `winget install`. REQUIRES WINGET": {},
 	"DisableRealtimeMonitoringCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DisableAllDefenderCAUTIONCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DefenderScanOnlyWhenIdle": true,
@@ -36,5 +47,6 @@
 	"EnableDriverPrio": true,
 	"ShowSecondsInTaskbar": false,
 	"ShowRunAsDifferentUser": true,
+	"ShowHiddenExplorer": true,
 	"AutoRestart": true
 }
