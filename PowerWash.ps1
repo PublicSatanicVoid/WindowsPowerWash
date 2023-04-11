@@ -10,11 +10,12 @@
 #
 
 if ("/?" -in $args) {
-	".\PowerWash.ps1 [/all | /auto | /config] [/noinstalls] [/noscans] [/autorestart]"
+	".\PowerWash.ps1 [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
 	"	/all			Runs all PowerWash features without prompting"
 	"	/auto			Runs a default subset of PowerWash features, without prompting"
 	"	/config			Runs actions enabled in PowerWashSettings.json, without prompting"
 	"	/stats			Shows current performance stats and exits"
+	"	/warnconfig		Shows potentially destructive configured operations"
 	"	/noinstalls		Skips PowerWash actions that would install software (overrides other flags)"
 	"	/noscans		Skips PowerWash actions that perform lengthy scans (overrides other flags)"
 	"	/autorestart		Restarts computer when done"
@@ -124,6 +125,45 @@ $edition = (Get-WindowsEdition -online).Edition
 $has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Edu*") -or ($edition -Like "*Enterprise*")
 $has_win_enterprise = ($edition -Like "*Enterprise*") -or ($edition -Like "*Edu*")
 "Windows Edition: $edition (pro=$has_win_pro) (enterprise=$has_win_enterprise)"
+
+if ("/warnconfig" -in $args) {
+	"Showing potentially destructive configured operations:"
+	"==Removals=="
+	if ($global:config_map.DisableRealtimeMonitoringCAUTION) {
+		if ($global:config_map.DisableAllDefenderCAUTIONCAUTION) {
+			"* WARNING: Configured settings will disable Windows Defender entirely."
+		}
+		else {
+			"* WARNING: Configured settings will disable Windows Defender realtime monitoring."
+		}
+	}
+	if ($global:config_map.RemoveEdge) {
+		"* Will remove Microsoft Edge"
+	}
+	if ($global:config_map.RemovePreinstalled) {
+		"* Will remove the following preinstalled apps:"
+		foreach ($app in $global:config_map.RemovePreinstalledList) {
+			"  - $app"
+		}
+	}
+	"==Installs=="
+	if ($global:config_map.InstallGpEdit) {
+		"* Will install Group Policy Editor if Windows edition is Home"
+	}
+	try {
+		Get-Command winget | Out-Null
+		if ($global:config_map.RemovePreinstalled) {
+			"* Will install the following via Winget:"
+			foreach ($app in $global:config_map.InstallConfiguredList) {
+				"  - winget install $app"
+			}
+		}
+	} catch {
+		"* Will skip configured Winget installs as Winget is not present"
+	}
+	
+	exit
+}
 
 if ($global:do_all -and $global:do_all_auto) {
 	"Error: Can only specify one of /all or /auto"
@@ -406,6 +446,30 @@ if ($remove_preinstalled) {
 	}
 }
 
+$remove_edge=Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge"
+if ($remove_edge) {
+	$edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
+	foreach ($item in Get-ChildItem -Path "$edge_base") {
+		$setup = "$edge_base\$item\Installer\setup.exe"
+		if (Test-Path "$setup") {
+			"Removing Edge installation: $setup"
+			& "$setup" --uninstall --system-level --force-uninstall
+		}
+	}
+}
+
+try {
+	Get-Command winget | Out-Null
+	$install_configured=Confirm "Install configured applications?" -Auto $false -ConfigKey "InstallConfigured"
+	if ($install_configured) {
+		foreach ($params in $global:config_map.InstallConfiguredList) {
+			& "winget" "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
+		}
+	}
+} catch {
+	"Skipping install of configured applications: Winget not installed"
+}
+
 $disable_realtime_monitoring=Confirm "Disable real-time protection from Windows Defender? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableRealtimeMonitoringCAUTION"
 if ($disable_realtime_monitoring) {
 	$disable_all_defender=Confirm "--> Disable Windows Defender entirely? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableAllDefenderCAUTIONCAUTION"
@@ -517,6 +581,13 @@ $show_runas=Confirm "Do you want to show 'Run as different user' in Start?" -Aut
 if ($show_runas) {
 	RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Key "ShowRunAsDifferentUserInStart" -Value 1 -ValueType "DWord"
 	"Will now show 'Run as different user' in Start"
+}
+
+$show_explorer=Confirm "Do you want to show file extensions and hidden files in Explorer?" -Auto $true -ConfigKey "ShowHiddenExplorer"
+if ($show_explorer) {
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "Hidden" -Value 1 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "HideFileExt" -Value 0 -ValueType "DWord"
+	"Will now show file extensions and hidden files in Explorer"
 }
 
 # Checks for third-party antivirus products (generally not needed)
