@@ -120,6 +120,12 @@ $global:config_map=(Get-Content -Raw ".\PowerWashSettings.json" | ConvertFrom-Js
 $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
 $autorestart="/autorestart" -in $args
+$is_unattend="/is-unattend" -in $args
+if ($is_unattend) {
+	"Unattended setup detected"
+	Add-Type -AssemblyName System.Windows.Forms
+	[System.Windows.Forms.MessageBox]::Show('Applying custom Windows configuration. Do not restart until notified that this has completed.', 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+}
 
 # Check Windows edition; some editions don't support certain features
 $edition = (Get-WindowsEdition -online).Edition
@@ -179,8 +185,6 @@ if ($global:do_all -and $global:do_all_auto) {
 	exit
 }
 
-$gp_changed=$false
-
 function RegistryPut ($Path, $Key, $Value, $ValueType) {
 	If (-NOT (Test-Path "$Path")) {
 		New-Item -Path "$Path" -Force | Out-Null
@@ -220,6 +224,11 @@ function Confirm ($Prompt, $Auto=$false, $ConfigKey=$null) {
 	return (Read-Host "$Prompt y/n") -eq "y"
 }
 
+function UnpinApp($appname) {
+	# https://learn.microsoft.com/en-us/answers/questions/214599/unpin-icons-from-taskbar-in-windows-10-20h2
+	((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -eq $appname}).Verbs() | ?{$_.Name.replace('&', '') -match 'Unpin from taskbar'} | %{$_.DoIt()}
+}
+
 # Check system file integrity
 $do_sfc=(-not $noscan) -and (Confirm "Run system file integrity checks? (May take a few minutes)" -Auto $false -ConfigKey "CheckIntegrity")
 if ($do_sfc) {
@@ -249,16 +258,22 @@ if ($disable_hpet) {
 }
 
 # Disable automatic updates
-$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" -Auto $true -ConfigKey "DisableAutoUpdate"
-if ($disable_autoupdate) {
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "AUOptions" -Value 2 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" -Key "AutoDownload" -Value 5 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "AutoDownload" -Value 4 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "DisableOSUpgrade" -Value 1 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "AUPowerManagement" -Value 0 -ValueType "DWord"
-	$gp_changed=$true
-	"Automatic Windows updates disabled"
+if ($has_win_pro) {
+	$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" -Auto $true -ConfigKey "DisableAutoUpdate"
+	if ($disable_autoupdate) {
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "AUOptions" -Value 2 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" -Key "AutoDownload" -Value 5 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "AutoDownload" -Value 4 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "DisableOSUpgrade" -Value 1 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "AUPowerManagement" -Value 0 -ValueType "DWord"
+		$gp_changed=$true
+		"Automatic Windows updates disabled"
+	}
+}
+else {
+	"Windows Home edition does not support disabling automatic updates, skipping this feature"
+	"If you want to disable automatic updates on Home, you can try setting your internet connection to Metered."
 }
 
 # Disable Microsoft telemetry
@@ -266,15 +281,7 @@ $disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $
 if ($disable_telemetry) {
 	# Windows has 4 levels of telemetry: Security, Required, Enhanced, Optional
 	# According to Microsoft, only Enterprise supports Security as min telemetry level, other platforms only support Required
-	# However, the Security (minimum) level DOES seem to work as expected on Windows 10 Pro as well.
-	# Accordingly, the below logic does not appear to be required.
-	#if ($has_win_enterprise) {
-	#	$min_telemetry = 0
-	#}
-	#else {
-	#	$min_telemetry = 1
-	#}
-	#"Minimum supported telemetry is $min_telemetry"
+	# However, we can just always set it to Security and Windows will apply the lowest allowed setting.
 	
 	$min_telemetry = 0
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value $min_telemetry -ValueType "DWord"
@@ -284,8 +291,6 @@ if ($disable_telemetry) {
 	
 	# Disable application telemetry
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Key "AITEnable" -Value 0 -ValueType "DWord"
-	
-	$gp_changed=$true
 	
 	sc.exe config DiagTrack start=disabled
 	sc.exe config dmwappushservice start=disabled
@@ -368,7 +373,6 @@ if ($redline) {
 	
 	# Disable power throttling
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" -Key "PowerThrottlingOff" -Value 1 -ValueType "DWord"
-	$gp_changed=$true
 	
 	# Enable hibernate option
 	powercfg /hibernate on
@@ -402,7 +406,6 @@ if ($disable_cortana) {
 	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "DisableWebSearch" -Value 1 -ValueType "DWord"
 	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWeb" -Value 0 -ValueType "DWord"
 	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWebOverMeteredConnections" -Value 0 -ValueType "DWord"
-	$gp_changed=$true
 	"Cortana disabled"
 }
 
@@ -413,7 +416,6 @@ if ($has_win_enterprise) {
 		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
 		RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
 		RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -ValueType "DWord"
-		$gp_changed=$true
 		"Consumer features disabled"
 	}
 
@@ -528,7 +530,6 @@ if ($defender_low_priority) {
 $disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true -ConfigKey "DisableFastStartup"
 if ($disable_faststartup) {
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key "HiberbootEnabled" -Value 0 -ValueType "DWord"
-	$gp_changed=$true
 	"Fast Startup disabled"
 }
 
@@ -615,6 +616,18 @@ if ($show_explorer) {
 	"Will now show file extensions and hidden files in Explorer"
 }
 
+$customize_taskbar=Confirm "Clean up taskbar? (Recommended for a cleaner out-of-box Windows experience)" -Auto $false -ConfigKey "CleanupTaskbar"
+if ($customize_taskbar) {
+	UnpinApp("Microsoft Store")
+	UnpinApp("Microsoft Edge")
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "TraySearchBoxVisible" -Value 0 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "SearchboxTaskbarMode" -Value 1 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" -Key "EnableFeeds" -Value 0 -ValueType "DWord"
+	taskkill /f /im explorer.exe
+	start explorer.exe
+	"Taskbar cleaned up"
+}
+
 # Checks for third-party antivirus products (generally not needed)
 $av_product=(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct).displayName
 if ($av_product -ne "Windows Defender") {
@@ -624,12 +637,12 @@ if ($av_product -ne "Windows Defender") {
 	}
 }
 
-if ($gp_changed) {
-	"Registry settings that affect group policy were changed. Updating group policy..."
-	gpupdate /force
-}
-
 ""
+
+if ($is_unattend) {
+	Add-Type -AssemblyName System.Windows.Forms
+	[System.Windows.Forms.MessageBox]::Show('Custom Windows configuration has been successfully applied. You may now restart.', 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+}
 
 "PowerWash complete, a restart is recommended."
 if ($autorestart -or ($global:do_config -and $global:config_map.AutoRestart)) {
