@@ -38,7 +38,8 @@
 		"Microsoft.WindowsTerminal",
 		"Microsoft.PowerToys",
 		"Microsoft.Sysinternals.ProcessMonitor",
-		"Git.Git"
+		"Git.Git",
+		"Gyan.FFmpeg"
 	],   "<-- Passes these as arguments to `winget install`. REQUIRES WINGET": {},
 	
 	"DisableRealtimeMonitoringCAUTION": false,   "<-- EXTRA CAUTION": {},
@@ -52,9 +53,10 @@
 	"EnableDriverMsi": true,
 	"EnableDriverPrio": true,
 	
-	"ShowSecondsInTaskbar": false,
+	"ShowSecondsInTaskbar": true,
 	"ShowRunAsDifferentUser": true,
 	"ShowHiddenExplorer": true,
+	"CleanupTaskbar": true,
 	
-	"AutoRestart": true
+	"AutoRestart": false
 }
