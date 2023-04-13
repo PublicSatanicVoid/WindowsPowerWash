@@ -1,5 +1,5 @@
-# PowerWash (PowerShell script)
-Remove bloatware from Windows and optimize for low latency and high performance
+# PowerWash: Reclaim Windows
+Remove bloatware from Windows, take control of important settings, and optimize for low latency and high performance
 
 **NOTE:** This script is NOT designed to repair a broken/corrupted Windows installation! It is designed to run on a fully functioning system and further optimize it for high-performance use cases. A clean install prior to using this is ideal!
 
