@@ -8,7 +8,7 @@ The default Windows installation has to cater to a very wide variety of users, a
 
 I created PowerWash because I believe that underneath the cruft (ads, telemetry, Windows-as-a-service automatic updates) Windows is fundamentally a great operating system, and it shouldn't be so difficult to make it great. Many debloater tools are themselves bloatware, or don't let you configure things easily, or just don't work. PowerWash takes the good stuff from what's already been done and adds even more good stuff.
 
-*This software may (depending on user configuration) modify registry settings, uninstall certain Windows applications, or otherwise perform actions commonly considered "dangerous" or "destructive". My testing on both physical and virtual machines has indicated these are safe operations. However, no amount of testing is perfect and I can't guarantee your system will be stable if you use this. You **use this at your own risk** and should make sure you understand what the features you plan to use actually do!*
+*This software may (depending on user configuration) modify registry settings, uninstall certain Windows applications, or otherwise perform actions commonly considered "dangerous" or "destructive". My testing on both physical and virtual machines as well as extensive reading of documentation has indicated these are safe operations. However, no amount of testing is perfect, documentation is sometimes wrong, and I can't guarantee your system will be stable if you use any component of this software. You **use this at your own risk** and should make sure you understand what the features you plan to use actually do!*
 
 ## Using PowerWash
 There are three ways PowerWash is designed to be used:
