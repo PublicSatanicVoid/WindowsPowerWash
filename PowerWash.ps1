@@ -10,11 +10,12 @@
 #
 
 if ("/?" -in $args) {
-	".\PowerWash.ps1 [/all | /auto | /config] [/noinstalls] [/noscans] [/autorestart]"
+	".\PowerWash.ps1 [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
 	"	/all			Runs all PowerWash features without prompting"
 	"	/auto			Runs a default subset of PowerWash features, without prompting"
 	"	/config			Runs actions enabled in PowerWashSettings.json, without prompting"
 	"	/stats			Shows current performance stats and exits"
+	"	/warnconfig		Shows potentially destructive configured operations"
 	"	/noinstalls		Skips PowerWash actions that would install software (overrides other flags)"
 	"	/noscans		Skips PowerWash actions that perform lengthy scans (overrides other flags)"
 	"	/autorestart		Restarts computer when done"
@@ -115,23 +116,78 @@ if ("/stats" -in $args) {
 $global:do_all="/all" -in $args
 $global:do_all_auto="/auto" -in $args
 $global:do_config="/config" -in $args
-$global:config_map=(Get-Content -Raw ".\PowerWashSettings.json" | ConvertFrom-Json)
+$global:config_map=If ($do_config) {
+	(Get-Content -Raw ".\PowerWashSettings.json" | ConvertFrom-Json)
+} Else {
+	@{}
+}
 $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
 $autorestart="/autorestart" -in $args
+$is_unattend="/is-unattend" -in $args
+if ($is_unattend) {
+	"Unattended setup detected"
+	Add-Type -AssemblyName System.Windows.Forms
+	[System.Windows.Forms.MessageBox]::Show('Applying custom Windows configuration. Do not restart until notified that this has completed.', 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+}
 
+# Check Windows edition; some editions don't support certain features
 $edition = (Get-WindowsEdition -online).Edition
 $has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Edu*") -or ($edition -Like "*Enterprise*")
 $has_win_enterprise = ($edition -Like "*Enterprise*") -or ($edition -Like "*Edu*")
 "Windows Edition: $edition (pro=$has_win_pro) (enterprise=$has_win_enterprise)"
+
+# Check if we have Winget already
+Get-Command winget 2>$null | Out-Null
+$has_winget = $?
+
+if ("/warnconfig" -in $args) {
+	"Showing potentially destructive configured operations:"
+	"==Removals=="
+	if ($global:config_map.DisableRealtimeMonitoringCAUTION) {
+		if ($global:config_map.DisableAllDefenderCAUTIONCAUTION) {
+			"* WARNING: Configured settings will disable Windows Defender entirely."
+		}
+		else {
+			"* WARNING: Configured settings will disable Windows Defender realtime monitoring."
+		}
+	}
+	if ($global:config_map.RemoveEdge) {
+		"* Will remove Microsoft Edge"
+	}
+	if ($global:config_map.RemovePreinstalled) {
+		"* Will remove the following preinstalled apps:"
+		foreach ($app in $global:config_map.RemovePreinstalledList) {
+			"  - $app"
+		}
+	}
+	"==Installs=="
+	if ($global:config_map.InstallGpEdit) {
+		"* Will install Group Policy Editor if Windows edition is Home"
+	}
+	if ($global:config_map.InstallWinget) {
+		"* Will install Winget if needed"
+	}
+	try {
+		Get-Command winget | Out-Null
+		if ($global:config_map.RemovePreinstalled) {
+			"* Will install the following via Winget:"
+			foreach ($app in $global:config_map.InstallConfiguredList) {
+				"  - $app"
+			}
+		}
+	} catch {
+		"* Will skip configured Winget installs as Winget is not present"
+	}
+	
+	exit
+}
 
 if ($global:do_all -and $global:do_all_auto) {
 	"Error: Can only specify one of /all or /auto"
 	"Do '.\PowerWash.ps1 /?' for help"
 	exit
 }
-
-$gp_changed=$false
 
 function RegistryPut ($Path, $Key, $Value, $ValueType) {
 	If (-NOT (Test-Path "$Path")) {
@@ -148,7 +204,7 @@ function RunScriptAsSystem ($Path, $ArgString) {
 	$Job = $Task | Start-ScheduledTask -AsJob -ErrorAction Stop
 	$Job | Wait-Job | Remove-Job -Force -Confirm:$False
 	While (($Task | Get-ScheduledtaskInfo).LastTaskResult -eq 267009) { Start-Sleep -Milliseconds 200 }
-	$Task | Unregister-ScheduledTask
+	$Task | Unregister-ScheduledTask -Force -Confirm:$false
 	"System level script completed successfully"
 }
 
@@ -170,6 +226,11 @@ function Confirm ($Prompt, $Auto=$false, $ConfigKey=$null) {
 		return $global:config_map.$ConfigKey
 	}
 	return (Read-Host "$Prompt y/n") -eq "y"
+}
+
+function UnpinApp($appname) {
+	# https://learn.microsoft.com/en-us/answers/questions/214599/unpin-icons-from-taskbar-in-windows-10-20h2
+	((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -eq $appname}).Verbs() | ?{$_.Name.replace('&', '') -match 'Unpin from taskbar'} | %{$_.DoIt()}
 }
 
 # Check system file integrity
@@ -201,16 +262,22 @@ if ($disable_hpet) {
 }
 
 # Disable automatic updates
-$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" -Auto $true -ConfigKey "DisableAutoUpdate"
-if ($disable_autoupdate) {
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "AUOptions" -Value 2 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" -Key "AutoDownload" -Value 5 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "AutoDownload" -Value 4 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "DisableOSUpgrade" -Value 1 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "AUPowerManagement" -Value 0 -ValueType "DWord"
-	$gp_changed=$true
-	"Automatic Windows updates disabled"
+if ($has_win_pro) {
+	$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" -Auto $true -ConfigKey "DisableAutoUpdate"
+	if ($disable_autoupdate) {
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "AUOptions" -Value 2 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" -Key "AutoDownload" -Value 5 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "AutoDownload" -Value 4 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "DisableOSUpgrade" -Value 1 -ValueType "DWord"
+		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "AUPowerManagement" -Value 0 -ValueType "DWord"
+		$gp_changed=$true
+		"Automatic Windows updates disabled"
+	}
+}
+else {
+	"Windows Home edition does not support disabling automatic updates, skipping this feature"
+	"If you want to disable automatic updates on Home, you can try setting your internet connection to Metered."
 }
 
 # Disable Microsoft telemetry
@@ -218,15 +285,7 @@ $disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $
 if ($disable_telemetry) {
 	# Windows has 4 levels of telemetry: Security, Required, Enhanced, Optional
 	# According to Microsoft, only Enterprise supports Security as min telemetry level, other platforms only support Required
-	# However, the Security (minimum) level DOES seem to work as expected on Windows 10 Pro as well.
-	# Accordingly, the below logic does not appear to be required.
-	#if ($has_win_enterprise) {
-	#	$min_telemetry = 0
-	#}
-	#else {
-	#	$min_telemetry = 1
-	#}
-	#"Minimum supported telemetry is $min_telemetry"
+	# However, we can just always set it to Security and Windows will apply the lowest allowed setting.
 	
 	$min_telemetry = 0
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value $min_telemetry -ValueType "DWord"
@@ -236,8 +295,6 @@ if ($disable_telemetry) {
 	
 	# Disable application telemetry
 	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Key "AITEnable" -Value 0 -ValueType "DWord"
-	
-	$gp_changed=$true
 	
 	sc.exe config DiagTrack start=disabled
 	sc.exe config dmwappushservice start=disabled
@@ -320,7 +377,6 @@ if ($redline) {
 	
 	# Disable power throttling
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" -Key "PowerThrottlingOff" -Value 1 -ValueType "DWord"
-	$gp_changed=$true
 	
 	# Enable hibernate option
 	powercfg /hibernate on
@@ -354,7 +410,6 @@ if ($disable_cortana) {
 	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "DisableWebSearch" -Value 1 -ValueType "DWord"
 	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWeb" -Value 0 -ValueType "DWord"
 	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWebOverMeteredConnections" -Value 0 -ValueType "DWord"
-	$gp_changed=$true
 	"Cortana disabled"
 }
 
@@ -365,7 +420,6 @@ if ($has_win_enterprise) {
 		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
 		RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
 		RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -ValueType "DWord"
-		$gp_changed=$true
 		"Consumer features disabled"
 	}
 
@@ -406,6 +460,48 @@ if ($remove_preinstalled) {
 	}
 }
 
+$remove_edge=Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge"
+if ($remove_edge) {
+	$edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
+	foreach ($item in Get-ChildItem -Path "$edge_base") {
+		$setup = "$edge_base\$item\Installer\setup.exe"
+		if (Test-Path "$setup") {
+			"Removing Edge installation: $setup"
+			& "$setup" --uninstall --system-level --verbose-logging --force-uninstall
+		}
+	}
+}
+
+if (-not $has_winget) {
+	$install_winget=Confirm "Install Winget package manager?" -Auto $false -ConfigKey "InstallWinget"
+	if ($install_winget) {
+		# https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
+		Add-AppxPackage -Path https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx
+
+		Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3 -OutFile .\microsoft.ui.xaml.2.7.3.zip
+		Expand-Archive .\microsoft.ui.xaml.2.7.3.zip
+		Add-AppxPackage .\microsoft.ui.xaml.2.7.3\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx
+
+		Invoke-WebRequest -Uri https://github.com/microsoft/winget-cli/releases/download/v1.4.10173/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle -OutFile .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+		Add-AppxPackage .\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+		
+		$has_winget = $true
+		
+		"Winget installed"
+	}
+}
+
+if ($has_winget) {
+	$install_configured=Confirm "Install configured applications?" -Auto $false -ConfigKey "InstallConfigured"
+	if ($install_configured) {
+		foreach ($params in $global:config_map.InstallConfiguredList) {
+			& "winget" "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
+		}
+	}
+} else {
+	"Skipping install of configured applications: Winget not installed"
+}
+
 $disable_realtime_monitoring=Confirm "Disable real-time protection from Windows Defender? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableRealtimeMonitoringCAUTION"
 if ($disable_realtime_monitoring) {
 	$disable_all_defender=Confirm "--> Disable Windows Defender entirely? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableAllDefenderCAUTIONCAUTION"
@@ -435,11 +531,9 @@ if ($defender_low_priority) {
 	"Defender tasks will operate at a lower priority."
 }
 
-
 $disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true -ConfigKey "DisableFastStartup"
 if ($disable_faststartup) {
 	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key "HiberbootEnabled" -Value 0 -ValueType "DWord"
-	$gp_changed=$true
 	"Fast Startup disabled"
 }
 
@@ -519,6 +613,25 @@ if ($show_runas) {
 	"Will now show 'Run as different user' in Start"
 }
 
+$show_explorer=Confirm "Do you want to show file extensions and hidden files in Explorer?" -Auto $true -ConfigKey "ShowHiddenExplorer"
+if ($show_explorer) {
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "Hidden" -Value 1 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "HideFileExt" -Value 0 -ValueType "DWord"
+	"Will now show file extensions and hidden files in Explorer"
+}
+
+$customize_taskbar=Confirm "Clean up taskbar? (Recommended for a cleaner out-of-box Windows experience)" -Auto $false -ConfigKey "CleanupTaskbar"
+if ($customize_taskbar) {
+	UnpinApp("Microsoft Store")
+	UnpinApp("Microsoft Edge")
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "TraySearchBoxVisible" -Value 0 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "SearchboxTaskbarMode" -Value 1 -ValueType "DWord"
+	RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" -Key "EnableFeeds" -Value 0 -ValueType "DWord"
+	taskkill /f /im explorer.exe
+	start explorer.exe
+	"Taskbar cleaned up"
+}
+
 # Checks for third-party antivirus products (generally not needed)
 $av_product=(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct).displayName
 if ($av_product -ne "Windows Defender") {
@@ -528,14 +641,14 @@ if ($av_product -ne "Windows Defender") {
 	}
 }
 
-if ($gp_changed) {
-	"Registry settings that affect group policy were changed. Updating group policy..."
-	gpupdate /force
-}
-
 ""
 
+if ($is_unattend) {
+	Add-Type -AssemblyName System.Windows.Forms
+	[System.Windows.Forms.MessageBox]::Show('Custom Windows configuration has been successfully applied. You may now restart.', 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+}
+
 "PowerWash complete, a restart is recommended."
-if ($autorestart -or $global:config_map.AutoRestart) {
+if ($autorestart -or ($global:do_config -and $global:config_map.AutoRestart)) {
 	Restart-Computer
 }

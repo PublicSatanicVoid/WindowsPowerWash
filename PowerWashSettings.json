@@ -1,13 +1,15 @@
 {
 	"CheckIntegrity": true,
-	"InstallGpEdit": true,
-	"DisableHpet": true,
+	
 	"DisableAutoUpdate": true,   "<-- Requires Pro or Enterprise/Edu": {},
 	"DisableTelemetry": true,
+	
+	"DisableHpet": true,
 	"MultimediaResponsiveness": true,
 	"PowerSettingsMaxPerformance": true,
 	"HwGpuScheduling": true,
 	"NetworkResponsiveness": true,
+	
 	"DisableCortana": true,
 	"DisableConsumerFeatures": true,   "<-- Requires Enterprise/Edu": {},
 	"DisablePreinstalled": true,   "<-- Requires Enterprise/Edu": {},
@@ -15,26 +17,46 @@
 	"RemovePreinstalledList": [
 		"Microsoft.SkypeApp",
 		"Microsoft.People",
-		"Microsoft.CommsPhone",
-		"Microsoft.WindowsPhone",
+		"Microsoft.WindowsCommunicationsApps",
+		"Microsoft.YourPhone",
 		"Microsoft.XboxApp",
 		"Microsoft.Messaging",
 		"Microsoft.OneConnect",
 		"Microsoft.WindowsSoundRecorder",
 		"Microsoft.BingWeather",
 		"Microsoft.Advertising.Xaml",
-		"Microsoft.Wallet",
-		"Microsoft.Windows.Cortana"
+		"Microsoft.Wallet"
 	],   "<-- Some packages like Edge and ContentDeliveryManager can't be uninstalled this way": {},
+	"RemoveEdge": false,   "<-- Still in alpha": {},
+	
+	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
+	"InstallWinget": false,
+	"InstallConfigured": false,   "<-- Installs applications below using Winget": {},
+	"InstallConfiguredList": [
+		"Notepad++.Notepad++",
+		"Microsoft.VisualStudioCode",
+		"Microsoft.WindowsTerminal",
+		"Microsoft.PowerToys",
+		"Microsoft.Sysinternals.ProcessMonitor",
+		"Git.Git",
+		"Gyan.FFmpeg"
+	],   "<-- Passes these as arguments to `winget install`. REQUIRES WINGET": {},
+	
 	"DisableRealtimeMonitoringCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DisableAllDefenderCAUTIONCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DefenderScanOnlyWhenIdle": true,
 	"DefenderScanLowPriority": true,
+	
 	"DisableFastStartup": true,
 	"DisableStartupDelay": true,
+	
 	"EnableDriverMsi": true,
 	"EnableDriverPrio": true,
-	"ShowSecondsInTaskbar": false,
+	
+	"ShowSecondsInTaskbar": true,
 	"ShowRunAsDifferentUser": true,
-	"AutoRestart": true
+	"ShowHiddenExplorer": true,
+	"CleanupTaskbar": true,
+	
+	"AutoRestart": false
 }
