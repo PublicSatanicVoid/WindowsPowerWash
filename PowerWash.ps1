@@ -1,5 +1,5 @@
 #
-# PowerWash (Alpha)
+# PowerWash (Beta)
 #
 # Aims to improve system responsiveness, performance, and latency
 # by tuning settings to uncompromisingly favor performance and
