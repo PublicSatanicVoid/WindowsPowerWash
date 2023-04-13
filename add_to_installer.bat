@@ -23,7 +23,7 @@ echo Dest: %unattend_dest%
 
 mkdir %drive_letter%:\sources\$OEM$\$$\Panther
 curl -o %drive_letter%:\sources\$OEM$\$$\Panther\unattend.xml https://raw.githubusercontent.com/%repo_id%/main/unattend.xml
-powershell -Command "(gc '%unattend_dest%') -replace 'REPO_PLACEHOLDER_DO_NOT_CHANGE', '%repo_id%' | Out-File '%unattend_dest%'"
+powershell -Command "(gc '%unattend_dest%') -replace 'REPO_PLACEHOLDER_DO_NOT_CHANGE', '%repo_id%' | Out-File -Encoding UTF8 '%unattend_dest%'"
 
 
 echo That's all! Your USB drive %drive_letter%: will now run PowerWash along with the Windows installation.
