@@ -121,15 +121,18 @@ $global:config_map=If ($do_config) {
 } Else {
 	@{}
 }
+$will_restart = $autorestart -or ($global:do_config -and $global:config_map.AutoRestart)
 $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
 $autorestart="/autorestart" -in $args
 $is_unattend="/is-unattend" -in $args
 if ($is_unattend) {
 	"Unattended setup detected"
+	$restart_info = If ($will_restart) { "`nThe computer will automatically restart when finished." } Else { "" }
 	Add-Type -AssemblyName System.Windows.Forms
-	[System.Windows.Forms.MessageBox]::Show('Applying custom Windows configuration. Do not restart until notified that this has completed.', 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+	[System.Windows.Forms.MessageBox]::Show("Applying custom Windows configuration.`nDo not restart until notified that this has completed.$restart_info`nPress OK to continue.", 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
 }
+
 
 # Check Windows edition; some editions don't support certain features
 $edition = (Get-WindowsEdition -online).Edition
@@ -643,12 +646,12 @@ if ($av_product -ne "Windows Defender") {
 
 ""
 
-if ($is_unattend) {
+if ($is_unattend -and (-not $will_restart)) {
 	Add-Type -AssemblyName System.Windows.Forms
-	[System.Windows.Forms.MessageBox]::Show('Custom Windows configuration has been successfully applied. You may now restart.', 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+	[System.Windows.Forms.MessageBox]::Show('Custom Windows configuration has been successfully applied. A restart is recommended.', 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
 }
 
 "PowerWash complete, a restart is recommended."
-if ($autorestart -or ($global:do_config -and $global:config_map.AutoRestart)) {
+if ($will_restart) {
 	Restart-Computer
 }
