@@ -7,12 +7,12 @@ PowerWash can be easily deployed to a fresh PC as part of the Windows installati
 **How?** Windows has an "Unattended installation" feature that can be added to installation media, to automate most of the setup process. We can tack on extra commands to this, such as running PowerWash with a predefined configuration.
 
 ### Setup
-- Familiarize yourself with using PowerWash in "configuration mode" [here](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/USAGE_CONFIG.md).
+- Familiarize yourself with using PowerWash in "configuration mode" [here](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md).
 - [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this repository (`UniverseCraft/WindowsPowerWash`) into your own public GitHub repository.
 - Modify your copy of `PowerWashSettings.json` with the settings you want executed when PowerWash automatically runs during setup.
 - *(Optional but highly recommended)* Test this out on a local machine or VM.
 - Burn a Windows ISO to a USB drive. You can use [Rufus](https://github.com/pbatard/rufus/releases/) or Microsoft's [Media Creation Tool](https://www.microsoft.com/en-us/software-download/windows10) for this.
-- Download and run [`add_to_installer.bat`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/add_to_installer.bat). You will be prompted to enter the drive letter of the USB drive and also the ID of your forked repository. **This is in the format `Username/Repo`, eg `UniverseCraft/PersonalDeploymentSettings`**, where `PersonalDeploymentSettings` has been forked from `UniverseCraft/WindowsPowerWash`.
+- Download and run [`autodeploy/add_to_installer.bat`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/autodeploy/add_to_installer.bat). You will be prompted to enter the drive letter of the USB drive and also the ID of your forked repository. **This is in the format `Username/Repo`, eg `UniverseCraft/PersonalDeploymentSettings`**, where `PersonalDeploymentSettings` has been forked from `UniverseCraft/WindowsPowerWash`.
 - Your USB drive for installing Windows will now download and run your configured copy of PowerWash at the end of Windows setup.
 
 ### Usage
