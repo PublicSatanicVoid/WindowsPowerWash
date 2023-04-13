@@ -629,7 +629,7 @@ if ($customize_taskbar) {
 	UnpinApp("Microsoft Edge")
 	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "TraySearchBoxVisible" -Value 0 -ValueType "DWord"
 	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "SearchboxTaskbarMode" -Value 1 -ValueType "DWord"
-	RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" -Key "EnableFeeds" -Value 0 -ValueType "DWord"
+	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" -Key "EnableFeeds" -Value 0 -ValueType "DWord"
 	taskkill /f /im explorer.exe
 	start explorer.exe
 	"Taskbar cleaned up"
