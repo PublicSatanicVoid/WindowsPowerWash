@@ -116,7 +116,11 @@ if ("/stats" -in $args) {
 $global:do_all="/all" -in $args
 $global:do_all_auto="/auto" -in $args
 $global:do_config="/config" -in $args
-$global:config_map=(Get-Content -Raw ".\PowerWashSettings.json" | ConvertFrom-Json)
+$global:config_map=If ($do_config) {
+	(Get-Content -Raw ".\PowerWashSettings.json" | ConvertFrom-Json)
+} Else {
+	@{}
+}
 $noinstall="/noinstalls" -in $args
 $noscan="/noscans" -in $args
 $autorestart="/autorestart" -in $args
