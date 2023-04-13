@@ -6,6 +6,8 @@ Remove bloatware from Windows and optimize for low latency and high performance
 ## About PowerWash
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc. Also, many "technical" users find some of the defaults annoying. **PowerWash removes annoying, bloated, and unperformant parts of Windows** and can also install helpful utilities automatically.
 
+I created PowerWash because I believe that underneath the cruft (ads, telemetry, Windows-as-a-service automatic updates) Windows is fundamentally a great operating system, and it shouldn't be so difficult to make it great. Many debloater tools are themselves bloatware, or don't let you configure things easily, or just don't work. PowerWash takes the good stuff from what's already been done and adds even more good stuff.
+
 ## Using PowerWash
 There are three ways PowerWash is designed to be used:
 
