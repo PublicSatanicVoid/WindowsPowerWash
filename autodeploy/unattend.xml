@@ -28,7 +28,7 @@
                 </SynchronousCommand>
 				<SynchronousCommand wcm:action="add">
 					<Order>2</Order>
-					<CommandLine>&quot;PowerShell.exe&quot; -Command &quot;curl -o bootstrap.ps1 https://raw.githubusercontent.com/REPO_PLACEHOLDER_DO_NOT_CHANGE/main/bootstrap.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap.ps1 -Confirm:$false&quot;</CommandLine>
+					<CommandLine>&quot;PowerShell.exe&quot; -Command &quot;curl -o bootstrap.ps1 https://raw.githubusercontent.com/REPO_PLACEHOLDER_DO_NOT_CHANGE/main/autodeploy/bootstrap.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap.ps1 -Confirm:$false&quot;</CommandLine>
 					<Description>Bootstrap into PowerWash setup</Description>
 				</SynchronousCommand>
             </FirstLogonCommands>
