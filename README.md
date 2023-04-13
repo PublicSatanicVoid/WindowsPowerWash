@@ -16,17 +16,17 @@ There are three ways PowerWash is designed to be used:
 ### Interactive mode (default)
 In this mode, you are prompted step-by-step to decide which PowerWash features to run.
 This is helpful for first-time PowerWash users.
-[Guide to interactive mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/USAGE_INTERACTIVE.md)
+[Guide to interactive mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_INTERACTIVE.md)
 
 ### Configuration mode
 In this mode, you edit `PowerWashSettings.json` to toggle the features that you want PowerWash to run.
 This is helpful for automating the process and lets you configure what programs to install/uninstall.
-[Guide to configuration mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/USAGE_CONFIG.md)
+[Guide to configuration mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md)
 
 ### Deployment mode
 In this mode, PowerWash automatically runs when installing Windows from a USB drive.
 This is helpful for automating the process when you frequently install/reinstall Windows or want to start multiple devices from the same pre-configured point.
-[Guide to deployment mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/USAGE_DEPLOYMENT.md)
+[Guide to deployment mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_DEPLOYMENT.md)
 
 ## Special Thank-Yous
 - While many freely available sites have contributed valuable knowledge in the development of this script, I especially want to thank the maintainers of [admx.help](https://admx.help) for providing an easy-to-use and comprehensive inventory of Group Policy and associated registry settings. Also, as bad a reputation as Microsoft has for user-friendliness, their technical documentation at [learn.microsoft.com](https://learn.microsoft.com) is generally very high quality.
