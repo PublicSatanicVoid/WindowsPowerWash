@@ -3,6 +3,7 @@ This short guide walks you through how to use PowerWash in the "interactive usag
 
 ### Setup
 - You only need to download `[PowerWash.ps1](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWash.ps1)` to use PowerWash interactively.
+  - If you want to remove bloatware programs or install custom programs with PowerWash, you also need to download `[PowerWashSettings.json](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.json)`
 - Make sure your [`ExecutionPolicy`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.3) allows scripts to run
 
 ### Usage: Standard
