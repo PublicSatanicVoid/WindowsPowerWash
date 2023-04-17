@@ -301,6 +301,8 @@ if ($disable_telemetry) {
 	
 	sc.exe config DiagTrack start=disabled
 	sc.exe config dmwappushservice start=disabled
+	sc.exe config PcaSvc start=disabled
+	sc.exe config RemoteRegistry start=disabled
 	
 	TryDisableTask "Consolidator"
 	TryDisableTask "FamilySafetyMonitor"
