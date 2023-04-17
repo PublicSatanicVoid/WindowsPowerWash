@@ -24,8 +24,11 @@
 		"Microsoft.OneConnect",
 		"Microsoft.WindowsSoundRecorder",
 		"Microsoft.BingWeather",
+		"Microsoft.BingNews",
 		"Microsoft.Advertising.Xaml",
-		"Microsoft.Wallet"
+		"Microsoft.Wallet",
+		"Microsoft.549981C3F5F10",
+		"MicrosoftTeams"
 	],   "<-- Some packages like Edge and ContentDeliveryManager can't be uninstalled this way": {},
 	"RemoveEdge": false,   "<-- Still in alpha": {},
 	
