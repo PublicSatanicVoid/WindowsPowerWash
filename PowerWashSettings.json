@@ -34,12 +34,16 @@
 	"InstallConfigured": false,   "<-- Installs applications below using Winget": {},
 	"InstallConfiguredList": [
 		"Notepad++.Notepad++",
-		"Microsoft.VisualStudioCode",
 		"Microsoft.WindowsTerminal",
+		"Gyan.FFmpeg",
+		"Git.Git",
 		"Microsoft.PowerToys",
 		"Microsoft.Sysinternals.ProcessMonitor",
-		"Git.Git",
-		"Gyan.FFmpeg"
+		"Microsoft.VisualStudioCode",
+		"7zip.7zip",
+		"Discord.Discord",
+		"Google.Chrome",
+		"Valve.Steam"
 	],   "<-- Passes these as arguments to `winget install`. REQUIRES WINGET": {},
 	
 	"DisableRealtimeMonitoringCAUTION": false,   "<-- EXTRA CAUTION": {},
