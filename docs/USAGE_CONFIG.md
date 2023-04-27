@@ -1,3 +1,5 @@
+<sup>[← Back to home](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/README.md)</sup>
+
 ## Using PowerWash with a configuration file
 This short guide shows you how to configure PowerWash ahead of time with what features you want to run.
 
