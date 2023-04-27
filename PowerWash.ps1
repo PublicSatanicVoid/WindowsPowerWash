@@ -9,6 +9,7 @@
 # USE AT YOUR OWN RISK. BACKUP SYSTEM BEFORE USING.
 #
 
+### USAGE INFORMATION ###
 if ("/?" -in $args) {
 	".\PowerWash.ps1 [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
 	"	/all			Runs all PowerWash features without prompting"
@@ -22,32 +23,124 @@ if ("/?" -in $args) {
 	exit
 }
 
-# Must be running as SYSTEM to modify certain Defender settings (even then, will need Tamper Protection off manually for some of them to take effect)
-# We have to bootstrap to this by scheduling a task to call this script with this flag
-if ("/ElevatedAction" -in $args) {
-	Set-MpPreference -DisableRealtimeMonitoring $true
+### COMMAND LINE PARAMETERS ###
+$global:do_all="/all" -in $args
+$global:do_all_auto="/auto" -in $args
+$global:do_config="/config" -in $args
+if ($global:do_all -and $global:do_all_auto) {
+	"Error: Can only specify one of /all or /auto"
+	"Do '.\PowerWash.ps1 /?' for help"
+	exit
+}
+$global:config_map=If (Test-Path ".\PowerWashSettings.json") {
+	(Get-Content -Raw ".\PowerWashSettings.json" | ConvertFrom-Json)
+} Else {
+	@{}
+}
+$will_restart = $autorestart -or ($global:do_config -and $global:config_map.AutoRestart)
+$noinstall="/noinstalls" -in $args
+$noscan="/noscans" -in $args
+$autorestart="/autorestart" -in $args
+$is_unattend="/is-unattend" -in $args
+if ($is_unattend) {
+	"Unattended setup detected"
+	$restart_info = If ($will_restart) { "`nThe computer will automatically restart when finished." } Else { "" }
+	Add-Type -AssemblyName System.Windows.Forms
+	[System.Windows.Forms.MessageBox]::Show("Applying custom Windows configuration.`nDo not restart until notified that this has completed.$restart_info`nPress OK to continue.", 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+}
 
-	#$tamper_protection_restore=Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Name "TamperProtection"
-	#RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Key "TamperProtection" -Value 0 -ValueType "DWord"
-	Set-MpPreference -DisableRealtimeMonitoring 1
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Key "DisableBehaviorMonitoring" -Value 1 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Key "DisableRealtimeMonitoring" -Value 1 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Key "DisableOnAccessProtection" -Value 1 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Key "DisableScanOnRealtimeEnable" -Value 1 -ValueType "DWord"
-	"Defender real-time monitoring disabled."
-	if ("/DisableAllDefender" -in $args) {
-		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection" -Key "SpyNetReporting" -Value 0 -ValueType "DWord"
-		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection" -Key "SubmitSamplesConsent" -Value 0 -ValueType "DWord"
-		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender" -Key "DisableAntiSpyware" -Value 1 -ValueType "DWord"
-		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Key "TamperProtection" -Value 4 -ValueType "DWord"
-		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key "DisableAntiSpyware" -Value 1 -ValueType "DWord"
-		"Defender disabled."
+
+### WARN ON DESTRUCTIVE OPERATIONS ###
+if ("/warnconfig" -in $args) {
+	"Showing potentially destructive configured operations:"
+	"==Removals=="
+	if ($global:config_map.DisableRealtimeMonitoringCAUTION) {
+		if ($global:config_map.DisableAllDefenderCAUTIONCAUTION) {
+			"* WARNING: Configured settings will disable Windows Defender entirely."
+		}
+		else {
+			"* WARNING: Configured settings will disable Windows Defender realtime monitoring."
+		}
 	}
-	#RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Key "TamperProtection" -Value $tamper_protection_restore -ValueType "DWord"
+	if ($global:config_map.RemoveEdge) {
+		"* Will remove Microsoft Edge"
+	}
+	if ($global:config_map.RemovePreinstalled) {
+		"* Will remove the following preinstalled apps:"
+		foreach ($app in $global:config_map.RemovePreinstalledList) {
+			"  - $app"
+		}
+	}
+	if ($global:config_map.RemoveWindowsCapabilities) {
+		"* Will remove the following capabilities:"
+		foreach ($cap in $global:config_map.RemoveWindowsCapabilitiesList) {
+			" - $app"
+		}
+	}
+	"==Installs=="
+	if ($global:config_map.InstallGpEdit) {
+		"* Will install Group Policy Editor if Windows edition is Home"
+	}
+	if ($global:config_map.InstallWinget) {
+		"* Will install Winget if needed"
+	}
+	try {
+		Get-Command winget | Out-Null
+		if ($global:config_map.InstallConfigured) {
+			"* Will install the following via Winget:"
+			foreach ($app in $global:config_map.InstallConfiguredList) {
+				"  - $app"
+			}
+		}
+	} catch {
+		"* Will skip configured Winget installs as Winget is not present"
+	}
 	
 	exit
 }
 
+### REGISTRY KEY DEFINITIONS ###
+$RK_PolicyRoot = "HKLM:\SOFTWARE\Policies\Microsoft"
+$RK_Policy_AppCompat = "$RK_PolicyRoot\Windows\AppCompat"
+$RK_Policy_CloudContent = "$RK_PolicyRoot\Windows\CloudContent"
+$RK_Policy_DataCollection = "$RK_PolicyRoot\Windows\DataCollection"
+$RK_Policy_Defender = "$RK_PolicyRoot\Windows Defender"
+$RK_Policy_Defender_RealtimeProtection = "$RK_Policy_Defender\Real-Time Protection"
+$RK_Policy_Explorer = "$RK_PolicyRoot\Windows\Explorer"
+$RK_Policy_Feeds = "$RK_PolicyRoot\Windows\Windows Feeds"
+$RK_Policy_Search = "$RK_PolicyRoot\Windows\Windows Search"
+$RK_Policy_Store = "$RK_PolicyRoot\WindowsStore"
+$RK_Policy_Update = "$RK_PolicyRoot\Windows\WindowsUpdate"
+$RK_Policy_Update_AU = "$RK_Policy_Update\AU"
+
+$RK_Defender = "HKLM:\SOFTWARE\Microsoft\Windows Defender"
+$RK_Defender_Features = "$RK_Defender\Features"
+
+$RK_Explorer = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer"
+$RK_Explorer_Advanced = "$RK_Explorer\Advanced"
+$RK_Explorer_Serialize = "$RK_Explorer\Serialize"
+$RK_Startup = "$RK_Explorer\StartupApproved\Run"
+
+$RK_MMCSS = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+$RK_MMCSS_ProAudio = "$RK_MMCSS\Tasks\Pro Audio"
+
+$RK_Uninst = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+$RK_Uninst_Edge = "$RK_Uninst\Microsoft Edge"
+
+$RK_Store_Update = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate"
+$RK_ContentDelivery = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+$RK_Search = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search"
+
+$RK_DevEnum = "HKLM:\SYSTEM\CurrentControlSet\Enum"
+$RK_FastStartup = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power"
+$RK_GPUSched = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"
+$RK_Net_Ndu = "HKLM:\SYSTEM\ControlSet001\Services\Ndu"
+$RK_PowerThrottling = "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling"
+
+$RK_TIPC = "HKLM:\SOFTWARE\Microsoft\Input\TIPC"
+
+
+### PERFORMANCE STATISTICS ###
 if ("/stats" -in $args) {
 	"Collecting current performance stats, please be patient..."
 	"It's recommended to run this before and after applying PowerWash (remember to restart)"
@@ -113,90 +206,29 @@ if ("/stats" -in $args) {
 	exit
 }
 
-$global:do_all="/all" -in $args
-$global:do_all_auto="/auto" -in $args
-$global:do_config="/config" -in $args
-$global:config_map=If ($do_config) {
-	(Get-Content -Raw ".\PowerWashSettings.json" | ConvertFrom-Json)
-} Else {
-	@{}
-}
-$will_restart = $autorestart -or ($global:do_config -and $global:config_map.AutoRestart)
-$noinstall="/noinstalls" -in $args
-$noscan="/noscans" -in $args
-$autorestart="/autorestart" -in $args
-$is_unattend="/is-unattend" -in $args
-if ($is_unattend) {
-	"Unattended setup detected"
-	$restart_info = If ($will_restart) { "`nThe computer will automatically restart when finished." } Else { "" }
-	Add-Type -AssemblyName System.Windows.Forms
-	[System.Windows.Forms.MessageBox]::Show("Applying custom Windows configuration.`nDo not restart until notified that this has completed.$restart_info`nPress OK to continue.", 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
-}
 
-
+### COMPATIBILITY CHECKS ###
 # Check Windows edition; some editions don't support certain features
 $edition = (Get-WindowsEdition -online).Edition
 $has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Edu*") -or ($edition -Like "*Enterprise*")
 $has_win_enterprise = ($edition -Like "*Enterprise*") -or ($edition -Like "*Edu*")
 "Windows Edition: $edition (pro=$has_win_pro) (enterprise=$has_win_enterprise)"
-
 # Check if we have Winget already
 Get-Command winget 2>$null | Out-Null
 $has_winget = $?
 
-if ("/warnconfig" -in $args) {
-	"Showing potentially destructive configured operations:"
-	"==Removals=="
-	if ($global:config_map.DisableRealtimeMonitoringCAUTION) {
-		if ($global:config_map.DisableAllDefenderCAUTIONCAUTION) {
-			"* WARNING: Configured settings will disable Windows Defender entirely."
-		}
-		else {
-			"* WARNING: Configured settings will disable Windows Defender realtime monitoring."
-		}
-	}
-	if ($global:config_map.RemoveEdge) {
-		"* Will remove Microsoft Edge"
-	}
-	if ($global:config_map.RemovePreinstalled) {
-		"* Will remove the following preinstalled apps:"
-		foreach ($app in $global:config_map.RemovePreinstalledList) {
-			"  - $app"
-		}
-	}
-	"==Installs=="
-	if ($global:config_map.InstallGpEdit) {
-		"* Will install Group Policy Editor if Windows edition is Home"
-	}
-	if ($global:config_map.InstallWinget) {
-		"* Will install Winget if needed"
-	}
-	try {
-		Get-Command winget | Out-Null
-		if ($global:config_map.RemovePreinstalled) {
-			"* Will install the following via Winget:"
-			foreach ($app in $global:config_map.InstallConfiguredList) {
-				"  - $app"
-			}
-		}
-	} catch {
-		"* Will skip configured Winget installs as Winget is not present"
-	}
-	
-	exit
-}
 
-if ($global:do_all -and $global:do_all_auto) {
-	"Error: Can only specify one of /all or /auto"
-	"Do '.\PowerWash.ps1 /?' for help"
-	exit
-}
+### UTILITY FUNCTIONS ###
 
-function RegistryPut ($Path, $Key, $Value, $ValueType) {
-	If (-NOT (Test-Path "$Path")) {
+function RegistryPut ($Path, $Key, $Value, $VType) {
+	if ($Path -eq $null) {
+		"ERROR: Null registry key passed"
+		return
+	}
+	if (-NOT (Test-Path "$Path")) {
 		New-Item -Path "$Path" -Force | Out-Null
 	}
-	New-ItemProperty -Path "$Path" -Name "$Key" -Value "$Value" -PropertyType "$ValueType" -Force | Out-Null
+	New-ItemProperty -Path "$Path" -Name "$Key" -Value "$Value" -PropertyType "$VType" -Force | Out-Null
 }
 
 function RunScriptAsSystem ($Path, $ArgString) {
@@ -252,9 +284,34 @@ function UnpinApp($appname) {
 	((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | ?{$_.Name -eq $appname}).Verbs() | ?{$_.Name.replace('&', '') -match 'Unpin from taskbar'} | %{$_.DoIt()}
 }
 
+# Must be running as SYSTEM to modify certain Defender settings (even then, will need Tamper Protection off manually for some of them to take effect)
+# We have to bootstrap to this by scheduling a task to call this script with this flag
+if ("/ElevatedAction" -in $args) {
+	Set-MpPreference -DisableRealtimeMonitoring $true
+
+	Set-MpPreference -DisableRealtimeMonitoring 1
+	RegistryPut $RK_Policy_Defender_RealtimeProtection -Key "DisableBehaviorMonitoring" -Value 1 -VType "DWORD"
+	RegistryPut $RK_Policy_Defender_RealtimeProtection -Key "DisableRealtimeMonitoring" -Value 1 -VType "DWORD"
+	RegistryPut $RK_Policy_Defender_RealtimeProtection -Key "DisableOnAccessProtection" -Value 1 -VType "DWORD"
+	RegistryPut $RK_Policy_Defender_RealtimeProtection -Key "DisableScanOnRealtimeEnable" -Value 1 -VType "DWORD"
+	"Defender real-time monitoring disabled."
+	if ("/DisableAllDefender" -in $args) {
+		RegistryPut $RK_Policy_Defender_RealtimeProtection -Key "SpyNetReporting" -Value 0 -VType "DWORD"
+		RegistryPut $RK_Policy_Defender_RealtimeProtection -Key "SubmitSamplesConsent" -Value 0 -VType "DWORD"
+		RegistryPut $RK_Defender -Key "DisableAntiSpyware" -Value 1 -VType "DWORD"
+		RegistryPut $RK_Defender_Features -Key "TamperProtection" -Value 4 -VType "DWORD"
+		RegistryPut $RK_Policy_Defender -Key "DisableAntiSpyware" -Value 1 -VType "DWORD"
+		"Defender disabled."
+	}
+	
+	exit
+}
+
+
+### POWERWASH FEATURES ###
+
 # Check system file integrity
-$do_sfc=(-not $noscan) -and (Confirm "Run system file integrity checks? (May take a few minutes)" -Auto $false -ConfigKey "CheckIntegrity")
-if ($do_sfc) {
+if ((-not $noscan) -and (Confirm "Run system file integrity checks? (May take a few minutes)" -Auto $false -ConfigKey "CheckIntegrity")) {
 	"Running System File Checker..."
 	sfc.exe /scannow
 	
@@ -265,8 +322,7 @@ if ($do_sfc) {
 # Install Group Policy editor, which isn't installed by default on Home editions
 # Allows easy tweaking of a wide range of settings without needing to edit registry
 if (-not $has_win_pro) {
-	$do_gpedit=(-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true -ConfigKey "InstallGpEdit")
-	if ($do_gpedit) {
+	if ((-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true -ConfigKey "InstallGpEdit")) {
 		cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
 		cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")'
 	}
@@ -274,23 +330,20 @@ if (-not $has_win_pro) {
 
 # Disable HPET (high precision event timer)
 # Some systems will benefit from this, some will suffer. Only way is to benchmark and see
-$disable_hpet=Confirm "Do you want to disable the high-precision event timer? (May not improve performance on all systems)" -Auto $false -ConfigKey "DisableHpet"
-if ($disable_hpet) {
+if (Confirm "Do you want to disable the high-precision event timer? (May not improve performance on all systems)" -Auto $false -ConfigKey "DisableHpet") {
 	Get-PnpDevice -FriendlyName "High precision event timer" | Disable-Pnpdevice -Confirm:$false
 	"High-precision event timer disabled"
 }
 
 # Disable automatic updates
 if ($has_win_pro) {
-	$disable_autoupdate=Confirm "Do you want to disable automatic Windows updates?" -Auto $true -ConfigKey "DisableAutoUpdate"
-	if ($disable_autoupdate) {
-		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "NoAutoUpdate" -Value 1 -ValueType "DWord"
-		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Key "AUOptions" -Value 2 -ValueType "DWord"
-		RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate" -Key "AutoDownload" -Value 5 -ValueType "DWord"
-		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "AutoDownload" -Value 4 -ValueType "DWord"
-		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore" -Key "DisableOSUpgrade" -Value 1 -ValueType "DWord"
-		RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Key "AUPowerManagement" -Value 0 -ValueType "DWord"
-		$gp_changed=$true
+	if (Confirm "Do you want to disable automatic Windows updates?" -Auto $true -ConfigKey "DisableAutoUpdate") {
+		RegistryPut $RK_Policy_Update_AU -Key "NoAutoUpdate" -Value 1 -VType "DWORD"
+		RegistryPut $RK_Policy_Update_AU -Key "AUOptions" -Value 2 -VType "DWORD"
+		RegistryPut $RK_Store_Update -Key "AutoDownload" -Value 5 -VType "DWORD"
+		RegistryPut $RK_Policy_Store -Key "AutoDownload" -Value 4 -VType "DWORD"
+		RegistryPut $RK_Policy_Store -Key "DisableOSUpgrade" -Value 1 -VType "DWORD"
+		RegistryPut $RK_Policy_Update -Key "AUPowerManagement" -Value 0 -VType "DWORD"
 		"Automatic Windows updates disabled"
 	}
 }
@@ -299,21 +352,20 @@ else {
 	"If you want to disable automatic updates on Home, you can try setting your internet connection to Metered."
 }
 
-# Disable Microsoft telemetry
-$disable_telemetry=Confirm "Do you want to disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTelemetry"
-if ($disable_telemetry) {
+# Disable Microsoft telemetry as much as we can
+if (Confirm "Do you want to disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTelemetry") {
 	# Windows has 4 levels of telemetry: Security, Required, Enhanced, Optional
 	# According to Microsoft, only Enterprise supports Security as min telemetry level, other platforms only support Required
 	# However, we can just always set it to Security and Windows will apply the lowest allowed setting.
-	
 	$min_telemetry = 0
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Key "AllowTelemetry" -Value $min_telemetry -ValueType "DWord"
+	
+	RegistryPut $RK_Policy_DataCollection -Key "AllowTelemetry" -Value $min_telemetry -VType "DWORD"
 	
 	# Disable inking and typing recognition
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Input\TIPC" -Key "Enabled" -Value 0 -ValueType "DWord"
+	RegistryPut $RK_TIPC -Key "Enabled" -Value 0 -VType "DWORD"
 	
 	# Disable application telemetry
-	RegistryPut -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Key "AITEnable" -Value 0 -ValueType "DWord"
+	RegistryPut $RK_Policy_AppCompat -Key "AITEnable" -Value 0 -VType "DWORD"
 	
 	sc.exe config DiagTrack start=disabled
 	sc.exe config dmwappushservice start=disabled
@@ -341,24 +393,22 @@ if ($disable_telemetry) {
 }
 
 # Multimedia related settings to prioritize audio
-$opt_mmcss=Confirm "Do you want to optimize multimedia settings for pro audio?" -Auto $true -Configkey "MultimediaResponsiveness"
-if ($do_all -or $opt_mmcss -eq 'y') {
+if ($do_all -or (Confirm "Do you want to optimize multimedia settings for pro audio?" -Auto $true -ConfigKey "MultimediaResponsiveness")) {
 	# Scheduling algorithm will reserve 10% (default is 20%) of CPU for low-priority tasks
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "SystemResponsiveness" -Value 10 -ValueType "DWord"
+	RegistryPut $RK_MMCSS -Key "SystemResponsiveness" -Value 10 -VType "DWORD"
 	
 	# May reduce idling, improving responsiveness
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "NoLazyMode" -Value 1 -ValueType "DWord"
+	RegistryPut $RK_MMCSS_ProAudio -Key "NoLazyMode" -Value 1 -VType "DWORD"
 	
 	# Max priority for Pro Audio tasks
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "Priority" -Value 1 -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "Scheduling Category" -Value "High" -ValueType "String"
+	RegistryPut $RK_MMCSS_ProAudio -Key "Priority" -Value 1 -VType "DWORD"
+	RegistryPut $RK_MMCSS_ProAudio -Key "Scheduling Category" -Value "High" -VType "String"
 	
 	"Multimedia settings optimized for pro audio"
 }
 
 # Power management settings for high performance - "Ultimate" power scheme bundled with newer Windows versions
-$redline=Confirm "Redline power settings for maximum performance? (May reduce latency, but will use more power)" -Auto $true -ConfigKey "PowerSettingsMaxPerformance"
-if ($redline) {
+if (Confirm "Redline power settings for maximum performance? (May reduce latency, but will use more power)" -Auto $true -ConfigKey "PowerSettingsMaxPerformance") {
 	$guid_match=".*GUID: (\w+-\w+-\w+-\w+-\w+).*"
 	$default_ultimate_guid="e9a42b02-d5df-448d-aa00-03f14749eb61"
 	$active_scheme=((powercfg /getactivescheme) -ireplace $guid_match, '$1')
@@ -367,6 +417,7 @@ if ($redline) {
 	powercfg /setacvalueindex $scheme 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 0  # Disable wake timers
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR LATENCYHINTPERF1 99  # Latency sensitive tasks will raise performance level
 	powercfg /setacvalueindex $scheme SUB_VIDEO VIDEOIDLE 0  # Don't automatically turn off display
+	
 	# Below are documented at https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR DISTRIBUTEUTIL 0  # Disable utility distribution, which can reduce performance
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR CPMINCORES 100  # Disable core parking
@@ -379,6 +430,7 @@ if ($redline) {
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR PERFDECTHRESHOLD 8
 	
 	powercfg /setacvalueindex $scheme SUB_PROCESSOR PERFBOOSTMODE 2  # Aggressive turbo boosting
+	
 	powercfg /setactive $scheme
 	
 	# Delete old profiles from this script being run multiple times
@@ -397,7 +449,7 @@ if ($redline) {
 	}
 	
 	# Disable power throttling
-	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" -Key "PowerThrottlingOff" -Value 1 -ValueType "DWord"
+	RegistryPut $RK_PowerThrottling -Key "PowerThrottlingOff" -Value 1 -VType "DWORD"
 	
 	# Enable hibernate option
 	powercfg /hibernate on
@@ -405,61 +457,57 @@ if ($redline) {
 	"High performance power settings installed"
 }
 
-$hwsch=Confirm "Enable hardware-accelerated GPU scheduling?" -Auto $true -ConfigKey "HwGpuScheduling"
-if ($hwsch) {
-	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Key "HwSchMode" -Value 2 -ValueType "DWord"
+if (Confirm "Enable hardware-accelerated GPU scheduling?" -Auto $true -ConfigKey "HwGpuScheduling") {
+	RegistryPut $RK_GPUSched -Key "HwSchMode" -Value 2 -VType "DWORD"
 	"Hardware-accelerated GPU scheduling enabled (will take effect after reboot)"
 }
 
 # Prioritize low latency on network adapters
-$net=Confirm "Optimize network adapter settings for low latency?" -Auto $true -ConfigKey "NetworkResponsiveness"
-if ($net) {
-	RegistryPut -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key "NetworkThrottlingIndex" -Value 0xFFFFFFFF -ValueType "DWord"
-	RegistryPut -Path "HKLM:\SYSTEM\ControlSet001\Services\Ndu" -Key "Start" -Value 0x4 -ValueType "DWord"
+if (Confirm "Optimize network adapter settings for low latency?" -Auto $true -ConfigKey "NetworkResponsiveness") {
+	RegistryPut $RK_MMCSS -Key "NetworkThrottlingIndex" -Value 0xFFFFFFFF -VType "DWORD"
+	RegistryPut $RK_Net_Ndu -Key "Start" -Value 0x4 -VType "DWORD"
+	
 	# Below settings may fail depending on network adapter's capabilities. This isn't a problem, so fail silently
-	Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -ErrorAction 'SilentlyContinue'
-	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -ErrorAction 'SilentlyContinue'
-	Disable-NetAdapterRsc -Name '*' -IncludeHidden -ErrorAction 'SilentlyContinue'  # Disables packet coalescing
-	Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -ErrorAction 'SilentlyContinue'
-	Restart-NetAdapter -Name '*' -IncludeHidden -ErrorAction 'SilentlyContinue'
+	Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -EA 'SilentlyContinue'
+	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -EA 'SilentlyContinue'
+	Disable-NetAdapterRsc -Name '*' -IncludeHidden -EA 'SilentlyContinue'  # Disables packet coalescing
+	Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -EA 'SilentlyContinue'
+	Restart-NetAdapter -Name '*' -IncludeHidden -EA 'SilentlyContinue'
 	"Network adapter settings optimized"
 }
 
-$disable_cortana=Confirm "Disable Cortana?" -Auto $true -ConfigKey "DisableCortana"
-if ($disable_cortana) {
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "AllowCortana" -Value 0 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "DisableWebSearch" -Value 1 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWeb" -Value 0 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key "ConnectedSearchUseWebOverMeteredConnections" -Value 0 -ValueType "DWord"
+if (Confirm "Disable Cortana?" -Auto $true -ConfigKey "DisableCortana") {
+	RegistryPut $RK_Policy_Search -Key "AllowCortana" -Value 0 -VType "DWORD"
+	RegistryPut $RK_Policy_Search -Key "DisableWebSearch" -Value 1 -VType "DWORD"
+	RegistryPut $RK_Policy_Search -Key "ConnectedSearchUseWeb" -Value 0 -VType "DWORD"
+	RegistryPut $RK_Policy_Search -Key "ConnectedSearchUseWebOverMeteredConnections" -Value 0 -VType "DWORD"
 	"Cortana disabled"
 }
 
 if ($has_win_enterprise) {
-	$disable_consumer_features=Confirm "Disable Windows consumer features?" -Auto $true -ConfigKey "DisableConsumerFeatures"
-	if ($disable_consumer_features) {
-		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableWindowsConsumerFeatures" -Value 1 -ValueType "DWord"
-		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
-		RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableThirdPartySuggestions" -Value 1 -ValueType "DWord"
-		RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Key "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -ValueType "DWord"
+	if (Confirm "Disable Windows consumer features?" -Auto $true -ConfigKey "DisableConsumerFeatures") {
+		RegistryPut $RK_Policy_CloudContent -Key "DisableWindowsConsumerFeatures" -Value 1 -VType "DWORD"
+		RegistryPut $RK_Policy_CloudContent -Key "DisableThirdPartySuggestions" -Value 1 -VType "DWORD"
+		RegistryPut $RK_Policy_CloudContent -Key "DisableThirdPartySuggestions" -Value 1 -VType "DWORD"
+		RegistryPut $RK_Policy_CloudContent -Key "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -VType "DWORD"
 		"Consumer features disabled"
 	}
 
-	$disable_preinstalled=Confirm "Disable preinstalled apps?" -Auto $true -ConfigKey "DisablePreinstalled"
-	if ($disable_preinstalled) {
-		RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "FeatureManagementEnabled" -Value 0 -ValueType "DWord"
-		RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "OemPreInstalledAppsEnabled" -Value 0 -ValueType "DWord"
-		RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "PreInstalledAppsEnabled" -Value 0 -ValueType "DWord"
-		RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "ContentDeliveryAllowed" -Value 0 -ValueType "DWord"
-		RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "SilentInstalledAppsEnabled" -Value 0 -ValueType "DWord"
-		RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Key "PreInstalledAppsEverEnabled" -Value 0 -ValueType "DWord"
+	if (Confirm "Disable preinstalled apps?" -Auto $true -ConfigKey "DisablePreinstalled") {
+		RegistryPut $RK_ContentDelivery -Key "FeatureManagementEnabled" -Value 0 -VType "DWORD"
+		RegistryPut $RK_ContentDelivery -Key "OemPreInstalledAppsEnabled" -Value 0 -VType "DWORD"
+		RegistryPut $RK_ContentDelivery -Key "PreInstalledAppsEnabled" -Value 0 -VType "DWORD"
+		RegistryPut $RK_ContentDelivery -Key "ContentDeliveryAllowed" -Value 0 -VType "DWORD"
+		RegistryPut $RK_ContentDelivery -Key "SilentInstalledAppsEnabled" -Value 0 -VType "DWORD"
+		RegistryPut $RK_ContentDelivery -Key "PreInstalledAppsEverEnabled" -Value 0 -VType "DWORD"
 		"Preinstalled apps disabled"
 	}
 }
 
-$remove_preinstalled=Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKey "RemovePreinstalled"
-if ($remove_preinstalled) {
+if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKey "RemovePreinstalled") {
 	# Adapted from  https://www.kapilarya.com/how-to-uninstall-built-in-apps-in-windows-10
 	ForEach ($App in $global:config_map.RemovePreinstalledList) {
+		"$App"
 		$Packages = Get-AppxPackage | Where-Object {$_.Name -eq $App}
 		if ($Packages -eq $null) {
 			"Warning: No installed packages found for $App, skipping"
@@ -481,8 +529,7 @@ if ($remove_preinstalled) {
 	}
 }
 
-$remove_capabilities=Confirm "Remove configured list of Windows capabilities?" -Auto $true -ConfigKey "RemoveWindowsCapabilities"
-if ($remove_capabilities) {
+if (Confirm "Remove configured list of Windows capabilities?" -Auto $true -ConfigKey "RemoveWindowsCapabilities") {
 	$Caps = Get-WindowsCapability -Online
 	ForEach ($CapName in $global:config_map.RemoveWindowsCapabilitiesList) {
 		$Cap = $Caps | Where {$_.Name -Like "*$CapName*"}
@@ -496,13 +543,12 @@ if ($remove_capabilities) {
 	}
 }
 
-$remove_edge=Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge"
-if ($remove_edge) {
+if (Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge") {
 	"Note: This feature is experimental and may not work completely or at all"
 	
 	"Marking Edge as removable..."
-	RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge" -Key "NoRemove" -Value 0 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge" -Key "NoRepair" -Value 0 -ValueType "DWord"
+	RegistryPut $RK_Uninst_Edge -Key "NoRemove" -Value 0 -VType "DWORD"
+	RegistryPut $RK_Uninst_Edge -Key "NoRepair" -Value 0 -VType "DWORD"
 	
 	"Attempting to remove Edge using setup tool..."
 	$edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
@@ -521,7 +567,7 @@ if ($remove_edge) {
 	"Removing Edge from C:\ProgramData\Packages..."
 	takeown /a /f C:\ProgramData\Packages
 	takeown /a /f C:\ProgramData\Packages /r /d Y | Out-Null
-	$pkgs = ls C:\ProgramData\Packages | Where {$_.Name -Like "*MicrosoftEdge*"}
+	$pkgs = ls C:\ProgramData\Packages | Where {$_.Name -Like "*Microsoft*Edge*"}
 	foreach ($pkg in $pkgs) {
 		Remove-Item -Recurse -Force -Path "C:\ProgramData\Packages\$pkg" -EA SilentlyContinue
 	}
@@ -529,7 +575,7 @@ if ($remove_edge) {
 	"Removing Edge from C:\Windows\SystemApps..."
 	takeown /a /f C:\Windows\SystemApps
 	takeown /a /f C:\Windows\SystemApps /r /d Y | Out-Null
-	$apps = ls C:\Windows\SystemApps | Where {$_.Name -Like "*MicrosoftEdge*"}
+	$apps = ls C:\Windows\SystemApps | Where {$_.Name -Like "*Microsoft*Edge*"}
 	foreach ($app in $apps) {
 		Remove-Item -Recurse -Force -Path "C:\Windows\SystemApps\$app" -EA SilentlyContinue
 	}
@@ -543,15 +589,20 @@ if ($remove_edge) {
 	}
 	
 	"Removing Edge from programs list in registry..."
-	Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" | Where {$_ -Like "*Microsoft Edge*"} | ForEach-Object {
+	
+	Get-ChildItem -Path $RK_Uninst | Where {$_ -Like "*Microsoft*Edge*"} | ForEach-Object {
 		$CurrentKey = (Get-ItemProperty -Path $_.PsPath)
 		Remove-Item -Force -Path $CurrentKey.PSPath
+	}
+	
+	"Removing Edge from startup..."
+	(Get-Item -Path $RK_Startup).Property | Where {$_ -Like "*Microsoft*Edge*"} | ForEach-Object {
+		Remove-ItemProperty -Force -Path "$startup_key" -Name "$_"
 	}
 }
 
 if (-not $has_winget) {
-	$install_winget=Confirm "Install Winget package manager?" -Auto $false -ConfigKey "InstallWinget"
-	if ($install_winget) {
+	if (Confirm "Install Winget package manager?" -Auto $false -ConfigKey "InstallWinget") {
 		# https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
 		Add-AppxPackage -Path https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx
 
@@ -569,8 +620,7 @@ if (-not $has_winget) {
 }
 
 if ($has_winget) {
-	$install_configured=Confirm "Install configured applications?" -Auto $false -ConfigKey "InstallConfigured"
-	if ($install_configured) {
+	if (Confirm "Install configured applications?" -Auto $false -ConfigKey "InstallConfigured") {
 		foreach ($params in $global:config_map.InstallConfiguredList) {
 			& "winget" "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
 		}
@@ -579,18 +629,7 @@ if ($has_winget) {
 	"Skipping install of configured applications: Winget not installed"
 }
 
-$disable_realtime_monitoring=Confirm "Disable real-time protection from Windows Defender? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableRealtimeMonitoringCAUTION"
-if ($disable_realtime_monitoring) {
-	$disable_all_defender=Confirm "--> Disable Windows Defender entirely? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableAllDefenderCAUTIONCAUTION"
-	
-	if ($disable_realtime_monitoring) {
-		RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /DisableRealtimeMonitoring $(If ($disable_all_defender) {'/DisableAllDefender'} Else {''})"
-	}
-	
-}
-
-$scan_idle_only=Confirm "Configure Windows Defender to run scans only when computer is idle?" -Auto $true -ConfigKey "DefenderScanOnlyWhenIdle"
-if ($scan_idle_only) {
+if (Confirm "Configure Windows Defender to run scans only when computer is idle?" -Auto $true -ConfigKey "DefenderScanOnlyWhenIdle") {
 	$wait = New-TimeSpan -Minutes 10
 	$settings = New-ScheduledTaskSettingsSet -RunOnlyIfIdle -IdleWaitTimeout $wait -RestartOnIdle
 	Set-ScheduledTask -TaskPath "Microsoft\Windows\Windows Defender" -TaskName "Windows Defender Cache Maintenance" -Settings $settings
@@ -601,30 +640,31 @@ if ($scan_idle_only) {
 	"Defender will only perform scans when computer is idle."
 }
 
-$defender_low_priority=Confirm "Run Defender tasks at a lower priority?" -Auto $true -ConfigKey "DefenderScanLowPriority"
-if ($defender_low_priority) {
+if (Confirm "Run Defender tasks at a lower priority?" -Auto $true -ConfigKey "DefenderScanLowPriority") {
 	Set-MpPreference -EnableLowCpuPriority $true
 	Set-MpPreference -ScanAvgCPULoadFactor 5
 	"Defender tasks will operate at a lower priority."
 }
 
-$disable_faststartup=Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true -ConfigKey "DisableFastStartup"
-if ($disable_faststartup) {
-	RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key "HiberbootEnabled" -Value 0 -ValueType "DWord"
+if (Confirm "Disable real-time protection from Windows Defender? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableRealtimeMonitoringCAUTION") {
+	$disable_all_defender=Confirm "--> Disable Windows Defender entirely? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "DisableAllDefenderCAUTIONCAUTION"
+	RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /DisableRealtimeMonitoring $(If ($disable_all_defender) {'/DisableAllDefender'} Else {''})"
+}
+
+if (Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true -ConfigKey "DisableFastStartup") {
+	RegistryPut $RK_FastStartup -Key "HiberbootEnabled" -Value 0 -VType "DWORD"
 	"Fast Startup disabled"
 }
 
-$disable_startupdelay=Confirm "Disable app startup delay?" -Auto $true -ConfigKey "DisableStartupDelay"
-if ($disable_startupdelay) {
-	RegistryPut -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize" -Key "StartupDelayInMSec" -Value 0 -ValueType "DWord"
+if (Confirm "Disable app startup delay?" -Auto $true -ConfigKey "DisableStartupDelay") {
+	RegistryPut $RK_Explorer_Serialize -Key "StartupDelayInMSec" -Value 0 -VType "DWORD"
 	"Startup delay disabled"
 }
 
 # Enable MSI mode for devices that support it
 # Message-signaled interrupts are an alternative to line-based interrupts,
 # supporting a larger number of interrupts and lower latencies.
-$do_msi=Confirm "Do you want to enable Message-Signaled Interrupts for all devices that support them?" -Auto $true -ConfigKey "EnableDriverMsi"
-if ($do_msi) {
+if (Confirm "Do you want to enable Message-Signaled Interrupts for all devices that support them?" -Auto $true -ConfigKey "EnableDriverMsi") {
 	$do_priority=Confirm "--> Do you also want to prioritize interrupts from certain devices like the GPU and PCIe controller?" -Auto $true -ConfigKey "EnableDriverPrio"
 	
 	"Applying interrupt policies..."
@@ -642,7 +682,7 @@ if ($do_msi) {
 		# Prioritize interrupts from PCIe controller and graphics card
 		if ($do_priority -and ($DeviceDesc -like "*PCIe Controller*" -or $DeviceDesc -like "*NVIDIA GeForce*")) {
 			"- Prioritizing interrupts from $DeviceDesc..."
-			RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\Affinity Policy" -Key "DevicePriority" -Value 3 -ValueType "DWord"
+			RegistryPut "$RK_DevEnum\$InstanceId\Device Parameters\Interrupt Management\Affinity Policy" -Key "DevicePriority" -Value 3 -VType "DWORD"
 			$N_Prio++
 		}
 		
@@ -654,7 +694,7 @@ if ($do_msi) {
 		$InterruptModes = ($Properties | Where-Object {$_.KeyName -eq 'DEVPKEY_PciDevice_InterruptSupport'}).Data
 		if ($InterruptModes -gt 1) {
 			"- Enabling MSI mode for $DeviceDesc..."
-			RegistryPut -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" -Key "MSISupported" -Value 1 -ValueType "DWord"
+			RegistryPut "$RK_DevEnum\$InstanceId\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" -Key "MSISupported" -Value 1 -VType "DWORD"
 			$N_MSI++
 		}
 	}
@@ -663,8 +703,7 @@ if ($do_msi) {
 }
 
 # Checks for IRQ conflicts
-$check_irq=Confirm "Do you want to check for IRQ conflicts?" -Auto $true
-if ($check_irq) {
+if (Confirm "Do you want to check for IRQ conflicts?" -Auto $true) {
 	"Checking for IRQ conflicts..."
 	Get-CimInstance Win32_PNPAllocatedResource | Out-File -FilePath "IRQDump.txt"
 	(Select-String -Path "IRQDump.txt" -Pattern "IRQNumber") -ireplace '.*IRQNumber = (\d+).*', '$1' | Out-File -FilePath IRQNumbers.txt
@@ -678,32 +717,32 @@ if ($check_irq) {
 	}
 }
 
-$show_secs=Confirm "Do you want to show seconds in the taskbar clock?" -Auto $false -ConfigKey "ShowSecondsInTaskbar"
-if ($show_secs) {
-	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "ShowSecondsInSystemClock" -Value 1 -ValueType "DWord"
+# Seconds in taskbar
+if (Confirm "Do you want to show seconds in the taskbar clock?" -Auto $false -ConfigKey "ShowSecondsInTaskbar") {
+	RegistryPut $RK_Explorer_Advanced -Key "ShowSecondsInSystemClock" -Value 1 -VType "DWORD"
 	"Seconds will now be shown in the taskbar clock"
 }
 
-$show_runas=Confirm "Do you want to show 'Run as different user' in Start?" -Auto $true -ConfigKey "ShowRunAsDifferentUser"
-if ($show_runas) {
-	RegistryPut "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Key "ShowRunAsDifferentUserInStart" -Value 1 -ValueType "DWord"
+# Show "Run as different user"
+if (Confirm "Do you want to show 'Run as different user' in Start?" -Auto $true -ConfigKey "ShowRunAsDifferentUser") {
+	RegistryPut $RK_Policy_Explorer -Key "ShowRunAsDifferentUserInStart" -Value 1 -VType "DWORD"
 	"Will now show 'Run as different user' in Start"
 }
 
-$show_explorer=Confirm "Do you want to show file extensions and hidden files in Explorer?" -Auto $true -ConfigKey "ShowHiddenExplorer"
-if ($show_explorer) {
-	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "Hidden" -Value 1 -ValueType "DWord"
-	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Key "HideFileExt" -Value 0 -ValueType "DWord"
+# Show useful Explorer stuff
+if (Confirm "Do you want to show file extensions and hidden files in Explorer?" -Auto $true -ConfigKey "ShowHiddenExplorer") {
+	RegistryPut $RK_Explorer_Advanced -Key "Hidden" -Value 1 -VType "DWORD"
+	RegistryPut $RK_Explorer_Advanced -Key "HideFileExt" -Value 0 -VType "DWORD"
 	"Will now show file extensions and hidden files in Explorer"
 }
 
-$customize_taskbar=Confirm "Clean up taskbar? (Recommended for a cleaner out-of-box Windows experience)" -Auto $false -ConfigKey "CleanupTaskbar"
-if ($customize_taskbar) {
+# Clean up taskbar
+if (Confirm "Clean up taskbar? (Recommended for a cleaner out-of-box Windows experience)" -Auto $false -ConfigKey "CleanupTaskbar") {
 	UnpinApp("Microsoft Store")
 	UnpinApp("Microsoft Edge")
-	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "TraySearchBoxVisible" -Value 0 -ValueType "DWord"
-	RegistryPut "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Key "SearchboxTaskbarMode" -Value 1 -ValueType "DWord"
-	RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" -Key "EnableFeeds" -Value 0 -ValueType "DWord"
+	RegistryPut $RK_Search -Key "TraySearchBoxVisible" -Value 0 -VType "DWORD"
+	RegistryPut $RK_Search -Key "SearchboxTaskbarMode" -Value 1 -VType "DWORD"
+	RegistryPut $RK_Policy_Feeds -Key "EnableFeeds" -Value 0 -VType "DWORD"
 	taskkill /f /im explorer.exe
 	start explorer.exe
 	"Taskbar cleaned up"
