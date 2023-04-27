@@ -27,6 +27,8 @@ if ("/?" -in $args) {
 if ("/ElevatedAction" -in $args) {
 	Set-MpPreference -DisableRealtimeMonitoring $true
 
+	echo $(whoami) | Out-File "C:\Users\User\Downloads\WhoAmI.txt"
+
 	#$tamper_protection_restore=Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Name "TamperProtection"
 	#RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Key "TamperProtection" -Value 0 -ValueType "DWord"
 	Set-MpPreference -DisableRealtimeMonitoring 1
@@ -202,12 +204,28 @@ function RegistryPut ($Path, $Key, $Value, $ValueType) {
 function RunScriptAsSystem ($Path, $ArgString) {
 	# Adapted from https://github.com/mkellerman/Invoke-CommandAs/blob/master/Invoke-CommandAs/Private/Invoke-ScheduledTask.ps1
 	$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "$Path $ArgString"
-	$Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+	#$Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+	#$Principal = New-ScheduledTaskPrincipal -UserId "NT SERVICE\TrustedInstaller" -LogonType ServiceAccount -RunLevel Highest
+	$Principal = New-ScheduledTaskPrincipal -GroupId "BUILTIN\Administrators" -RunLevel Highest
 	$Task = Register-ScheduledTask PowerWashSystemTask -Action $Action -Principal $Principal
-	$Job = $Task | Start-ScheduledTask -AsJob -ErrorAction Stop
-	$Job | Wait-Job | Remove-Job -Force -Confirm:$False
+	
+	# Previously
+	#$Job = $Task | Start-ScheduledTask -AsJob -ErrorAction Stop
+	#$Job | Wait-Job | Remove-Job -Force -Confirm:$False
+	#While (($Task | Get-ScheduledtaskInfo).LastTaskResult -eq 267009) { Start-Sleep -Milliseconds 200 }
+	#$Task | Unregister-ScheduledTask -Force -Confirm:$false
+	
+	# Now
+	$svc = New-Object -ComObject 'Schedule.Service'
+	$svc.Connect()
+	$TIUser = "NT Service\TrustedInstaller"
+	$folder = $svc.GetFolder("\")
+	$inner_task = $folder.GetTask("PowerWashSystemTask")
+	$inner_task.RunEx($null, 0, 0, $TIUser)
+	
 	While (($Task | Get-ScheduledtaskInfo).LastTaskResult -eq 267009) { Start-Sleep -Milliseconds 200 }
-	$Task | Unregister-ScheduledTask -Force -Confirm:$false
+	Unregister-ScheduledTask -TaskName PowerWashSystemTask -Confirm:$false
+	
 	"System level script completed successfully"
 }
 
@@ -465,15 +483,71 @@ if ($remove_preinstalled) {
 	}
 }
 
+$remove_capabilities=Confirm "Remove configured list of Windows capabilities?" -Auto $true -ConfigKey "RemoveWindowsCapabilities"
+if ($remove_capabilities) {
+	$Caps = Get-WindowsCapability -Online
+	ForEach ($CapName in $global:config_map.RemoveWindowsCapabilitiesList) {
+		$Cap = $Caps | Where {$_.Name -Like "*$CapName*"}
+		if ($Cap -eq $null) {
+			"Warning: No such capability as $CapName, skipping"
+		}
+		else {
+			"Removing $Cap capability..."
+			$Caps | Where {$_.Name -Like "*$Cap*"} | Remove-WindowsCapability -Online
+		}
+	}
+}
+
 $remove_edge=Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge"
 if ($remove_edge) {
+	"Note: This feature is experimental and may not work completely or at all"
+	
+	"Marking Edge as removable..."
+	RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge" -Key "NoRemove" -Value 0 -ValueType "DWord"
+	RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge" -Key "NoRepair" -Value 0 -ValueType "DWord"
+	
+	"Attempting to remove Edge using setup tool..."
 	$edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
 	foreach ($item in Get-ChildItem -Path "$edge_base") {
 		$setup = "$edge_base\$item\Installer\setup.exe"
 		if (Test-Path "$setup") {
 			"Removing Edge installation: $setup"
-			& "$setup" --uninstall --system-level --verbose-logging --force-uninstall
+			& "$setup" --uninstall --msedge --system-level --verbose-logging --force-uninstall
 		}
+	}
+	
+	"Removing Edge from provisioned packages..."
+	$provisioned = (Get-AppxProvisionedPackage -Online | Where {$_.PackageName -Like "*Edge*"}).PackageName
+	Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers
+	
+	"Removing Edge from C:\ProgramData\Packages..."
+	takeown /a /f C:\ProgramData\Packages
+	takeown /a /f C:\ProgramData\Packages /r /d Y | Out-Null
+	$pkgs = ls C:\ProgramData\Packages | Where {$_.Name -Like "*MicrosoftEdge*"}
+	foreach ($pkg in $pkgs) {
+		Remove-Item -Recurse -Force -Path "C:\ProgramData\Packages\$pkg" -EA SilentlyContinue
+	}
+	
+	"Removing Edge from C:\Windows\SystemApps..."
+	takeown /a /f C:\Windows\SystemApps
+	takeown /a /f C:\Windows\SystemApps /r /d Y | Out-Null
+	$apps = ls C:\Windows\SystemApps | Where {$_.Name -Like "*MicrosoftEdge*"}
+	foreach ($app in $apps) {
+		Remove-Item -Recurse -Force -Path "C:\Windows\SystemApps\$app" -EA SilentlyContinue
+	}
+	
+	"Removing Edge from C:\Program Files (x86)\Microsoft..."
+	takeown /a /f "C:\Program Files (x86)\Microsoft"
+	takeown /a /f "C:\Program Files (x86)\Microsoft" /r /d Y | Out-Null
+	$apps = ls "C:\Program Files (x86)\Microsoft" | Where {$_.Name -Like "*Edge*"}
+	foreach ($app in $apps) {
+		Remove-Item -Recurse -Force -Path "C:\Program Files (x86)\Microsoft\$app" -EA SilentlyContinue
+	}
+	
+	"Removing Edge from programs list in registry..."
+	Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" | Where {$_ -Like "*Microsoft Edge*"} | ForEach-Object {
+		$CurrentKey = (Get-ItemProperty -Path $_.PsPath)
+		Remove-Item -Force -Path $CurrentKey.PSPath
 	}
 }
 
