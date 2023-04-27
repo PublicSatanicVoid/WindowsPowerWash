@@ -42,7 +42,7 @@
 		"Microsoft.Windows.WordPad",
 		"Browser.InternetExplorer"
 	],
-	"RemoveEdge": true,   "<-- Still in alpha": {},
+	"RemoveEdge": false,   "<-- Still in alpha": {},
 	
 	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
 	"InstallWinget": true,
