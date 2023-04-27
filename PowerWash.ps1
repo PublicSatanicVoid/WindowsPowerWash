@@ -589,7 +589,6 @@ if (Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge") {
 	}
 	
 	"Removing Edge from programs list in registry..."
-	
 	Get-ChildItem -Path $RK_Uninst | Where {$_ -Like "*Microsoft*Edge*"} | ForEach-Object {
 		$CurrentKey = (Get-ItemProperty -Path $_.PsPath)
 		Remove-Item -Force -Path $CurrentKey.PSPath
@@ -597,7 +596,7 @@ if (Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge") {
 	
 	"Removing Edge from startup..."
 	(Get-Item -Path $RK_Startup).Property | Where {$_ -Like "*Microsoft*Edge*"} | ForEach-Object {
-		Remove-ItemProperty -Force -Path "$startup_key" -Name "$_"
+		Remove-ItemProperty -Force -Path "$RK_Startup" -Name "$_"
 	}
 	
 	"Removing Edge from start menu..."
