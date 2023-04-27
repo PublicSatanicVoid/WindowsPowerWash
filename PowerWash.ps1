@@ -377,7 +377,7 @@ if (Confirm "Do you want to disable all Windows updates? (You will need to manua
 
 # Add update toggle script to desktop
 # This is the next best thing for Home users to being able to disable automatic updates. They can toggle updates on when they want to check or install updates, and toggle updates back off when they're done.
-if ((-not Test-Path "$home\Documents\.ToggleUpdates.bat") -and (Confirm "Do you want to add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "AddUpdateToggleScriptToDesktop")) {
+if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -and (Confirm "Do you want to add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "AddUpdateToggleScriptToDesktop")) {
 	Invoke-WebRequest -Uri https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/extra/ToggleUpdates.bat -OutFile $home\Documents\.ToggleUpdates.bat
 	
 	CreateShortcut -Dest "$home\Desktop\Toggle Updates.lnk" -Source "$home\Documents\.ToggleUpdates.bat" -Admin $true
