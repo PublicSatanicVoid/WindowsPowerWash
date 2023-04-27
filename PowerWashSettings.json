@@ -15,15 +15,20 @@
 	"DisablePreinstalled": true,   "<-- Requires Enterprise/Edu": {},
 	"RemovePreinstalled": true,
 	"RemovePreinstalledList": [
+		"CreativeTechnologyLtd.SoundBlasterConnect",
 		"Microsoft.549981C3F5F10",
 		"Microsoft.Advertising.Xaml",
 		"Microsoft.BingNews",
 		"Microsoft.BingWeather",
 		"Microsoft.Messaging",
+		"Microsoft.MicrosoftSolitaireCollection",
+		"Microsoft.MicrosoftOfficeHub",
 		"Microsoft.OneConnect",
 		"Microsoft.People",
 		"Microsoft.SkypeApp",
 		"Microsoft.Wallet",
+		"Microsoft.Windows.ParentalControls",
+		"Microsoft.Windows.SecureAssessmentBrowser",
 		"Microsoft.WindowsCommunicationsApps",
 		"Microsoft.WindowsFeedbackHub",
 		"Microsoft.WindowsSoundRecorder",
@@ -31,11 +36,17 @@
 		"Microsoft.YourPhone",
 		"MicrosoftTeams"
 	],   "<-- Some packages like Edge and ContentDeliveryManager can't be uninstalled this way": {},
-	"RemoveEdge": false,   "<-- Still in alpha": {},
+	"RemoveWindowsCapabilities": true,
+	"RemoveWindowsCapabilitiesList": [
+		"OneCoreUAP.OneSync",
+		"Microsoft.Windows.WordPad",
+		"Browser.InternetExplorer"
+	],
+	"RemoveEdge": true,   "<-- Still in alpha": {},
 	
 	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
-	"InstallWinget": false,
-	"InstallConfigured": false,   "<-- Installs applications below using Winget": {},
+	"InstallWinget": true,
+	"InstallConfigured": true,   "<-- Installs applications below using Winget": {},
 	"InstallConfiguredList": [
 		"Notepad++.Notepad++",
 		"Microsoft.WindowsTerminal",
