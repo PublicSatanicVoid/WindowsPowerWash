@@ -30,7 +30,9 @@ Some editions of Windows do not have the necessary components to support certain
 | Enable message-signaled interrupts | ✅ | ✅ | ✅ | Enabling [message-signaled interrupts](https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-message-signaled-interrupts) on all devices that support them can improve interrupt latency |
 | Prioritize GPU and PCIe controller | ✅ | ✅ | ✅ | May improve DPC/ISR latency for tasks where high regularity is preferred |
 | Disable Windows telemetry | ◑ | ◕ | ✅ | Home edition can disable some telemetry; Pro edition can disable most telemetry; Enterprise/Education can disable all telemetry |
-| Disable automatic Windows updates | ❌ | ✅ | ✅ | Background updates can unexpectedly consume resources and automatic install/restart is typically not wanted. Microsoft not making this available on Home editions is ridiculous, but there's nothing we can do about it. | 
+| Disable automatic Windows updates | ❌ | ✅ | ✅ | Background updates can unexpectedly consume resources and automatic install/restart is typically not wanted. | 
+| Disable all Windows updates | ✅ | ✅ | ✅ | Completely disables the Windows Update feature, disabling both automatic and manual updates. |
+| Toggle Windows updates | ✅ | ✅ | ✅ | Adds a script to your desktop to toggle the Windows Update feature on/off. **This is the best compromise for Home editions** |
 | Disable Windows consumer features | ❌ | ❌ | ✅ | Disables [Windows consumer features](https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.CloudContent::DisableWindowsConsumerFeatures) (e.g. third-party suggestions) |
 | Throttle "Antimalware Service Executable" | ✅ | ✅ | ✅ | Configures Windows Defender to only run scans when the computer is idle; reduces priority of Defender tasks and limits their CPU usage |
 | Disable Defender Real-Time Protection | ⚠️ | ⚠️ | ⚠️ | CAUTION: This will make your device less secure. Requires Tamper Protection to be disabled. Not recommended and still experimental. |
