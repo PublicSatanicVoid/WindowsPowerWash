@@ -28,8 +28,8 @@ In this mode, PowerWash automatically runs when installing Windows from a USB dr
 This is helpful for automating the process when you frequently install/reinstall Windows or want to start multiple devices from the same pre-configured point.
 [Guide to deployment mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_DEPLOYMENT.md)
 
-**NOTE:** This script is NOT designed to repair a broken/corrupted Windows installation! It is designed to run on a fully functioning system and further optimize it for high-performance use cases. A clean install prior to using this is ideal!
-
 ## Special Thank-Yous
 - While many freely available sites have contributed valuable knowledge in the development of this script, I especially want to thank the maintainers of [admx.help](https://admx.help) for providing an easy-to-use and comprehensive inventory of Group Policy and associated registry settings. Also, as bad a reputation as Microsoft has for user-friendliness, their technical documentation at [learn.microsoft.com](https://learn.microsoft.com) is generally very high quality.
 - All beta testers
+
+**NOTE:** This script is NOT designed to repair a broken/corrupted Windows installation! It is designed to run on a fully functioning system and further optimize it for high-performance use cases. A clean install prior to using this is ideal!
