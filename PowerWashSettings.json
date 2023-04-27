@@ -2,6 +2,8 @@
 	"CheckIntegrity": true,
 	
 	"DisableAutoUpdate": true,   "<-- Requires Pro or Enterprise/Edu": {},
+	"DisableAllUpdate": false,
+	"AddUpdateToggleScriptToDesktop": false,
 	"DisableTelemetry": true,
 	
 	"DisableHpet": true,
@@ -42,7 +44,7 @@
 		"Microsoft.Windows.WordPad",
 		"Browser.InternetExplorer"
 	],
-	"RemoveEdge": false,   "<-- Still in alpha": {},
+	"RemoveEdge": true,   "<-- Still in alpha": {},
 	
 	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
 	"InstallWinget": true,
@@ -64,7 +66,9 @@
 	"DisableRealtimeMonitoringCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DisableAllDefenderCAUTIONCAUTION": false,   "<-- EXTRA CAUTION": {},
 	"DefenderScanOnlyWhenIdle": true,
+	"DefenderScanOnlyWhenIdle_TimeoutMins": 10,
 	"DefenderScanLowPriority": true,
+	"DefenderScanLowPriority_MaxCpuUsage": 5,
 	
 	"DisableFastStartup": true,
 	"DisableStartupDelay": true,
