@@ -547,7 +547,7 @@ if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKe
 			"- No installed packages found for $App, skipping"
 		}
 		else {
-			"- Removing $App installed package..."
+			"- Attempting removal of $App installed package..."
 			foreach ($Package in $Packages) {
 				Set-NonRemovableAppsPolicy -Online -PackageFamilyName $Package.PackageFamilyName -NonRemovable 0 | Out-Null
 				Remove-AppxPackage -package $Package.PackageFullName 2>$null | Out-Null
@@ -558,7 +558,7 @@ if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKe
 			"- No provisioned package found for $App, skipping"
 		}
 		else {
-			"- Removing $App provisioned package..."
+			"- Attempting removal of $App provisioned package..."
 			Remove-AppxProvisionedPackage -online -packagename $ProvisionedPackage.PackageName 2>$null | Out-Null
 		}
 	}
@@ -601,7 +601,9 @@ if (Confirm "Remove Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "Rem
 	
 	"- Removing Edge from provisioned packages..."
 	$provisioned = (Get-AppxProvisionedPackage -Online | Where {$_.PackageName -Like "*Edge*"}).PackageName
-	Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers
+	if ($provisioned -ne $null) {
+		Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers
+	}
 	
 	"- Removing Edge from C:\ProgramData\Packages..."
 	takeown /a /f C:\ProgramData\Packages | Out-Null
