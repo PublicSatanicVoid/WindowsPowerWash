@@ -599,6 +599,20 @@ if (Confirm "Remove Microsoft Edge?" -Auto $false -ConfigKey "RemoveEdge") {
 	(Get-Item -Path $RK_Startup).Property | Where {$_ -Like "*Microsoft*Edge*"} | ForEach-Object {
 		Remove-ItemProperty -Force -Path "$startup_key" -Name "$_"
 	}
+	
+	"Removing Edge from start menu..."
+	$programs = ls "C:\ProgramData\Microsoft\Windows\Start Menu\Programs" | Where {$_.Name -Like "*Microsoft*Edge*"}
+	foreach ($program in $programs) {
+		Remove-Item -Force -Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\$program"
+	}
+	
+	"Removing Edge from desktop..."
+	$programs = ls "$home\Desktop" | Where {$_.Name -Like "*Microsoft*Edge*"}
+	foreach ($program in $programs) {
+		Remove-Item -Force -Path "$home\Desktop\$program"
+	}
+	
+	"Microsoft Edge removed"
 }
 
 if (-not $has_winget) {
