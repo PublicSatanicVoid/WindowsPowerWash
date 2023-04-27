@@ -1,3 +1,5 @@
+<sup>[← Back to home](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/README.md)</sup>
+
 ## PowerWash: Interactive Usage Guide
 This short guide walks you through how to use PowerWash in the "interactive usage" mode, which prompts you whether to enable each feature.
 
