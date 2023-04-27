@@ -27,8 +27,6 @@ if ("/?" -in $args) {
 if ("/ElevatedAction" -in $args) {
 	Set-MpPreference -DisableRealtimeMonitoring $true
 
-	echo $(whoami) | Out-File "C:\Users\User\Downloads\WhoAmI.txt"
-
 	#$tamper_protection_restore=Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Name "TamperProtection"
 	#RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Key "TamperProtection" -Value 0 -ValueType "DWord"
 	Set-MpPreference -DisableRealtimeMonitoring 1
