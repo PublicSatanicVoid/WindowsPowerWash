@@ -45,7 +45,7 @@ $is_unattend="/is-unattend" -in $args
 
 if ($is_unattend) {
 	"Unattended setup detected"
-	if ($global:config_map.NotifyBeforePowerWash) {
+	if ($global:config_map.Unattend_NotifyBeforePowerWash) {
 		$restart_info = If ($will_restart) { "`nThe computer will automatically restart when finished." } Else { "" }
 		Add-Type -AssemblyName System.Windows.Forms
 		[System.Windows.Forms.MessageBox]::Show("Applying custom Windows configuration.`nDo not restart until notified that this has completed.$restart_info`nPress OK to continue.", 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
