@@ -2,7 +2,7 @@
 
 ## PowerWash: Deployment via Windows Installation Media
 
-PowerWash can be easily deployed to a fresh PC as part of the Windows installation process - no user intervention necessary!
+PowerWash can be easily deployed to a fresh PC as part of the Windows installation process - no user intervention necessary! This requires a USB drive.
 
 **Why?** This is primarily geared toward those who frequently reinstall Windows or frequently acquire new devices as a way to get a better out-of-box experience and auto-install their desired applications. This can drastically reduce bringup time for new devices and also can be easily extended to run additional commands during initial Windows setup.
 
