@@ -26,11 +26,11 @@
                     <CommandLine>net user User /logonpasswordchg:yes</CommandLine>
                     <Description>Require user to change from default password</Description>
                 </SynchronousCommand>
-				<SynchronousCommand wcm:action="add">
-					<Order>2</Order>
-					<CommandLine>&quot;PowerShell.exe&quot; -Command &quot;curl -o bootstrap.ps1 https://raw.githubusercontent.com/REPO_PLACEHOLDER_DO_NOT_CHANGE/main/autodeploy/bootstrap.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap.ps1 -Confirm:$false&quot;</CommandLine>
-					<Description>Bootstrap into PowerWash setup</Description>
-				</SynchronousCommand>
+		<SynchronousCommand wcm:action="add">
+		    <Order>2</Order>
+		    <CommandLine>&quot;PowerShell.exe&quot; -Command &quot;curl -o bootstrap.ps1 https://raw.githubusercontent.com/REPO_PLACEHOLDER_DO_NOT_CHANGE/main/autodeploy/bootstrap.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap.ps1 -Confirm:$false&quot;</CommandLine>
+		    <Description>Bootstrap into PowerWash setup</Description>
+		</SynchronousCommand>
             </FirstLogonCommands>
         </component>
         <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" language="neutral" publicKeyToken="31bf3856ad364e35" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
