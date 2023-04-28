@@ -101,7 +101,7 @@ WindowsUpdate:
   DisableAutoUpdate: true
 
   # Disables Windows Update entirely. Both automatic and manual updates are disabled.
-  DisableAllUpdate: true
+  DisableAllUpdate: false
 
   # Adds a script shortcut to the desktop to toggle Windows Update completely on/off.
   # This is the best compromise for Windows Home users, as it lets them keep updates off
