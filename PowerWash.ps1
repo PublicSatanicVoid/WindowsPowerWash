@@ -45,9 +45,11 @@ $is_unattend="/is-unattend" -in $args
 
 if ($is_unattend) {
 	"Unattended setup detected"
-	$restart_info = If ($will_restart) { "`nThe computer will automatically restart when finished." } Else { "" }
-	Add-Type -AssemblyName System.Windows.Forms
-	[System.Windows.Forms.MessageBox]::Show("Applying custom Windows configuration.`nDo not restart until notified that this has completed.$restart_info`nPress OK to continue.", 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+	if ($global:config_map.NotifyBeforePowerWash) {
+		$restart_info = If ($will_restart) { "`nThe computer will automatically restart when finished." } Else { "" }
+		Add-Type -AssemblyName System.Windows.Forms
+		[System.Windows.Forms.MessageBox]::Show("Applying custom Windows configuration.`nDo not restart until notified that this has completed.$restart_info`nPress OK to continue.", 'PowerWash Setup', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information)
+	}
 }
 
 
@@ -828,11 +830,13 @@ if ($av_product -ne "Windows Defender") {
 
 # Check system file integrity
 if ((-not $noscan) -and (Confirm "Run system file integrity checks? (May take a few minutes)" -Auto $false -ConfigKey "CheckIntegrity")) {
-	"Running System File Checker..."
+	"- Running Deployment Image Servicing and Management Tool..."
+	dism.exe /online /cleanup-image /restorehealth
+	
+	"- Running System File Checker..."
 	sfc.exe /scannow
 	
-	"Running Deployment Image Servicing and Management Tool..."
-	dism.exe /online /cleanup-image /restorehealth
+	"- Complete"
 }
 
 
