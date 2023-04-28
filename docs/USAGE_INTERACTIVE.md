@@ -12,7 +12,7 @@ This short guide walks you through how to use PowerWash in the "interactive usag
 - Open a PowerShell prompt as an Administrator
 - `cd` to the directory containing `PowerWash.ps1`, e.g.: `cd C:\Users\User\Downloads`
 - Run PowerWash: `.\PowerWash.ps1`
-- You will be prompted step by step which PowerWash features you want to use.
+- You will be prompted step by step which PowerWash features you want to use. Make sure to read the descriptions carefully!
 
 ### Usage: Benchmarking (recommended, but slower)
 - Open a PowerShell prompt as an Administrator
