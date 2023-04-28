@@ -362,14 +362,14 @@ else {
 
 # Disable all updates
 if (Confirm "Do you want to disable all Windows updates? (You will need to manually re-enable them when you want to check or install updates)" -Auto $false -ConfigKey "DisableAllUpdate") {
-	sc.exe stop UsoSvc
-	sc.exe config UsoSvc start=disabled
+	sc.exe stop UsoSvc | Out-Null
+	sc.exe config UsoSvc start=disabled | Out-Null
 
-	sc.exe stop WaaSMedicSvc
+	sc.exe stop WaaSMedicSvc | Out-Null
 	RegistryPut "$RK_Services\WaaSMedicSvc" -Key "Start" -Value 4 -VType "DWORD"
 
-	sc.exe stop wuauserv
-	sc.exe config wuauserv start=disabled
+	sc.exe stop wuauserv | Out-Null
+	sc.exe config wuauserv start=disabled | Out-Null
 	
 	"- Complete"
 }
