@@ -1,4 +1,6 @@
 {
+	"Unattend_NotifyBeforePowerWash": true,   "<-- Ignore if not using auto-deployment": {},
+	
 	"CheckIntegrity": true,
 	
 	"DisableAutoUpdate": true,   "<-- Requires Pro or Enterprise/Edu": {},
