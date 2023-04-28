@@ -3,7 +3,7 @@
 ## How It Works
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc.
 
-PowerWash modifies various aspects of your Windows installation. It configures your system to aggressively choose maximum performance and minimum latency over power saving. (Note: Many of the changes intentionally do not apply when on battery). It does this through a combination of registry changes, application package removals, PowerShell commands, and more.
+PowerWash modifies various aspects of your Windows installation. It configures your system to aggressively choose maximum performance and minimum latency over power saving. (Note: Many of the changes intentionally do not apply when on battery). It also removes bloatware and unwanted default programs, and generally cleans up the out-of-box experience. It does this through a combination of registry changes, application package removals, PowerShell cmdlets, and more.
 
 ## Feature Support
 
