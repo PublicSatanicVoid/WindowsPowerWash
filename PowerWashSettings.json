@@ -41,9 +41,8 @@
 	"RemoveWindowsCapabilities": true,
 	"RemoveWindowsCapabilitiesList": [
 		"OneCoreUAP.OneSync",
-		"Microsoft.Windows.WordPad",
-		"Browser.InternetExplorer"
-	],
+		"Microsoft.Windows.WordPad"
+	],   "<-- 'Browser.InternetExplorer' can also be removed, but not recommended as it breaks URL shortcuts": {}
 	"RemoveEdge": true,   "<-- Still in alpha": {},
 	
 	"InstallGpEdit": true,   "<-- Automatically skipped if edition is not Home": {},
