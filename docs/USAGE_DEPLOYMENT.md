@@ -19,8 +19,9 @@ PowerWash can be easily deployed to a fresh PC as part of the Windows installati
 
 ### Usage
 - Plug in the USB to a device you want to (re)install Windows on, select it as the device to boot from (generally pressing F8 during boot brings you to the boot options) and follow the prompts to install Windows.
-- You'll go through a streamlined version of the setup process as normal, and at the end you will be automatically signed in and PowerWash will run with your configured settings.
-  - It's recommended to configure it to automatically restart when complete. Some registry changes won't take effect until after a restart.
+- You'll go through a streamlined version of the setup process as normal (selecting the drive partition/edition of windows, agreeing to the EULA, and choosing a network - everything else should be set automatically), and at the end you will be automatically signed in and PowerWash will run with your configured settings.
+  - It's recommended to configure PowerWash to automatically restart when complete. Some registry changes won't take effect until after a restart.
+  - You can optionally configure PowerWash to show a confirmation dialog before it starts. If it is not configured to automatically restart, it will show a dialog reminding the user that a restart is recommended for all changes to take effect.
 - After restarting, you will be prompted to change your password. The default password is blank. The default account is named User. This can be changed if desired from the Windows settings.
 
 ### Testing
