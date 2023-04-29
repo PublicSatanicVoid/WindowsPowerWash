@@ -62,7 +62,12 @@ Debloat:
   # Uninstalls below list of preinstalled packages
   RemovePreinstalled: true
   RemovePreinstalledList:
+    - 4DF9E0F8.Netflix
+    - AppleInc.iTunes
     - CreativeTechnologyLtd.SoundBlasterConnect
+    - HULULLC.HULUPLUS
+    - king.com.CandyCrushFriends
+    - king.com.FarmHeroesSaga
     - Microsoft.549981C3F5F10 # This is Cortana
     - Microsoft.Advertising.Xaml
     - Microsoft.BingNews
@@ -80,6 +85,7 @@ Debloat:
     - Microsoft.XboxApp
     - Microsoft.YourPhone
     - MicrosoftTeams
+    - RivetNetworks.KillerControlCenter
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true

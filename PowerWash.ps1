@@ -179,7 +179,7 @@ $RK_Defender_Features = "$RK_Defender\Features"
 $RK_Explorer = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer"
 $RK_Explorer_Advanced = "$RK_Explorer\Advanced"
 $RK_Explorer_Serialize = "$RK_Explorer\Serialize"
-$RK_Startup = "$RK_Explorer\StartupApproved\Run"
+#$RK_Startup = "$RK_Explorer\StartupApproved\Run"
 
 $RK_MMCSS = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
 $RK_MMCSS_ProAudio = "$RK_MMCSS\Tasks\Pro Audio"
@@ -187,6 +187,33 @@ $RK_MMCSS_ProAudio = "$RK_MMCSS\Tasks\Pro Audio"
 $RK_Uninst = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
 $RK_Uninst_Edge = "$RK_Uninst\Microsoft Edge"
 
+
+
+
+
+
+# Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\SecurityManager\CapAuthz\ApplicationsEx\Microsoft.MicrosoftEdge_44.19041.1266.0_neutral__8wekyb3d8bbwe
+# Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\SecurityManager\CapAuthz\ApplicationsEx\Microsoft.MicrosoftEdgeDevToolsClient_1000.19041.1023.0_neutral_neutral_8wekyb3d8bbwe
+# Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe
+# Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Config\Microsoft.MicrosoftEdge_8wekyb3d8bbwe
+# Computer\HKEY_LOCAL_MACHINE\SYSTEM\Setup\Upgrade\Appx\DownlevelGather\AppxAllUserStore\Config\Microsoft.MicrosoftEdge_8wekyb3d8bbwe
+# Computer\HKEY_LOCAL_MACHINE\SYSTEM\Setup\Upgrade\Appx\DownlevelGather\AppxAllUserStore\InboxApplications\Microsoft.MicrosoftEdge_44.18362.1533.0_neutral__8wekyb3d8bbwe
+# Computer\HKEY_LOCAL_MACHINE\SYSTEM\Setup\Upgrade\Appx\DownlevelGather\AppxAllUserStore\S-1-5-21-3648988713-1279931744-352962703-1001\Microsoft.MicrosoftEdge_44.18362.1533.0_neutral__8wekyb3d8bbwe
+# Computer\HKEY_LOCAL_MACHINE\SYSTEM\Setup\Upgrade\Appx\DownlevelGather\PackageInstallState\Microsoft.MicrosoftEdge_44.18362.1533.0_neutral__8wekyb3d8bbwe
+
+
+
+
+
+
+
+
+
+# OSIntegrationLevel: default 5
+# Protected by SYSTEM
+#$RK_Edge = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MicrosoftEdge"
+
+$RK_Privacy = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy"
 $RK_Store_Update = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate"
 $RK_ContentDelivery = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
 $RK_Search = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search"
@@ -296,22 +323,17 @@ function RegistryPut ($Path, $Key, $Value, $VType) {
 }
 
 function RunScriptAsSystem ($Path, $ArgString) {
+    "  [Invoking script as SYSTEM]"
+    "$home" | Out-File -FilePath "C:\.PowerWashHome.tmp" -Force -NoNewline
     # Adapted from https://github.com/mkellerman/Invoke-CommandAs/blob/master/Invoke-CommandAs/Private/Invoke-ScheduledTask.ps1
     $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "$Path $ArgString"
-    #$Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-    #$Principal = New-ScheduledTaskPrincipal -UserId "NT SERVICE\TrustedInstaller" -LogonType ServiceAccount -RunLevel Highest
-    $Principal = New-ScheduledTaskPrincipal -GroupId "BUILTIN\Administrators" -RunLevel Highest
+    $Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
     $Task = Register-ScheduledTask PowerWashSystemTask -Action $Action -Principal $Principal
-
-    $svc = New-Object -ComObject 'Schedule.Service'
-    $svc.Connect()
-    $TIUser = "NT Service\TrustedInstaller"
-    $folder = $svc.GetFolder("\")
-    $inner_task = $folder.GetTask("PowerWashSystemTask")
-    $inner_task.RunEx($null, 0, 0, $TIUser)
-	
+    $Job = $Task | Start-ScheduledTask -AsJob -ErrorAction Stop
+    $Job | Wait-Job | Remove-Job -Force -Confirm:$False
     While (($Task | Get-ScheduledtaskInfo).LastTaskResult -eq 267009) { Start-Sleep -Milliseconds 200 }
-    Unregister-ScheduledTask -TaskName PowerWashSystemTask -Confirm:$false
+    $Task | Unregister-ScheduledTask -Confirm:$false
+    "System level script completed successfully"
 }
 
 function TryDisableTask ($TaskName) {
@@ -373,9 +395,19 @@ function CreateShortcut($Dest, $Source, $Admin = $false) {
     }
 }
 
+$global:verbose_log = "C:\PowerWashVerbose.log"
+function SyslevelDebugLog($Msg) {
+    #$Msg | Out-File -FilePath $global:verbose_log -Append -Force
+}
+
 # Must be running as SYSTEM to modify certain Defender settings (even then, will need Tamper Protection off manually for some of them to take effect)
 # We have to bootstrap to this by scheduling a task to call this script with this flag
+
 if ("/ElevatedAction" -in $args) {
+    $UserHome = Get-Content "C:\.PowerWashHome.tmp"
+    Set-Location $UserHome
+    SyslevelDebugLog "ElevatedAction entering (user home = $UserHome)"
+
     if ("/DisableRealtimeMonitoring" -in $args) {
         Set-MpPreference -DisableRealtimeMonitoring $true
         RegistryPut $RK_Policy_Defender_RealtimeProtection -Key "DisableBehaviorMonitoring" -Value 1 -VType "DWORD"
@@ -392,7 +424,137 @@ if ("/ElevatedAction" -in $args) {
             "Defender disabled."
         }
     }
-	
+    elseif ("/RemoveEdge" -in $args) {
+        if ("/RegistryStage" -in $args) {
+            $keys_to_remove = @(
+                "HKLM:\SOFTWARE\WOW6432Node\Clients\StartMenuInternet\Microsoft Edge",
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Edge",
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate",
+                "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\MicrosoftEdgeUpdateTaskMachineCore",
+                "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\MicrosoftEdgeUpdateTaskMachineUA"
+            )
+            $keys_to_remove_by_child = @(
+                "HKLM:\SOFTWARE\Microsoft\SecurityManager\CapAuthz\ApplicationsEx",
+                "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Update\TargetingInfo\Installed",
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+            )
+            $entries_to_remove_by_key = @(
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+                "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
+                "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32",
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32",
+                "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder"
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder"
+            )
+            $entries_to_remove_by_val = @(
+                "HKLM:\SOFTWARE\RegisteredApplications",
+                "HKCU:\SOFTWARE\RegisteredApplications"
+            )
+            SyslevelDebugLog "keys_to_remove"
+            $keys_to_remove | ForEach-Object {
+                SyslevelDebugLog "Reg remove: $_"
+                Remove-Item -Recurse -Force -Path "$_" | Tee-Object -FilePath $global:verbose_log
+            }
+            SyslevelDebugLog "keys_to_remove_by_child"
+            $keys_to_remove_by_child | ForEach-Object {
+                if (-not (Test-Path -Path $_)) {
+                    SyslevelDebugLog "Skipping nonexistent path $_"
+                }
+                else {
+                    Get-ChildItem -Path $_ | Where-Object { $_ -Like "*Microsoft*Edge*" } | ForEach-Object {
+                        SyslevelDebugLog "Reg remove: $_"
+                        Remove-Item -Recurse -Force -Path $_ | Tee-Object -FilePath $global:verbose_log
+                    }
+                }
+            }
+            SyslevelDebugLog "entries_to_remove_by_key"
+            $entries_to_remove_by_key | ForEach-Object {
+                $path = $_
+                if (-not (Test-Path -Path $path)) {
+                    SyslevelDebugLog "Skipping nonexistent path $path"
+                }
+                else {
+                    (Get-ItemProperty -Path $path).PSObject.Properties | Where-Object { $_.Name -Like "* Microsoft*Edge*" } | ForEach-Object {
+                        SyslevelDebugLog "Reg remove: $path -> $($_.Name)"
+                        Remove-ItemProperty -Force -Path $path -Name $_.Name | Tee-Object -FilePath $global:verbose_log
+                    }
+                }
+            }
+            SyslevelDebugLog "entries_to_remove_by_val"
+            $entries_to_remove_by_val | ForEach-Object {
+                $path = $_
+                if (-not (Test-Path -Path $path)) {
+                    SyslevelDebugLog "Skipping nonexistent path $path"
+                }
+                else {
+                    (Get-ItemProperty -Path $path).PSObject.Properties | Where-Object { $_.Value -Like "*Microsoft*Edge*" } | ForEach-Object {
+                        SyslevelDebugLog "Reg remove: $path -> $($_.Name)"
+                        Remove-ItemProperty -Force -Path $path -Name $_.Name | Tee-Object -FilePath $global:verbose_log
+                    }
+                }
+            }
+        }
+        elseif ("/FilesystemStage" -in $args) {
+            $folders_to_remove = @(
+                "$UserHome\AppData\Local\Microsoft\Edge",
+                "$UserHome\AppData\Local\Microsoft\EdgeBho",
+                "$UserHome\AppData\Local\MicrosoftEdge",
+                "$UserHome\MicrosoftEdgeBackups"
+            )
+            $folders_to_remove_by_subfolder = @(
+                "C:\ProgramData\Packages",
+                "C:\Windows\SystemApps",
+                "C:\Program Files\WindowsApps",
+                "C:\ProgramData\Microsoft\Windows\AppRepository",
+                "C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
+                "$UserHome\Desktop"
+            )
+            $folders_to_remove_by_subfolder_aggressive = @(
+                "C:\Program Files (x86)\Microsoft"
+            )
+            SyslevelDebugLog "folders_to_remove"
+            $folders_to_remove | ForEach-Object {
+                if (-not (Test-Path -Path $_)) {
+                    SyslevelDebugLog "Skipping nonexistent path $_"
+                }
+                else {
+                    SyslevelDebugLog "File remove: $_"
+                    Remove-Item -Recurse -Force -Path $_ | Tee-Object -FilePath $global:verbose_log
+                }
+            }
+            SyslevelDebugLog "folders_to_remove_by_subfolder"
+            $folders_to_remove_by_subfolder | ForEach-Object {
+                $path = $_
+                if (-not (Test-Path -Path $path)) {
+                    SyslevelDebugLog "Skipping nonexistent path $path"
+                }
+                else {
+                    Get-ChildItem -Path $_ | Where-Object { $_ -Like "*Microsoft*Edge*" } | ForEach-Object {
+                        "File remove: $path\$_" | SyslevelDebugLog
+                        Remove-Item -Recurse -Force -Path "$path\$_" | Tee-Object -FilePath $global:verbose_log
+                    }
+                }
+            }
+            SyslevelDebugLog "folders_to_remove_by_subfolder_aggressive"
+            $folders_to_remove_by_subfolder_aggressive | ForEach-Object {
+                $path = $_
+                if (-not (Test-Path -Path $path)) {
+                    SyslevelDebugLog "Skipping nonexistent path $path"
+                }
+                else {
+                    Get-ChildItem -Path $_ | Where-Object { $_ -Like "*Edge*" } | ForEach-Object {
+                        SyslevelDebugLog "File remove: $path\$_"
+                        Remove-Item -Recurse -Force -Path "$path\$_" | Tee-Object -FilePath $global:verbose_log
+                    }
+                }
+            }
+        }
+    }
+
+    Remove-Item -Path "C:\.PowerWashHome.tmp"
+
+    SyslevelDebugLog "ElevatedAction exiting"
     exit
 }
 
@@ -566,6 +728,7 @@ if (Confirm "Do you want to disable Microsoft telemetry?" -Auto $true -ConfigKey
 	
     "- Disabling telemetry registry settings..."
     RegistryPut $RK_Policy_DataCollection -Key "AllowTelemetry" -Value $min_telemetry -VType "DWORD"
+    RegistryPut $RK_Privacy -Key "TailoredExperiencesWithDiagnosticDataEnabled" -Value 0 -VType "DWORD"
     RegistryPut $RK_TIPC -Key "Enabled" -Value 0 -VType "DWORD"  # Inking/typing
     RegistryPut $RK_Policy_AppCompat -Key "AITEnable" -Value 0 -VType "DWORD"  # Apps
 	
@@ -697,53 +860,31 @@ if (Confirm "Remove Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "Deb
     if ($null -ne $provisioned) {
         Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers
     }
-	
-    "- Removing Edge from C:\ProgramData\Packages..."
-    takeown /a /f C:\ProgramData\Packages | Out-Null
-    takeown /a /f C:\ProgramData\Packages /r /d Y | Out-Null
-    $pkgs = Get-ChildItem C:\ProgramData\Packages | Where-Object { $_.Name -Like "*Microsoft*Edge*" }
-    foreach ($pkg in $pkgs) {
-        Remove-Item -Recurse -Force -Path "C:\ProgramData\Packages\$pkg" -EA SilentlyContinue
+
+    # Many registry keys to remove are protected by SYSTEM
+    "- Removing Edge from registry..."
+    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge /RegistryStage"
+
+    # Many folders to remove are protected by SYSTEM
+    "- Removing Edge from filesystem..."
+    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge /FilesystemStage"
+
+    "- Disabling Edge services..."
+    $services_to_disable = @(
+        "edgeupdate",
+        "edgeupdatem",
+        "MicrosoftEdgeElevationService"
+    )
+    $services_to_disable | ForEach-Object {
+        sc.exe stop $_ | Out-Null
+        sc.exe config $_ start=disabled | Out-Null
     }
-	
-    "- Removing Edge from C:\Windows\SystemApps..."
-    takeown /a /f C:\Windows\SystemApps | Out-Null
-    takeown /a /f C:\Windows\SystemApps /r /d Y | Out-Null
-    $apps = Get-ChildItem C:\Windows\SystemApps | Where-Object { $_.Name -Like "*Microsoft*Edge*" }
-    foreach ($app in $apps) {
-        Remove-Item -Recurse -Force -Path "C:\Windows\SystemApps\$app" -EA SilentlyContinue
-    }
-	
-    "- Removing Edge from C:\Program Files (x86)\Microsoft..."
-    takeown /a /f "C:\Program Files (x86)\Microsoft" | Out-Null
-    takeown /a /f "C:\Program Files (x86)\Microsoft" /r /d Y | Out-Null
-    $apps = Get-ChildItem "C:\Program Files (x86)\Microsoft" | Where-Object { $_.Name -Like "*Edge*" }
-    foreach ($app in $apps) {
-        Remove-Item -Recurse -Force -Path "C:\Program Files (x86)\Microsoft\$app" -EA SilentlyContinue
-    }
-	
-    "- Removing Edge from programs list in registry..."
-    Get-ChildItem -Path $RK_Uninst | Where-Object { $_ -Like "*Microsoft*Edge*" } | ForEach-Object {
-        $CurrentKey = (Get-ItemProperty -Path $_.PsPath)
-        Remove-Item -Force -Path $CurrentKey.PSPath
-    }
-	
-    "- Removing Edge from startup..."
-	(Get-Item -Path $RK_Startup).Property | Where-Object { $_ -Like "*Microsoft*Edge*" } | ForEach-Object {
-        Remove-ItemProperty -Force -Path "$RK_Startup" -Name "$_"
-    }
-	
-    "- Removing Edge from start menu..."
-    $programs = Get-ChildItem "C:\ProgramData\Microsoft\Windows\Start Menu\Programs" | Where-Object { $_.Name -Like "*Microsoft*Edge*" }
-    foreach ($program in $programs) {
-        Remove-Item -Force -Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\$program"
-    }
-	
-    "- Removing Edge from desktop..."
-    $programs = Get-ChildItem "$home\Desktop" | Where-Object { $_.Name -Like "*Microsoft*Edge*" }
-    foreach ($program in $programs) {
-        Remove-Item -Force -Path "$home\Desktop\$program"
-    }
+
+    # Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\MicrosoftEdge
+    # ^ OSIntegrationLevel: 6 -> 0
+
+    # Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Internet Explorer\EdgeIntegration
+    # ^ Supported: 1 -> 0
 	
     "- Complete"
 }
