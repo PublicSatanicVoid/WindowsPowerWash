@@ -21,6 +21,7 @@ PowerWash can be easily deployed to a fresh PC as part of the Windows installati
 - Plug in the USB to a device you want to (re)install Windows on, select it as the device to boot from (generally pressing F8 during boot brings you to the boot options) and follow the prompts to install Windows.
 - You'll go through a streamlined version of the setup process as normal, and at the end you will be automatically signed in and PowerWash will run with your configured settings.
   - It's recommended to configure it to automatically restart when complete. Some registry changes won't take effect until after a restart.
+- After restarting, you will be prompted to change your password. The default password is blank. The default account is named User. This can be changed if desired from the Windows settings.
 
 ### Testing
 - You don't need a spare computer to try this out - you can use eg [VMware Workstation Player](https://www.vmware.com/products/workstation-player.html) with [Plop Boot Manager](https://www.plop.at/en/bootmanager/download.html) to create a Windows VM installed from your USB drive.
