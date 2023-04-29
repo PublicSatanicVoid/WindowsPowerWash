@@ -1,3 +1,6 @@
+# PowerWash settings
+# https://github.com/UniverseCraft/WindowsPowerWash/blob/main/README.md
+
 # Settings for Windows unattended install.
 # Resources:
 # - https://github.com/UniverseCraft/WindowsPowerWash/blob/main/docs/USAGE_DEPLOYMENT.md
@@ -86,6 +89,7 @@ Debloat:
     - Microsoft.YourPhone
     - MicrosoftTeams
     - RivetNetworks.KillerControlCenter
+    # Cannot remove Edge this way. See "RemoveEdge" config value below instead.
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true

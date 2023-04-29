@@ -9,6 +9,16 @@
 # USE AT YOUR OWN RISK. BACKUP SYSTEM BEFORE USING.
 #
 
+
+$development_computers = @("DESKTOP-8146PKJ", "DESKTOP-OIDHB0U")
+$hostname = hostname
+$global:sys_account_debug_log = "C:\PowerWashSysActionsDbg.log"
+$global:is_debug = ($hostname -in $development_computers) -and $true
+if ($global:is_debug) {
+    "POWERWASH DEBUG MODE IS ON"
+    ""
+}
+
 ### USAGE INFORMATION ###
 if ("/?" -in $args) {
     ".\PowerWash.ps1 [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
@@ -25,15 +35,16 @@ if ("/?" -in $args) {
 
 
 "Loading dependencies..."
-
 "- NuGet package manager"
 if ("NuGet" -notin (Get-PackageProvider | Select-Object Name).Name) {
     Install-PackageProvider -Name NuGet -Force | Out-Null
     "  - Installed NuGet package manager"
 }
-
 "- powershell-yaml module"
-if ("powershell-yaml" -notin (Get-Module | Select-Object Name).Name) {
+try {
+    Import-Module powershell-yaml
+}
+catch {
     Install-Module -Name powershell-yaml -Force
     " - Installed powershell-yaml module"
 }
@@ -390,14 +401,18 @@ function CreateShortcut($Dest, $Source, $Admin = $false) {
 
     if ($Admin) {
         $bytes = [System.IO.File]::ReadAllBytes("$home\Desktop\Toggle Updates.lnk")
-        $bytes[0x15] = $bytes[0x15] -bor 0x20 #set byte 21 (0x15) bit 6 (0x20) ON
+        $bytes[0x15] = $bytes[0x15] -bor 0x20  # set byte 21 (0x15) bit 6 (0x20) ON
         [System.IO.File]::WriteAllBytes("$home\Desktop\Toggle Updates.lnk", $bytes)
     }
 }
 
-$global:verbose_log = "C:\PowerWashVerbose.log"
-function SyslevelDebugLog($Msg) {
-    #$Msg | Out-File -FilePath $global:verbose_log -Append -Force
+function SysDebugLog {
+    param([Parameter(Mandatory, ValueFromPipeline)] $Msg)
+    process {
+        if ($global:is_debug) {
+            $Msg | Out-File -FilePath $global:sys_account_debug_log -Append -Force
+        }
+    }
 }
 
 # Must be running as SYSTEM to modify certain Defender settings (even then, will need Tamper Protection off manually for some of them to take effect)
@@ -406,7 +421,7 @@ function SyslevelDebugLog($Msg) {
 if ("/ElevatedAction" -in $args) {
     $UserHome = Get-Content "C:\.PowerWashHome.tmp"
     Set-Location $UserHome
-    SyslevelDebugLog "ElevatedAction entering (user home = $UserHome)"
+    SysDebugLog "ElevatedAction entering (user home = $UserHome, args = $args)"
 
     if ("/DisableRealtimeMonitoring" -in $args) {
         Set-MpPreference -DisableRealtimeMonitoring $true
@@ -451,46 +466,50 @@ if ("/ElevatedAction" -in $args) {
                 "HKLM:\SOFTWARE\RegisteredApplications",
                 "HKCU:\SOFTWARE\RegisteredApplications"
             )
-            SyslevelDebugLog "keys_to_remove"
+
+            SysDebugLog "keys_to_remove"
             $keys_to_remove | ForEach-Object {
-                SyslevelDebugLog "Reg remove: $_"
-                Remove-Item -Recurse -Force -Path "$_" | Tee-Object -FilePath $global:verbose_log
+                SysDebugLog "Reg remove: $_"
+                Remove-Item -Recurse -Force -Path "$_" | SysDebugLog
             }
-            SyslevelDebugLog "keys_to_remove_by_child"
+
+            SysDebugLog "keys_to_remove_by_child"
             $keys_to_remove_by_child | ForEach-Object {
                 if (-not (Test-Path -Path $_)) {
-                    SyslevelDebugLog "Skipping nonexistent path $_"
+                    SysDebugLog "- Skipping nonexistent path $_"
                 }
                 else {
                     Get-ChildItem -Path $_ | Where-Object { $_ -Like "*Microsoft*Edge*" } | ForEach-Object {
-                        SyslevelDebugLog "Reg remove: $_"
-                        Remove-Item -Recurse -Force -Path $_ | Tee-Object -FilePath $global:verbose_log
+                        SysDebugLog "- Reg remove: $_"
+                        Remove-Item -Recurse -Force -Path $_ | SysDebugLog
                     }
                 }
             }
-            SyslevelDebugLog "entries_to_remove_by_key"
+
+            SysDebugLog "entries_to_remove_by_key"
             $entries_to_remove_by_key | ForEach-Object {
                 $path = $_
                 if (-not (Test-Path -Path $path)) {
-                    SyslevelDebugLog "Skipping nonexistent path $path"
+                    SysDebugLog "- Skipping nonexistent path $path"
                 }
                 else {
                     (Get-ItemProperty -Path $path).PSObject.Properties | Where-Object { $_.Name -Like "* Microsoft*Edge*" } | ForEach-Object {
-                        SyslevelDebugLog "Reg remove: $path -> $($_.Name)"
-                        Remove-ItemProperty -Force -Path $path -Name $_.Name | Tee-Object -FilePath $global:verbose_log
+                        SysDebugLog "- Reg remove: $path -> $($_.Name)"
+                        Remove-ItemProperty -Force -Path $path -Name $_.Name | SysDebugLog
                     }
                 }
             }
-            SyslevelDebugLog "entries_to_remove_by_val"
+
+            SysDebugLog "entries_to_remove_by_val"
             $entries_to_remove_by_val | ForEach-Object {
                 $path = $_
                 if (-not (Test-Path -Path $path)) {
-                    SyslevelDebugLog "Skipping nonexistent path $path"
+                    SysDebugLog "- Skipping nonexistent path $path"
                 }
                 else {
                     (Get-ItemProperty -Path $path).PSObject.Properties | Where-Object { $_.Value -Like "*Microsoft*Edge*" } | ForEach-Object {
-                        SyslevelDebugLog "Reg remove: $path -> $($_.Name)"
-                        Remove-ItemProperty -Force -Path $path -Name $_.Name | Tee-Object -FilePath $global:verbose_log
+                        SysDebugLog "- Reg remove: $path -> $($_.Name)"
+                        Remove-ItemProperty -Force -Path $path -Name $_.Name | SysDebugLog
                     }
                 }
             }
@@ -515,39 +534,54 @@ if ("/ElevatedAction" -in $args) {
             $folders_to_remove_by_subfolder_aggressive = @(
                 "C:\Program Files (x86)\Microsoft"
             )
-            SyslevelDebugLog "folders_to_remove"
+
+            SysDebugLog "folders_to_remove"
             $folders_to_remove | ForEach-Object {
                 if (-not (Test-Path -Path $_)) {
-                    SyslevelDebugLog "Skipping nonexistent path $_"
+                    SysDebugLog "- Skipping nonexistent path $_"
                 }
                 else {
-                    SyslevelDebugLog "File remove: $_"
-                    Remove-Item -Recurse -Force -Path $_ | Tee-Object -FilePath $global:verbose_log
+                    SysDebugLog "- File remove: $_"
+                    Remove-Item -Recurse -Force -Path $_ | SysDebugLog
                 }
             }
-            SyslevelDebugLog "folders_to_remove_by_subfolder"
+
+            SysDebugLog "folders_to_remove_by_subfolder"
             $folders_to_remove_by_subfolder | ForEach-Object {
                 $path = $_
                 if (-not (Test-Path -Path $path)) {
-                    SyslevelDebugLog "Skipping nonexistent path $path"
+                    SysDebugLog "- Skipping nonexistent path $path"
                 }
                 else {
                     Get-ChildItem -Path $_ | Where-Object { $_ -Like "*Microsoft*Edge*" } | ForEach-Object {
-                        "File remove: $path\$_" | SyslevelDebugLog
-                        Remove-Item -Recurse -Force -Path "$path\$_" | Tee-Object -FilePath $global:verbose_log
+                        "- File remove: $path\$_" | SysDebugLog
+                        Remove-Item -Recurse -Force -Path "$path\$_" | SysDebugLog
                     }
                 }
             }
-            SyslevelDebugLog "folders_to_remove_by_subfolder_aggressive"
+
+            SysDebugLog "folders_to_remove_by_subfolder_aggressive"
             $folders_to_remove_by_subfolder_aggressive | ForEach-Object {
                 $path = $_
                 if (-not (Test-Path -Path $path)) {
-                    SyslevelDebugLog "Skipping nonexistent path $path"
+                    SysDebugLog "- Skipping nonexistent path $path"
                 }
                 else {
                     Get-ChildItem -Path $_ | Where-Object { $_ -Like "*Edge*" } | ForEach-Object {
-                        SyslevelDebugLog "File remove: $path\$_"
-                        Remove-Item -Recurse -Force -Path "$path\$_" | Tee-Object -FilePath $global:verbose_log
+                        SysDebugLog "- File remove: $path\$_"
+                        Remove-Item -Recurse -Force -Path "$path\$_" | SysDebugLog
+                    }
+                }
+            }
+
+            SysDebugLog "remove implicit app shortcuts"
+            $implicit_app_shortcuts = "$UserHome\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned\ImplicitAppShortcuts"
+            if (Test-Path -Path $implicit_app_shortcuts) {
+                Get-ChildItem -Path $implicit_app_shortcuts | ForEach-Object {
+                    $path = "$implicit_app_shortcuts\$_"
+                    Get-ChildItem -Path $path | Where-Object { $_ -Like "*Edge*" } | ForEach-Object {
+                        Write-Host "- File remove: $path"
+                        Remove-Item -Recurse -Force -Path "$path" | SysDebugLog
                     }
                 }
             }
@@ -556,7 +590,7 @@ if ("/ElevatedAction" -in $args) {
 
     Remove-Item -Path "C:\.PowerWashHome.tmp"
 
-    SyslevelDebugLog "ElevatedAction exiting"
+    SysDebugLog "ElevatedAction exiting"
     exit
 }
 
