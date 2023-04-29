@@ -508,7 +508,9 @@ if ("/ElevatedAction" -in $args) {
                 "C:\Program Files\WindowsApps",
                 "C:\ProgramData\Microsoft\Windows\AppRepository",
                 "C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
-                "$UserHome\Desktop"
+                "$UserHome\Desktop",
+                "$UserHome\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch"
+                #^...Internet Explorer/Quick Launch/User Pinned/ImplicitAppShortcuts/<trash>"
             )
             $folders_to_remove_by_subfolder_aggressive = @(
                 "C:\Program Files (x86)\Microsoft"
