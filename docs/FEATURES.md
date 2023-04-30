@@ -53,7 +53,8 @@ Some editions of Windows do not have the necessary components to support certain
 | ------- | :----: | :---: | :--------------------: | ----------- |
 | Disable/uninstall Cortana | ✅ | ✅| ✅ | Most people find Cortana a nuisance |
 | Remove preinstalled applications | ✅ | ✅ | ✅ | Removes Skype, Teams, Xbox, News/Weather, Solitaire Collection, etc. [This list is configurable!](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md) |
-| Remove Microsoft Edge | ◕ | ◕ | ◕ | Removes the Edge program itself, but at the time of writing, some traces will remain. |
+| Remove phantom applications | ✅ | ✅ | ✅ | (BETA) Removes remnants of uninstalled applications from the registry. This can sometimes have a modest impact on performance, e.g. when the system is frequently looking up a large number of paths that don't exist. We can't remove every single reference to the application, but we can clean house quite a bit. |
+| Remove Microsoft Edge | ◕ | ◕ | ◕ | Thoroughly removes the Edge program itself, but at the time of writing, some small, non-functional traces will remain. The program itself can be removed, but it will still show up (without an icon, and doing nothing when clicked) in the programs list and Windows Search. |
 
 ### Software Installation
 
