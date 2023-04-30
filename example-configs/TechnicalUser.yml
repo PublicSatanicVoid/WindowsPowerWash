@@ -1,0 +1,212 @@
+# PowerWash settings
+# https://github.com/UniverseCraft/WindowsPowerWash/blob/main/README.md
+
+# Settings for Windows unattended install.
+# Resources:
+# - https://github.com/UniverseCraft/WindowsPowerWash/blob/main/docs/USAGE_DEPLOYMENT.md
+# - https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/automate-windows-setup
+Unattend:
+  # ONLY APPLIES TO UNATTENDED INSTALL MODE
+  # Shows a message box for the user to confirm before running PowerWash
+  # Otherwise, PowerWash will run immediately upon first logon right after Windows installs.
+  NotifyBeforePowerWash: true
+
+# Windows settings to maximize performance
+Performance:
+  # Disables the High-precision event timer. Whether or not this helps is entirely
+  # dependent on your system architecture and configuration. The only way to know
+  # is to test it out. My testing has indicated performance improvements from
+  # disabling it.
+  DisableHpet: true
+
+  # Hardware-accelerated GPU scheduling can lower graphics latency.
+  HwGpuScheduling: true
+
+  # Reserves resources for Pro Audio applications to minimize latency and provide
+  # more consistent performance.
+  MultimediaResponsiveness: true
+
+  # Disables settings on network adapters that add latency, such as packet coalescing.
+  NetworkResponsiveness: true
+
+  # Enables Windows' "Ultimate" performance plan, with additional tweaks for low latency
+  # and rapid ramp-up in response to increased system load. Disables power throttling.
+  PowerSettingsMaxPerformance: true
+
+  # Fast Startup can prevent some drivers from initializing properly. Disabling it may
+  # cause your device to boot more slowly, but it's generally worth it. Too many issues
+  # with Fast Startup have been reported.
+  DisableFastStartup: true
+
+  # Enables Message-Signaled Interrupts for all devices that support them. These improve
+  # communication bandwidth to/from supported devices.
+  EnableDriverMsi: true
+
+  # Prioritizes GPU and PCIe controller interrupts to give them more consistent QoS
+  EnableDriverPrio: true
+
+# Stops Windows and its components from phoning home. Desirable from both a performance and
+# privacy standpoint.
+DisableTelemetry: true
+
+# Removes bloatware / commonly unwanted programs and features
+Debloat:
+  # Disables Cortana from being used but does not uninstall it
+  DisableCortana: true
+
+  # ENTERPRISE / EDUCATION ONLY
+  # Disables Microsoft personalized recommendations and account notifications
+  DisableConsumerFeatures: true
+
+  # ENTERPRISE / EDUCATION ONLY
+  # Disables preinstalled apps from Microsoft and OEMs
+  DisablePreinstalled: true
+
+  # Uninstalls below list of preinstalled packages
+  RemovePreinstalled: true
+  RemovePreinstalledList:
+    - 4DF9E0F8.Netflix
+    - AppleInc.iTunes
+    - CreativeTechnologyLtd.SoundBlasterConnect
+    - HULULLC.HULUPLUS
+    - king.com.CandyCrushFriends
+    - king.com.FarmHeroesSaga
+    - Microsoft.549981C3F5F10 # This is Cortana
+    - Microsoft.Advertising.Xaml
+    - Microsoft.BingNews
+    - Microsoft.BingWeather
+    - Microsoft.Messaging
+    - Microsoft.MicrosoftSolitaireCollection
+    - Microsoft.MicrosoftOfficeHub
+    - Microsoft.OneConnect
+    - Microsoft.People
+    - Microsoft.SkypeApp
+    - Microsoft.Wallet
+    - Microsoft.WindowsCommunicationsApps
+    - Microsoft.WindowsFeedbackHub
+    - Microsoft.WindowsSoundRecorder
+    - Microsoft.XboxApp
+    - Microsoft.YourPhone
+    - MicrosoftTeams
+    - RivetNetworks.KillerControlCenter
+    # Cannot remove Edge this way. See "RemoveEdge" config value below instead.
+
+  # Will remove the below list of Windows capabilities/features
+  RemoveWindowsCapabilities: true
+  RemoveWindowsCapabilitiesList:
+    - OneCoreUAP.OneSync
+    - Microsoft.Windows.WordPad
+    #- Browser.InternetExplorer # Recommended to keep. Removing will break eg URL shortcuts.
+
+  # Removes phantom programs, i.e. programs listed in the registry but which
+  # do not actually exist.
+  RemovePhantom: true
+
+  # WARNING: EXPERIMENTAL
+  # Removes Microsoft Edge. Currently, some traces will remain, but the program itself will
+  # at least be gone.
+  RemoveEdge: false # EXPERIMENTAL
+
+# Settings pertaining to Windows Update
+WindowsUpdate:
+  # PRO / ENTERPRISE / EDUCATION ONLY
+  # Disables automatic Windows updates, but the user can still manually update from the
+  # Windows Update settings page.
+  DisableAutoUpdate: true
+
+  # Disables Windows Update entirely. Both automatic and manual updates are disabled.
+  DisableAllUpdate: false
+
+  # Adds a script shortcut to the desktop to toggle Windows Update completely on/off.
+  # This is the best compromise for Windows Home users, as it lets them keep updates off
+  # except when they specifically want to update.
+  AddUpdateToggleScriptToDesktop: true
+
+# Optional utilities and commonly loaded programs to install.
+Install:
+  # HOME EDITION ONLY
+  # Installs Group Policy Editor (gpedit.msc). On non-Home editions, this is available by
+  # default. On Home editions, once installed here, it won't show up in Windows search, but
+  # is accessible via Win+R, "gpedit.msc"
+  InstallGpEdit: true
+
+  # Installs Winget package manager. Convenient way to install a wide range of software
+  # from the command line, with no user interaction needed.
+  InstallWinget: true
+
+  # Installs below list of Winget packages
+  # Requires Winget to be installed.
+  InstallConfigured: true
+  InstallConfiguredList:
+    - 7zip.7zip
+    - Google.Chrome
+    - Notepad++.Notepad++
+    - Microsoft.WindowsTerminal
+    - Gyan.FFmpeg
+    - Git.Git
+    - Microsoft.PowerToys
+    #- Microsoft.Sysinternals.ProcessMonitor
+    #- Microsoft.VisualStudioCode
+    #- Discord.Discord
+    #- Valve.Steam
+
+# Settings related to Windows Defender.
+Defender:
+  # Tells Defender to only run scans when the computer is idle.
+  DefenderScanOnlyWhenIdle: true
+  DefenderScanOnlyWhenIdle_TimeoutMins: 10
+
+  # Limits the priority and CPU usage of Defender scans.
+  DefenderScanLowPriority: true
+  DefenderScanLowPriority_MaxCpuUsage: 5
+
+  # WARNING: EXPERIMENTAL AND DANGEROUS
+  # Requires Tamper Protection manually disabled. Can do this before or after.
+  # Disables realtime monitoring from Defender.
+  DisableRealtimeMonitoringCAUTION: false # EXPERIMENTAL
+
+  # WARNING: EXPERIMENTAL AND DANGEROUS
+  # Requires Tamper Protection manually disabled. Can do this before or after.
+  # Disables Defender entirely.
+  DisableAllDefenderCAUTIONCAUTION: false # EXPERIMENTAL
+
+# Convenient settings that make the Windows experience nicer. Most users want or
+# appreciate having these enabled.
+Convenience:
+  # Startup apps start as soon as possible.
+  DisableStartupDelay: true
+
+  # Shows time in taskbar as HH:MM:SS rather than HH:MM
+  ShowSecondsInTaskbar: true
+
+  # Shows "Run as different user" option in start menu
+  ShowRunAsDifferentUser: true
+
+  # Shows hidden files in Explorer
+  ShowHiddenExplorer: true
+
+  # Removes default cruft from the taskbar and collapses the search box.
+  CleanupTaskbar: true
+
+  # Configures search box in taskbar.
+  # Modes:
+  # - "Full": Shows the full search box
+  # - "Icon": Shows just the search icon
+  # - "Hidden": Hides the search box and icon
+  TaskbarSearchboxMode: Hidden
+
+# Settings for scans to perform.
+Scans:
+  # Runs DISM and SFC to scan and repair system files
+  CheckIntegrity: true
+
+  # Checks for IRQ conflicts. Devices sharing the same IRQ will commonly experience
+  # degraded performance.
+  CheckIRQ: true
+
+  # Warns if third-party antivirus is detected. These programs are usually not needed
+  # and almost always slow the system down and record potentially invasive user data.
+  WarnAV: true
+
+# Whether to automatically restart the computer when PowerWash completes.
+AutoRestart: true
