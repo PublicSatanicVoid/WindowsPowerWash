@@ -14,9 +14,9 @@ These are some of the most commonly wanted modifications to a standard Windows i
 - Throttle "MsMpEng.exe" / "Antimalware Service Executable"
 - Configure and activate maximum performance power plan
 
-## Feature Support
+## Full Listing
 
-Some editions of Windows do not have the necessary components to support certain PowerWash features. PowerWash does not impose any artificial limitations and the author continues to look for ways around Microsoft's. All features listed below are optional and configurable using the provided [`PowerWashSettings.json`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.json). (See [the documentation](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md)).
+*Note that some editions of Windows do not have the necessary components to support certain PowerWash features. PowerWash does not impose any artificial limitations and the author continues to look for ways around Microsoft's. All features listed below are optional and configurable using the provided [`PowerWashSettings.json`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.json). (See [the documentation](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md)).*
 
 ### System Configuration - Performance
 
