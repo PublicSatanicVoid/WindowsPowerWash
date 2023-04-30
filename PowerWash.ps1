@@ -41,10 +41,8 @@ if ("NuGet" -notin (Get-PackageProvider | Select-Object Name).Name) {
     "  - Installed NuGet package manager"
 }
 "- powershell-yaml module"
-try {
-    Import-Module powershell-yaml
-}
-catch {
+Import-Module powershell-yaml 2>$null | Out-Null
+if (-not $?) {
     Install-Module -Name powershell-yaml -Force
     " - Installed powershell-yaml module"
 }
@@ -204,7 +202,9 @@ $RK_Uninst_Edge = "$RK_Uninst\Microsoft Edge"
 
 $RK_Uninst_Locs = @(
     "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
 )
 $RK_AppPath_Locs = @(
     "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths",
@@ -464,22 +464,39 @@ if ("/ElevatedAction" -in $args) {
                 "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\MicrosoftEdgeUpdateTaskMachineUA"
             )
             $keys_to_remove_by_child = @(
-                "HKLM:\SOFTWARE\Microsoft\SecurityManager\CapAuthz\ApplicationsEx",
-                "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Update\TargetingInfo\Installed",
+                # Documented locations used to list installed applications
                 "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
                 "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\SecurityManager\CapAuthz\ApplicationsEx",
+                "$HKCU\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+                "$HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+
+                "HKLM:\SOFTWARE\RegisteredApplications",
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths",
+
                 "HKLM:\SOFTWARE\Microsoft\SecurityManager\CapAuthz\ApplicationsEx",
-                "$HKCU\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData"
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\SecurityManager\CapAuthz\ApplicationsEx",
+
+                "HKLM:\SOFTWARE\Classes",
+                "HKLM:\SOFTWARE\Classes\WOW6432Node",
+                "HKLM:\SOFTWARE\WOW6432Node\Classes",
+
+                "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Update\TargetingInfo\Installed",
+                "$HKCU\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData",
+                "$HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FeatureUsage\AppSwitched",
+                "$HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FeatureUsage\ShowJumpView",
+                "HKLM:\SOFTWARE\Clients\StartMenuInternet",
+                "HKLM:\SOFTWARE\Policies\Microsoft"
             )
             $entries_to_remove_by_key = @(
-                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+                "$HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
                 "$HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
                 "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
                 "$HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32",
                 "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32",
                 "$HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder"
-                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder"
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder",
+                "$HKCU\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache"
             )
             $entries_to_remove_by_val = @(
                 "HKLM:\SOFTWARE\RegisteredApplications",
@@ -490,7 +507,10 @@ if ("/ElevatedAction" -in $args) {
                 "$HKCU\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel"
             )
             $app_model_sub = @(
+                "PackageRepository\Extensions\ProgIDs",
                 "PackageRepository\Packages",
+                "PolicyCache",
+                "StateRepository"
                 "Repository\Families",
                 "Repository\Packages",
                 "SystemAppData"
@@ -499,7 +519,7 @@ if ("/ElevatedAction" -in $args) {
             SysDebugLog "keys_to_remove"
             $keys_to_remove | ForEach-Object {
                 $path = PSFormatRegPath -Path $_ -SID $SID
-                SysDebugLog "Reg remove: $path"
+                SysDebugLog "- Reg remove: $path"
                 Remove-Item -Recurse -Force -Path "$path" | SysDebugLog
             }
 
@@ -605,9 +625,12 @@ if ("/ElevatedAction" -in $args) {
                 "C:\ProgramData\Microsoft\Windows\AppRepository",
                 "C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
                 "$UserHome\Desktop",
+                "$UserHome\AppData\Local",
+                "$userHome\AppData\Local\Microsoft",
                 "$UserHome\AppData\Local\Packages",
-                "$UserHome\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch"
-                #^...Internet Explorer/Quick Launch/User Pinned/ImplicitAppShortcuts/<trash>"
+                "$UserHome\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch",
+                "C:\Windows\Prefetch",
+                "C:\ProgramData\Microsoft"
             )
             $folders_to_remove_by_subfolder_aggressive = @(
                 "C:\Program Files (x86)\Microsoft"
@@ -1015,7 +1038,7 @@ if (Confirm "Remove Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "Deb
     "- Removing Edge from provisioned packages..."
     $provisioned = (Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Edge*" }).PackageName
     if ($null -ne $provisioned) {
-        Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers
+        Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers 2>$null | Out-Null
     }
 
     # Many registry keys to remove are protected by SYSTEM
@@ -1026,15 +1049,16 @@ if (Confirm "Remove Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "Deb
     Write-Host "- Removing Edge from filesystem..." -NoNewline
     RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge /FilesystemStage"
 
-    "- Disabling Edge services..."
-    $services_to_disable = @(
+    "- Removing Edge services..."
+    $services_to_delete = @(
         "edgeupdate",
         "edgeupdatem",
         "MicrosoftEdgeElevationService"
     )
-    $services_to_disable | ForEach-Object {
+    $services_to_delete | ForEach-Object {
         sc.exe stop $_ | Out-Null
         sc.exe config $_ start=disabled | Out-Null
+        sc.exe delete $_ | Out-Null
     }
 
     # Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\MicrosoftEdge
