@@ -5,17 +5,18 @@ The default Windows installation has to cater to a very wide variety of users, a
 
 PowerWash modifies various aspects of your Windows installation. It configures your system to aggressively choose maximum performance and minimum latency over power saving. (Note: Many of the changes intentionally do not apply when on battery). It also removes bloatware and unwanted default programs, and generally cleans up the out-of-box experience. It does this through a combination of registry changes, application package removals, PowerShell cmdlets, and more.
 
+### Highlights
+
+These are some of the most commonly wanted modifications to a standard Windows install, and PowerWash has all of them!
+- Disable Microsoft telemetry / "phoning home"
+- Disable automatic updates
+- Remove useless preinstalled applications -- including Microsoft Edge, if desired
+- Throttle "MsMpEng.exe" / "Antimalware Service Executable"
+- Configure and activate maximum performance power plan
+
 ## Feature Support
 
 Some editions of Windows do not have the necessary components to support certain PowerWash features. PowerWash does not impose any artificial limitations and the author continues to look for ways around Microsoft's. All features listed below are optional and configurable using the provided [`PowerWashSettings.json`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.json). (See [the documentation](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md)).
-
-### Scans and checks
-
-| Feature | Works on Windows Home | Works on Windows Pro | Works on Windows Enterprise/Education | Description |
-| ------- | :----: | :---: | :--------------------: | ----------- |
-| System integrity checks | ✅ | ✅ | ✅ | Runs Microsoft's built-in [system file integrity checks](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e) to repair any corrupted system files |
-| Check for IRQ conflicts | ✅ | ✅ | ✅ | Sharing interrupt request lines among multiple devices can degrade performance. This cannot be fixed from within the software. | 
-| Warn if third-party antivirus found | ✅ | ✅ | ✅ | Windows Defender is generally faster and better; third-party antivirus software can slow the system down substantially - must be uninstalled manually, though |
 
 ### System Configuration - Performance
 
@@ -29,7 +30,6 @@ Some editions of Windows do not have the necessary components to support certain
 | Disable Fast Startup | ✅ | ✅ | ✅ | Disabling [Fast Startup](https://www.makeuseof.com/what-is-windows-fast-startup-why-disable-it) can fix problems with some devices since Fast Startup skips some initialization |
 | Enable message-signaled interrupts | ✅ | ✅ | ✅ | Enabling [message-signaled interrupts](https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-message-signaled-interrupts) on all devices that support them can improve interrupt latency |
 | Prioritize GPU and PCIe controller | ✅ | ✅ | ✅ | May improve DPC/ISR latency for tasks where high regularity is preferred |
-| Disable Windows telemetry | ◑ | ◕ | ✅ | Home edition can disable some telemetry; Pro edition can disable most telemetry; Enterprise/Education can disable all telemetry |
 | Disable automatic Windows updates | ❌ | ✅ | ✅ | Background updates can unexpectedly consume resources and automatic install/restart is typically not wanted. | 
 | Disable all Windows updates | ✅ | ✅ | ✅ | Completely disables the Windows Update feature, disabling both automatic and manual updates. |
 | Toggle Windows updates | ✅ | ✅ | ✅ | Adds a script to your desktop to toggle the Windows Update feature on/off. **This is the best compromise for Home editions** |
@@ -37,6 +37,7 @@ Some editions of Windows do not have the necessary components to support certain
 | Throttle "Antimalware Service Executable" | ✅ | ✅ | ✅ | Configures Windows Defender to only run scans when the computer is idle; reduces priority of Defender tasks and limits their CPU usage |
 | Disable Defender Real-Time Protection | ⚠️ | ⚠️ | ⚠️ | CAUTION: This will make your device less secure. Requires Tamper Protection to be disabled. Not recommended and still experimental. |
 | Disable Defender entirely | ⚠️ | ⚠️ | ⚠️ | CAUTION: This will make your device less secure. Requires Tamper Protection to be disabled. Not recommended and still experimental. |
+| Disable Windows telemetry | ◑ | ◕ | ✅ | Home edition can disable some telemetry; Pro edition can disable most telemetry; Enterprise/Education can disable all telemetry |
 
 ### System Configuration - Usability
 
@@ -63,6 +64,14 @@ Some editions of Windows do not have the necessary components to support certain
 | Install Group Policy Editor | ✅ | N/A | N/A | Installs [Group Policy editor](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/dn265982(v=ws.11)), which presents a straightforward and well-documented interface to make system changes without manually editing the registry. Group Policy editor is a Microsoft product but does not come installed by default on Home editions of Windows. |
 | Install Winget | ✅ | ✅ | ✅ | See [https://learn.microsoft.com/en-us/windows/package-manager/winget/](https://learn.microsoft.com/en-us/windows/package-manager/winget/) |
 | Install free utilities and replacements for Microsoft bloatware | ✅ | ✅ | ✅ | [This list is configurable!](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md) |
+
+### Scans and checks
+
+| Feature | Works on Windows Home | Works on Windows Pro | Works on Windows Enterprise/Education | Description |
+| ------- | :----: | :---: | :--------------------: | ----------- |
+| System integrity checks | ✅ | ✅ | ✅ | Runs Microsoft's built-in [system file integrity checks](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e) to repair any corrupted system files |
+| Check for IRQ conflicts | ✅ | ✅ | ✅ | Sharing interrupt request lines among multiple devices can degrade performance. This cannot be fixed from within the software. | 
+| Warn if third-party antivirus found | ✅ | ✅ | ✅ | Windows Defender is generally faster and better; third-party antivirus software can slow the system down substantially - must be uninstalled manually, though |
 
 ## Suggestions and Tips
 - I recommend you use programs like [LatencyMon](https://www.resplendence.com/latencymon) and [WhySoSlow](https://www.resplendence.com/whysoslow) to benchmark your system before and after running PowerWash and any other optimizations.
