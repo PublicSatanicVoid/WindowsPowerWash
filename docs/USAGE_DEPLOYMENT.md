@@ -11,7 +11,7 @@ PowerWash can be easily deployed to a fresh PC as part of the Windows installati
 ### Setup
 - Familiarize yourself with using PowerWash in "configuration mode" [here](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md).
 - [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this repository (`UniverseCraft/WindowsPowerWash`) into your own public GitHub repository.
-- Modify your copy of `PowerWashSettings.json` with the settings you want executed when PowerWash automatically runs during setup.
+- Modify your copy of `PowerWashSettings.yml` with the settings you want executed when PowerWash automatically runs during setup.
 - *(Optional but highly recommended)* Test this out on a local machine or VM.
 - Burn a Windows ISO to a USB drive. You can use [Rufus](https://github.com/pbatard/rufus/releases/) or Microsoft's [Media Creation Tool](https://www.microsoft.com/en-us/software-download/windows10) for this.
 - Download and run [`autodeploy/add_to_installer.bat`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/autodeploy/add_to_installer.bat). You will be prompted to enter the drive letter of the USB drive and also the ID of your forked repository. **This is in the format `Username/Repo`, eg `UniverseCraft/PersonalDeploymentSettings`**, where `PersonalDeploymentSettings` has been forked from `UniverseCraft/WindowsPowerWash`.
