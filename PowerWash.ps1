@@ -974,7 +974,7 @@ if (Confirm "Remove configured list of Windows capabilities?" -Auto $true -Confi
 if (Confirm "Remove phantom applications?" -Auto $true -ConfigKey "Debloat.RemovePhantom") {
     $RK_Uninst_Locs | ForEach-Object {
         $root = $_
-        Get-ChildItem -Path $root | ForEach-Object {
+        Get-ChildItem -Path $root -EA SilentlyContinue | ForEach-Object {
             $path = "$_".replace("HKEY_LOCAL_MACHINE", "HKLM:")
             $name = (Get-ItemProperty -Path $path -Name "DisplayName" -EA SilentlyContinue).DisplayName
             $install = (Get-ItemProperty -Path $path -Name "InstallLocation" -EA SilentlyContinue).InstallLocation
@@ -986,7 +986,7 @@ if (Confirm "Remove phantom applications?" -Auto $true -ConfigKey "Debloat.Remov
     }
     $RK_AppPath_Locs | ForEach-Object {
         $root = $_
-        Get-ChildItem -Path $root | ForEach-Object {
+        Get-ChildItem -Path $root -EA SilentlyContinue | ForEach-Object {
             $path = "$_".replace("HKEY_LOCAL_MACHINE", "HKLM:")
             $install = (Get-ItemProperty -Path $path -Name "Path" -EA SilentlyContinue).Path
             if ($install -and (-not (Test-Path -Path $install))) {
