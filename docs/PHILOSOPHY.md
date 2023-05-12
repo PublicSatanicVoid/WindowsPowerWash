@@ -4,13 +4,13 @@
 
 Microsoft wants Windows to be a service - not something you own, but something you own the temporary right to use under Microsoft's terms. This lets them force updates, reinstall adware whenever they feel like it, and block users from making simple changes like disabling telemetry or uninstalling Microsoft's default browser. 
 
-And with the out-of-the-box user experience, Windows really does feel like a service. You're bombarded with notifications from apps you never asked for, told to link everything to a Microsoft account and prompted to let Microsoft collect data from you. Before you did anything but choose a username, Microsoft already installed software you never asked for. And without checking for confirmation, it continues to install software you never asked for, through automatic and sometimes disruptive updates. This is Microsoft's dream for Windows: not a clean, efficient, and obedient operating system but a nosy, disruptive, and disobedient piece of borderline malware that you wish you could get rid of but can't.
+And with the out-of-the-box user experience, Windows really does feel like a service. You're bombarded with notifications from apps you never asked for, told to link everything to a Microsoft account and prompted to let Microsoft collect data from you. Before you did anything but choose a username, Microsoft already installed software you never asked for. And without checking for confirmation, it continues to install software you never asked for, through automatic and sometimes disruptive updates. This is Microsoft's dream for Windows: not a clean, efficient, and obedient operating system but a nosy, disruptive, and disobedient piece of borderline malware that you wish you could get rid of but can't. Why is that their dream? Because advertisement deals are more profitable than the resulting user dissatisfaction is costly.
 
-If you're like me, you are absolutely disgusted by the gradual shift toward making Windows a service, and you feel strongly that nobody but you should have control over your operating system.
+If you're like me, you are absolutely disgusted by the gradual shift toward making Windows a service, and you feel strongly that nobody but you should have control over your operating system. 
 
 The great news is that you can completely nuke all the "service"-like aspects of Windows without making your system unstable or compromising security. With a few minutes of work on a new installation, PowerWash can purge the crapware from your machine and streamline your experience by tuning performance settings, checking for common software and hardware issues, and installing software that _you_ want. (And yes, all of this is configurable.)
 
-And because it's open-source, you don't have to take my word for any of it. You can verify anything you're curious about and disable or remove it if you don't like it. You are also encouraged to contribute to this project with any modifications you think would be useful to the broader community.
+And because it's open-source, you don't have to take my word for any of it. You can verify anything you're curious about and disable or remove it if you don't like it or aren't comfortable. You are also encouraged to contribute to this project with any modifications you think would be useful to the broader community.
 
 
 ## The philosophy of PowerWash
