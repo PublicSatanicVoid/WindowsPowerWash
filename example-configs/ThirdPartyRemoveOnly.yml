@@ -47,20 +47,20 @@ Performance:
 
 # Stops Windows and its components from phoning home. Desirable from both a performance and
 # privacy standpoint.
-DisableTelemetry: true
+DisableTelemetry: false
 
 # Removes bloatware / commonly unwanted programs and features
 Debloat:
   # Disables Cortana from being used but does not uninstall it
-  DisableCortana: true
+  DisableCortana: false
 
   # ENTERPRISE / EDUCATION ONLY
   # Disables Microsoft personalized recommendations and account notifications
-  DisableConsumerFeatures: true
+  DisableConsumerFeatures: false
 
   # ENTERPRISE / EDUCATION ONLY
   # Disables preinstalled apps from Microsoft and OEMs
-  DisablePreinstalled: true
+  DisablePreinstalled: false
 
   # Uninstalls below list of preinstalled packages
   RemovePreinstalled: true
@@ -71,31 +71,19 @@ Debloat:
     - HULULLC.HULUPLUS
     - king.com.CandyCrushFriends
     - king.com.FarmHeroesSaga
-    - Microsoft.549981C3F5F10 # This is Cortana
-    - Microsoft.Advertising.Xaml
-    - Microsoft.BingNews
-    - Microsoft.BingWeather
-    - Microsoft.Messaging
-    - Microsoft.MicrosoftSolitaireCollection
-    - Microsoft.MicrosoftOfficeHub
-    - Microsoft.OneConnect
-    - Microsoft.People
-    - Microsoft.SkypeApp
-    - Microsoft.Wallet
-    - Microsoft.WindowsCommunicationsApps
-    - Microsoft.WindowsFeedbackHub
-    - Microsoft.WindowsSoundRecorder
-    - Microsoft.XboxApp
-    - Microsoft.YourPhone
-    - MicrosoftTeams
     - RivetNetworks.KillerControlCenter
+    - BytedancePte.Ltd.TikTok
+    - king.com.CandyCrushFriends
+    - king.com.FarmHeroesSaga
+    - SpotifyAB.SpotifyMusic
     # Cannot remove Edge this way. See "RemoveEdge" config value below instead.
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true
   RemoveWindowsCapabilitiesList:
-    - OneCoreUAP.OneSync
-    - Microsoft.Windows.WordPad
+    []
+    #- OneCoreUAP.OneSync
+    #- Microsoft.Windows.WordPad
     #- Browser.InternetExplorer # Recommended to keep. Removing will break eg URL shortcuts.
 
   # Removes phantom programs, i.e. programs listed in the registry but which
@@ -105,22 +93,26 @@ Debloat:
   # WARNING: EXPERIMENTAL
   # Removes Microsoft Edge. Currently, some traces will remain, but the program itself will
   # at least be gone.
-  RemoveEdge: true # EXPERIMENTAL
+  RemoveEdge: false # EXPERIMENTAL
+
+  # Attempts to remove additional traces of Edge. May or may not be necessary to keep it from
+  # reinstalling or showing up in e.g. package caches.
+  RemoveEdge_ExtraTraces: false # EXPERIMENTAL
 
 # Settings pertaining to Windows Update
 WindowsUpdate:
   # PRO / ENTERPRISE / EDUCATION ONLY
   # Disables automatic Windows updates, but the user can still manually update from the
   # Windows Update settings page.
-  DisableAutoUpdate: true
+  DisableAutoUpdate: false
 
   # Disables Windows Update entirely. Both automatic and manual updates are disabled.
-  DisableAllUpdate: true
+  DisableAllUpdate: false
 
   # Adds a script shortcut to the desktop to toggle Windows Update completely on/off.
   # This is the best compromise for Windows Home users, as it lets them keep updates off
   # except when they specifically want to update.
-  AddUpdateToggleScriptToDesktop: true
+  AddUpdateToggleScriptToDesktop: false
 
 # Optional utilities and commonly loaded programs to install.
 Install:
@@ -128,11 +120,11 @@ Install:
   # Installs Group Policy Editor (gpedit.msc). On non-Home editions, this is available by
   # default. On Home editions, once installed here, it won't show up in Windows search, but
   # is accessible via Win+R, "gpedit.msc"
-  InstallGpEdit: true
+  InstallGpEdit: false
 
   # Installs Winget package manager. Convenient way to install a wide range of software
   # from the command line, with no user interaction needed.
-  InstallWinget: true
+  InstallWinget: false
 
   # Installs below list of Winget packages
   # Requires Winget to be installed.
@@ -193,7 +185,7 @@ Convenience:
   # - "Full": Shows the full search box
   # - "Icon": Shows just the search icon
   # - "Hidden": Hides the search box and icon
-  TaskbarSearchboxMode: Hidden
+  TaskbarSearchboxMode: Full
 
 # Settings for scans to perform.
 Scans:
