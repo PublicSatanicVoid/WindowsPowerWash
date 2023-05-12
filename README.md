@@ -2,6 +2,7 @@
 Remove bloatware from Windows, take control of important settings, and optimize for low latency and high performance
 
 ### [Click here for features list](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/FEATURES.md)
+* Includes the ONLY up-to-date Microsoft Edge removal process as of 5/12/23
 
 ## About PowerWash
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc. Also, many "technical" users find some of the defaults annoying. **PowerWash removes annoying, bloated, and unperformant parts of Windows** and can also install helpful utilities automatically.
