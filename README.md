@@ -19,7 +19,7 @@ This is helpful for first-time PowerWash users.
 [Guide to interactive mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_INTERACTIVE.md)
 
 ### Configuration mode
-In this mode, you edit `PowerWashSettings.json` to toggle the features that you want PowerWash to run.
+In this mode, you edit `PowerWashSettings.yml` to toggle the features that you want PowerWash to run.
 This is helpful for automating the process and lets you configure what programs to install/uninstall.
 [Guide to configuration mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md)
 

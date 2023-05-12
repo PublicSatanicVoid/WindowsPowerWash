@@ -1162,7 +1162,7 @@ if (Confirm "Remove phantom applications?" -Auto $true -ConfigKey "Debloat.Remov
     }
     $RK_AppPath_Locs | ForEach-Object {
         $root = $_
-        Get-ChildItem -Path $root | ForEach-Object {
+        Get-ChildItem -Path $root -EA SilentlyContinue | ForEach-Object {
             $path = "$_".replace("HKEY_LOCAL_MACHINE", "HKLM:")
             $install = (Get-ItemProperty -Path $path -Name "Path" -EA SilentlyContinue).Path
             if ($install -and (-not (Test-Path -Path $install))) {
