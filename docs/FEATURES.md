@@ -8,11 +8,11 @@ PowerWash modifies various aspects of your Windows installation. It configures y
 ### Highlights
 
 These are some of the most commonly wanted modifications to a standard Windows install, and PowerWash has all of them!
-- Disable Microsoft telemetry / "phoning home"
-- Disable automatic updates
-- Remove useless preinstalled applications -- including Microsoft Edge, if desired
-- Throttle "MsMpEng.exe" / "Antimalware Service Executable"
-- Configure and activate maximum performance power plan
+- Disable Microsoft **telemetry** / "phoning home"
+- Disable **automatic updates**
+- Remove useless **preinstalled applications** -- including **Microsoft Edge**, if desired
+- Throttle "**MsMpEng**.exe" / "Antimalware Service Executable"
+- Configure and activate **maximum performance** power plan
 
 ## Full Listing
 
@@ -55,7 +55,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 | Disable/uninstall Cortana | ✅ | ✅| ✅ | Most people find Cortana a nuisance |
 | Remove preinstalled applications | ✅ | ✅ | ✅ | Removes Skype, Teams, Xbox, News/Weather, Solitaire Collection, etc. [This list is configurable!](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md) |
 | Remove phantom applications | ✅ | ✅ | ✅ | (BETA) Removes remnants of uninstalled applications from the registry. This can sometimes have a modest impact on performance, e.g. when the system is frequently looking up a large number of paths that don't exist. We can't remove every single reference to the application, but we can clean house quite a bit. |
-| Remove Microsoft Edge | ◕ | ◕ | ◕ | Thoroughly removes the Edge program itself, but at the time of writing, some small, non-functional traces will remain. The program itself can be removed, but it will still show up (without an icon, and doing nothing when clicked) in the programs list and Windows Search. |
+| Remove Microsoft Edge | ✅ | ✅ | ✅ | Thoroughly removes Microsoft Edge. While some small traces in the filesystem/registry may remain, this removes the vast majority of it and all visible signs. Requires a restart to take full effect. Requires SQLite- this will be installed automatically if needed. |
 
 ### Software Installation
 
