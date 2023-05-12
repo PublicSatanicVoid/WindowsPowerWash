@@ -8,6 +8,8 @@ PowerWash can be easily deployed to a fresh PC as part of the Windows installati
 
 **How?** Windows has an "Unattended installation" feature that can be added to installation media, to automate most of the setup process. We can tack on extra commands to this, such as running PowerWash with a predefined configuration.
 
+This is also preferable to downloading modded Windows ISOs - they are much harder to validate from a security perspective and much less reliable as the initial installation files are being modified in unexpected/unsupported ways. By just inserting the PowerWash bootstrapper and leaving the install files themselves untouched, you're much less likely to brick your install and you can rest easy knowing that nothing has been tampered with.
+
 ### Setup
 - Familiarize yourself with using PowerWash in "configuration mode" [here](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md).
 - [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this repository (`UniverseCraft/WindowsPowerWash`) into your own public GitHub repository.
