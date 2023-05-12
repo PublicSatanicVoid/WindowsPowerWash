@@ -67,6 +67,7 @@ Debloat:
   RemovePreinstalledList:
     - 4DF9E0F8.Netflix
     - AppleInc.iTunes
+    - BytedancePte.Ltd.TikTok
     - CreativeTechnologyLtd.SoundBlasterConnect
     - HULULLC.HULUPLUS
     - king.com.CandyCrushFriends
@@ -89,6 +90,7 @@ Debloat:
     - Microsoft.YourPhone
     - MicrosoftTeams
     - RivetNetworks.KillerControlCenter
+    - SpotifyAB.SpotifyMusic
     # Cannot remove Edge this way. See "RemoveEdge" config value below instead.
 
   # Will remove the below list of Windows capabilities/features
