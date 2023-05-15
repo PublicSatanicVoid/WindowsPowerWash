@@ -18,6 +18,9 @@ These are some of the most commonly wanted modifications to a standard Windows i
 
 *Note that some editions of Windows do not have the necessary components to support certain PowerWash features. PowerWash does not impose any artificial limitations and the author continues to look for ways around Microsoft's. All features listed below are optional and configurable using the provided [`PowerWashSettings.yml`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.yml). (See [the documentation](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md)).*
 
+*While PowerWash works as expected on Enterprise, it does not work as expected on Enterprise LTSB/LTSC. These editions are missing certain components that are vital to application package management. Most performance settings work as expected, but not bloatware removal or custom software installation.*
+
+
 ### System Configuration - Performance
 
 | Feature | Works on Windows Home | Works on Windows Pro | Works on Windows Enterprise/Education | Description |
