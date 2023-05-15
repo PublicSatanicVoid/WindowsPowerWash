@@ -1,13 +1,17 @@
 # PowerWash: Reclaim Windows
 Remove bloatware from Windows, take control of important settings, and optimize for low latency and high performance
 
+**Quick start:** Open an admin command prompt and enter: `"PowerShell.exe" -Command "curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false"`
+
 ### [Click here for features list](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/FEATURES.md)
-* Includes the ONLY up-to-date Microsoft Edge removal process as of 5/12/23
+* Includes the ONLY known working Microsoft Edge removal process as of 5/12/23
 
 ## About PowerWash
+The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications.
+
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc. Also, many "technical" users find some of the defaults annoying. **PowerWash removes annoying, bloated, and unperformant parts of Windows** and can also install helpful utilities automatically and configure settings for higher performance.
 
-I created PowerWash because I believe that underneath the cruft (ads, bloatware, telemetry, forced automatic updates) Windows is fundamentally a great operating system, and it shouldn't be so difficult to make it great. Many debloater tools are themselves bloatware, or don't let you configure things easily, or just don't work. PowerWash takes the good stuff from what's already been done and adds even more good stuff. Also, it's actively maintained and 100% open-source.
+I created PowerWash because I believe that underneath the cruft (ads, bloatware, telemetry, forced automatic updates) Windows is fundamentally a great operating system, and it shouldn't be so difficult to make it great. Many debloater tools are themselves bloatware, or don't let you configure things easily, or just don't work. PowerWash takes the good stuff from what's already been done and adds even more good stuff. Also, it's actively maintained and 100% open-source. [Read more about the philosophy behind PowerWash »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/PHILOSOPHY.md)
 
 
 
