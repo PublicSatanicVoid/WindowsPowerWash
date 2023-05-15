@@ -1,5 +1,5 @@
 # PowerWash: Reclaim Windows
-Remove bloatware from Windows, take control of important settings, and optimize for low latency and high performance
+The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications. Removes MS/OEM bloatware, telemetry, and applies aggressive performance settings, including many that are normally hidden from the user.
 
 **Quick start:** Open an admin command prompt and enter: `"PowerShell.exe" -Command "curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false"`
 
@@ -7,7 +7,6 @@ Remove bloatware from Windows, take control of important settings, and optimize 
 * Includes the ONLY known working Microsoft Edge removal process as of 5/12/23
 
 ## About PowerWash
-The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications.
 
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc. Also, many "technical" users find some of the defaults annoying. **PowerWash removes annoying, bloated, and unperformant parts of Windows** and can also install helpful utilities automatically and configure settings for higher performance.
 
