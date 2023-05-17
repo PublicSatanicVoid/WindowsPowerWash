@@ -1,4 +1,4 @@
-<sup>[← Back to home](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/README.md)</sup>
+<sup>[← Back to home](https://universecraft.github.io/WindowsPowerWash/)</sup>
 
 ## PowerWash Limitations
 
