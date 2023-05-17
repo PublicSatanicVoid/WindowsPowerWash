@@ -4,7 +4,9 @@ The fresh, snappy out-of-box experience you've always wanted in Windows - ready 
 ### [Click here for features list](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/FEATURES.md)
 * Includes the ONLY known working Microsoft Edge removal process as of 5/12/23
 
-**Quick start:** Open an admin PowerShell prompt and enter: ```curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false```
+**Quick start:** Open an admin PowerShell prompt and enter:
+
+```curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false```
 
 ## About PowerWash
 
@@ -32,8 +34,10 @@ In this mode, PowerWash automatically runs when installing Windows from a USB dr
 This is helpful for automating the process when you frequently install/reinstall Windows or want to start multiple devices from the same pre-configured point.
 [Guide to deployment mode »](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_DEPLOYMENT.md)
 
-## Some additional recommendations
+## Additional recommendations
 PowerWash should be used as part of a comprehensive approach to optimizing and securing your system.
+
+**NOTE:** This script is NOT designed to repair a broken/corrupted Windows installation! It is designed to run on a fully functioning system and further optimize it for high-performance use cases. A clean install prior to using this is ideal! (In fact, you can even [load PowerWash onto Windows installation media!](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_DEPLOYMENT.md))
 
 **Security.** To maximize security without sacrificing performance, I recommend using the enterprise version of Microsoft Defender, such as Defender for Business, along with Windows 10 Enterprise. The free version of Windows Defender does not adequately provide techniques such as Attack Surface Reduction, vulnerability tracking, etc., while third-party antivirus solutions tend to slow down your computer substantially. You can obtain permanent license keys to Enterprise from any number of reputable websites for ~$12 and easily purchase a Defender for Business subscription for ~$4/month if you have an email under a custom domain name. In my opinion, the setup is well worth it. I also recommend using BitLocker for drive encryption, using hardware rather than software encryption if possible.
 
@@ -45,5 +49,3 @@ See [LICENSE](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/LICENS
 ## Special Thank-Yous
 - While many freely available sites have contributed valuable knowledge in the development of this script, I especially want to thank the maintainers of [admx.help](https://admx.help) for providing an easy-to-use and comprehensive inventory of Group Policy and associated registry settings. Also, as bad a reputation as Microsoft has for user-friendliness, their technical documentation at [learn.microsoft.com](https://learn.microsoft.com) is generally very high quality.
 - All beta testers
-
-**NOTE:** This script is NOT designed to repair a broken/corrupted Windows installation! It is designed to run on a fully functioning system and further optimize it for high-performance use cases. A clean install prior to using this is ideal! (In fact, you can even [load PowerWash onto Windows installation media!](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_DEPLOYMENT.md))
