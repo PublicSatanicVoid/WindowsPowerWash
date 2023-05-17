@@ -1,4 +1,4 @@
-<sup>[← Back to home](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/README.md)</sup>
+<sup>[← Back to home](https://universecraft.github.io/WindowsPowerWash/)</sup>
 
 ## How It Works
 The default Windows installation has to cater to a very wide variety of users, and generally makes tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power management, data collection, etc.
@@ -16,7 +16,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 
 ## Full Listing
 
-*Note that some editions of Windows do not have the necessary components to support certain PowerWash features. PowerWash does not impose any artificial limitations and the author continues to look for ways around Microsoft's. All features listed below are optional and configurable using the provided [`PowerWashSettings.yml`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.yml). (See [the documentation](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md)).*
+*Note that some editions of Windows do not have the necessary components to support certain PowerWash features. PowerWash does not impose any artificial limitations and the author continues to look for ways around Microsoft's. All features listed below are optional and configurable using the provided [`PowerWashSettings.yml`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.yml). (See [the documentation](https://universecraft.github.io/WindowsPowerWash/docs/usage/config)).*
 
 *While PowerWash works as expected on Enterprise, it does not work as expected on Enterprise LTSB/LTSC. These editions are missing certain components that are vital to application package management. Most performance settings work as expected, but not bloatware removal or custom software installation.*
 
@@ -56,7 +56,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 | Feature | Works on Windows Home | Works on Windows Pro | Works on Windows Enterprise/Education | Description |
 | ------- | :----: | :---: | :--------------------: | ----------- |
 | Disable/uninstall Cortana | ✅ | ✅| ✅ | Most people find Cortana a nuisance |
-| Remove preinstalled applications | ✅ | ✅ | ✅ | Removes Skype, Teams, Xbox, News/Weather, Solitaire Collection, etc. [This list is configurable!](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md) |
+| Remove preinstalled applications | ✅ | ✅ | ✅ | Removes Skype, Teams, Xbox, News/Weather, Solitaire Collection, etc. [This list is configurable!](hhttps://universecraft.github.io/WindowsPowerWash/docs/usage/config) |
 | Remove phantom applications | ✅ | ✅ | ✅ | (BETA) Removes remnants of uninstalled applications from the registry. This can sometimes have a modest impact on performance, e.g. when the system is frequently looking up a large number of paths that don't exist. We can't remove every single reference to the application, but we can clean house quite a bit. |
 | Remove Microsoft Edge | ✅ | ✅ | ✅ | Thoroughly removes Microsoft Edge. While some small traces in the filesystem/registry may remain, this removes the vast majority of it and all visible signs. Requires a restart to take full effect. Requires SQLite- this will be installed automatically if needed. |
 
@@ -66,7 +66,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 | ------- | :----: | :---: | :--------------------: | ----------- |
 | Install Group Policy Editor | ✅ | N/A | N/A | Installs [Group Policy editor](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/dn265982(v=ws.11)), which presents a straightforward and well-documented interface to make system changes without manually editing the registry. Group Policy editor is a Microsoft product but does not come installed by default on Home editions of Windows. |
 | Install Winget | ✅ | ✅ | ✅ | See [https://learn.microsoft.com/en-us/windows/package-manager/winget/](https://learn.microsoft.com/en-us/windows/package-manager/winget/) |
-| Install free utilities and replacements for Microsoft bloatware | ✅ | ✅ | ✅ | [This list is configurable!](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md) |
+| Install free utilities and replacements for Microsoft bloatware | ✅ | ✅ | ✅ | [This list is configurable!](https://universecraft.github.io/WindowsPowerWash/docs/usage/config) |
 
 ### Scans and checks
 
