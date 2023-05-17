@@ -158,6 +158,11 @@ Install:
 
 # Settings related to Windows Defender.
 Defender:
+  # Configures Defender and related software for high security.
+  # Some of these features require Enterprise and/or Microsoft Defender 365, e.g. Microsoft Defender for Business.
+  # Policies applied include Attack Surface Reduction, exploit mitigation, and browser security.
+  ApplyRecommendedSecurityPolicies: true
+
   # Tells Defender to only run scans when the computer is idle.
   DefenderScanOnlyWhenIdle: true
   DefenderScanOnlyWhenIdle_TimeoutMins: 10
