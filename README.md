@@ -4,7 +4,7 @@ The fresh, snappy out-of-box experience you've always wanted in Windows - ready 
 ### [Click here for features list](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/FEATURES.md)
 * Includes the ONLY known working Microsoft Edge removal process as of 5/12/23
 
-**Quick start:** Open an admin command prompt and enter: `"PowerShell.exe" -Command "curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false"`
+**Quick start:** Open an admin PowerShell prompt and enter: `curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false`
 
 ## About PowerWash
 
