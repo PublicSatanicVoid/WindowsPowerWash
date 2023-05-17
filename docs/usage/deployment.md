@@ -1,4 +1,4 @@
-<sup>[← Back to home](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/README.md)</sup>
+<sup>[← Back to home](https://universecraft.github.io/WindowsPowerWash/)</sup>
 
 ## PowerWash: Deployment via Windows Installation Media
 
@@ -11,7 +11,7 @@ PowerWash can be easily deployed to a fresh PC as part of the Windows installati
 This is also preferable to downloading modded Windows ISOs - they are much harder to validate from a security perspective and much less reliable as the initial installation files are being modified in unexpected/unsupported ways. By just inserting the PowerWash bootstrapper and leaving the install files themselves untouched, you're much less likely to brick your install and you can rest easy knowing that nothing has been tampered with.
 
 ### Setup
-- Familiarize yourself with using PowerWash in "configuration mode" [here](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/docs/USAGE_CONFIG.md).
+- Familiarize yourself with using PowerWash in "configuration mode" [here](https://universecraft.github.io/WindowsPowerWash/docs/usage/config).
 - [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this repository (`UniverseCraft/WindowsPowerWash`) into your own public GitHub repository.
 - Modify your copy of `PowerWashSettings.yml` with the settings you want executed when PowerWash automatically runs during setup.
 - *(Optional but highly recommended)* Test this out on a local machine or VM.
