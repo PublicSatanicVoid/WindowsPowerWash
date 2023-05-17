@@ -10,7 +10,7 @@ PowerWash modifies various aspects of your Windows installation. It configures y
 These are some of the most commonly wanted modifications to a standard Windows install, and PowerWash has all of them!
 - Disable Microsoft **telemetry** / "phoning home"
 - Disable **automatic updates**
-- Remove useless **preinstalled applications** -- including **Microsoft Edge**, if desired
+- Remove useless or unwanted **preinstalled applications** -- including **Microsoft Edge**, if desired
 - Throttle "**MsMpEng**.exe" / "Antimalware Service Executable"
 - Configure and activate **maximum performance** power plan
 
