@@ -18,7 +18,7 @@ function RunScriptAsSystem($Path, $ArgString) {
     # Adapted from https://github.com/mkellerm1n/Invoke-CommandAs/blob/master/Invoke-CommandAs/Private/Invoke-ScheduledTask.ps1
     $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "$Path $ArgString"
     $Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-    $Task = Register-ScheduledTask PowerWashSystemTask -Action $Action -Principal $Principal
+    $Task = Register-ScheduledTask PowerWashSystemTask2 -Action $Action -Principal $Principal
     $Job = $Task | Start-ScheduledTask -AsJob -ErrorAction Stop
     $Job | Wait-Job | Remove-Job -Force -Confirm:$False
     While (($Task | Get-ScheduledtaskInfo).LastTaskResult -eq 267009) { Start-Sleep -Milliseconds 200 }
