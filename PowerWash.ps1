@@ -884,7 +884,8 @@ if ("/ElevatedAction" -in $args) {
             "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550",
             "c1db55ab-c21a-4637-bb3f-a12568109d35",
             "d3e037e1-3eb8-44c8-a917-57927947596d",
-            "e6db77e5-3df2-4cf1-b95a-636979351e5b"
+            "e6db77e5-3df2-4cf1-b95a-636979351e5b",
+            "d4f940ab-401b-4efc-aadc-ad5f3c50688a"
         )
         $asr_guids | ForEach-Object {
             RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 1 -VType "String"
@@ -892,6 +893,8 @@ if ("/ElevatedAction" -in $args) {
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
         
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
+
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LmCompatibilityLevel" -Value 5 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RunAsPPL" -Value 1 -VType "DWORD"
