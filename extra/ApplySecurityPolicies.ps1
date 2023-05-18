@@ -49,7 +49,7 @@ if ("/ApplySecurityPolicy" -in $args) {
 		"c1db55ab-c21a-4637-bb3f-a12568109d35",
 		"d3e037e1-3eb8-44c8-a917-57927947596d",
 		"e6db77e5-3df2-4cf1-b95a-636979351e5b",
-    "d4f940ab-401b-4efc-aadc-ad5f3c50688a"
+    		"d4f940ab-401b-4efc-aadc-ad5f3c50688a"
 	)
 	$asr_guids | ForEach-Object {
 		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 1 -VType "String"
