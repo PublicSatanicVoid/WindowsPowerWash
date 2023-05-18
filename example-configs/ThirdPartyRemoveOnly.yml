@@ -122,6 +122,11 @@ Install:
   # is accessible via Win+R, "gpedit.msc"
   InstallGpEdit: false
 
+  # HOME EDITION ONLY
+  # Installs Hyper-V. On non-Home editions, this is available by default.
+  # Can take a bit of time to install all the required packages.
+  InstallHyperV: false
+
   # Installs Winget package manager. Convenient way to install a wide range of software
   # from the command line, with no user interaction needed.
   InstallWinget: false

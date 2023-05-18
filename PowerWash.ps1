@@ -1374,6 +1374,26 @@ if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Group Poli
     "- Complete"
 }
 
+if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Hyper-V? (Not installed by default on Home editions)" -Auto $false -ConfigKey "Install.InstallHyperV")) {
+    "- Enumerating packages..."
+    $pkgs = Get-ChildItem C:\Windows\servicing\Packages | Where-Object { $_.Name -like "*Hyper*V*mum" }
+    
+    "- Installing packages..."
+    $i = 1
+    $pkgs | ForEach-Object {
+        $pkg = $_.Name
+        "  - ($i/$($pkgs.Length)) $pkg"
+        DISM.exe /Online /NoRestart /Add-Package:"C:\Windows\servicing\Packages\$pkg" 2>$null | Out-Null
+        $i++
+    }    
+
+    "- Enabling Hyper-V..."
+    # DISM.exe /Online /NoRestart /Enable-Feature /featurename:Microsoft-Hyper-V -All /LimitAccess /All 2>$null | Out-Null
+    Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
+
+    "- Complete"
+}
+
 if ((-not $global:has_winget) -and (Confirm "Install Winget package manager?" -Auto $false -ConfigKey "Install.InstallWinget")) {
     "- Installing Winget dependencies..."
 	
