@@ -10,7 +10,7 @@ curl -o PowerWashSettings.yml "https://raw.githubusercontent.com/$gh_repo_id/mai
 Set-ExecutionPolicy Unrestricted -Force -Confirm:$false
 
 Read-Host "To modify the PowerWash configuration, edit PowerWashSettings.yml in the current directory, then press Enter"
-$mode = Read-Host "Enter 'manual' to be promoted whether you want to apply each PowerWash feature, or 'config' to follow the configured settings."
+$mode = Read-Host "Enter 'manual' to be prompted whether you want to apply each PowerWash feature, or 'config' to follow the configured settings."
 
 "Bootstrapping into PowerWash..."
 if ($mode -eq "config") {
