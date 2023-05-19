@@ -10,7 +10,7 @@
 #
 
 
-$development_computers = @("DESKTOP-8146PKJ", "DESKTOP-OIDHB0U")
+$development_computers = @("DESKTOP-DEPFV0F", "DESKTOP-OIDHB0U")
 $hostname = hostname
 $global:sys_account_debug_log = "C:\PowerWashSysActionsDbg.log"
 $global:is_debug = ($hostname -in $development_computers) -and $true
