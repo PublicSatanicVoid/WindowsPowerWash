@@ -1272,7 +1272,7 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
 
     if (-not $has_sqlite) {
         if (-not $has_winget) {
-            "- SQLite3 is required to remove Edge, and Winget is required to install SQLite3. Installing Winget and its dependencies now..."
+            "- SQLite3 is required to remove Edge, and Winget is required to install SQLite3. Installing dependencies now..."
             Install-Winget
             "- Winget installed"
         }
