@@ -780,8 +780,12 @@ if ("/ElevatedAction" -in $args) {
             }
             else {
                 SysDebugLog "write over live appx sqlite database"
+		sc.exe config StateRepository start=disabled | Out-Null
                 Stop-Service -Force StateRepository | SysDebugLog
+		Remove-Item "$($appx_db)-shm"
+		Remove-Item "$($appx_db)-wal"
                 Copy-Item -Force -Path "C:\.appx.tmp" -Dest $appx_db | SysDebugLog
+		sc.exe config StateRepository start=demand | Out-Null
                 Start-Service StateRepository | SysDebugLog
                 Remove-Item "C:\.appx.tmp"
                 SysDebugLog "-done"
