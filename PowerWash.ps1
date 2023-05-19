@@ -434,9 +434,9 @@ function CreateShortcut($Dest, $Source, $Admin = $false) {
     $Shortcut.Save()
 
     if ($Admin) {
-        $bytes = [System.IO.File]::ReadAllBytes("$home\Desktop\Toggle Updates.lnk")
+        $bytes = [System.IO.File]::ReadAllBytes("$Dest")
         $bytes[0x15] = $bytes[0x15] -bor 0x20  # set byte 21 (0x15) bit 6 (0x20) ON
-        [System.IO.File]::WriteAllBytes("$home\Desktop\Toggle Updates.lnk", $bytes)
+        [System.IO.File]::WriteAllBytes("$Dest", $bytes)
     }
 }
 
