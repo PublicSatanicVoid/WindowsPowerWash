@@ -28,7 +28,7 @@ And on other editions of Windows, you have the (easier) option to disable automa
 > The Hyper-V role **cannot** be installed on Windows 10 Home.
 -[Microsoft Learn -- accessed 5/18/2023](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v#:~:text=The%20Hyper%2DV%20role%20cannot%20be%20installed%20on%20Windows%2010%20Home)
 
-While they take a bit of DISM-fu to install, both Group Policy Editor and Hyper-V, which are advertised as exclusive to professional Windows editions, can easily be installed on Windows Home through their corresponding PowerWash features. Their installation files are even included in the folder of servicing packages, just waiting to be installed!
+While they take a bit of DISM-fu to install, both Group Policy Editor and Hyper-V, which are advertised as exclusive to professional Windows editions, can easily be installed on Windows Home through their corresponding PowerWash features. Their installation files are even included in the folder of servicing packages, just waiting to be installed! How ridiculous is it that they tell you the feature can't be installed, when they put the installation files _on your computer?_
 
 (Yes, certain group policies don't work on Windows Home, but many of them do and most of the others have workarounds)
 
