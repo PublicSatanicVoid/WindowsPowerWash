@@ -869,7 +869,7 @@ if ("/ElevatedAction" -in $args) {
         Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
 
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
+        #RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
         $asr_guids = @(
             "26190899-1602-49e8-8b27-eb1d0a1ce869",
