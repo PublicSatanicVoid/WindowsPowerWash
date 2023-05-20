@@ -870,7 +870,7 @@ if ("/ElevatedAction" -in $args) {
         }
     }
     elseif ("/ApplySecurityPolicy" -in $args) {
-        Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
+        #Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
 
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
         #RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
