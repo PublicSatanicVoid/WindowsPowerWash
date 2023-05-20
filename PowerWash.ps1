@@ -423,7 +423,7 @@ function UnpinApp($appname) {
 	((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() `
     | Where-Object { $_.Name -eq $appname }).Verbs() `
     | Where-Object { $_.Name.replace('&', '') -match 'Unpin from taskbar' } `
-    | ForEach-Object { $_.DoIt() }
+    | ForEach-Object { $_.DoIt() } | 2>$null | Out-Null
 }
 
 function CreateShortcut($Dest, $Source, $Admin = $false) {
@@ -1156,6 +1156,102 @@ if (Confirm "Do you want to disable Microsoft telemetry?" -Auto $true -ConfigKey
 ""
 
 
+if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "Debloat.RemoveEdge") {
+    $aggressive = Confirm "--> Remove Microsoft Edge aggressively? (Removes extra traces of Edge from the filesystem and registry) (EXPERIMENTAL)" -Auto $false -ConfigKey "Debloat.RemoveEdge_ExtraTraces"
+    $aggressive_flag = $(If ($aggressive) { "/Aggressive" } Else { "" })
+
+    if (-not $has_sqlite) {
+        if (-not $has_winget) {
+            "- SQLite3 is required to remove Edge, and Winget is required to install SQLite3. Installing dependencies now..."
+            Install-Winget
+            "- Winget installed"
+        }
+
+        "- Installing required dependency SQLite3..."
+        & "winget" "install" "--accept-package-agreements" "--accept-source-agreements" "SQLite.SQLite"
+        "- SQLite3 installed"
+
+        $sqlite3_cmd = "$home\AppData\Local\Microsoft\WinGet\Links\sqlite3.exe"
+    }
+
+    "- NOTE: This feature is experimental and may not work completely or at all"
+
+    "- Stopping Microsoft Edge..."
+    taskkill /f /im msedge.exe 2>$null | Out-Null
+    taskkill /f /im MicrosoftEdgeUpdate.exe 2>$null | Out-Null
+	
+    "- Marking Edge as removable..."
+    RegistryPut $RK_Uninst_Edge -Key "NoRemove" -Value 0 -VType "DWORD"
+    RegistryPut $RK_Uninst_Edge -Key "NoRepair" -Value 0 -VType "DWORD"
+
+    "- Removing Edge from provisioned packages..."
+    $provisioned = (Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Edge*" }).PackageName
+    if ($null -ne $provisioned) {
+        Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers 2>$null | Out-Null
+    }
+
+    Write-Host "- Marking Edge as removable in Appx database..." -NoNewline
+    $appx_db = "C:\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
+    Copy-Item -Path $appx_db -Dest "C:\.appx.tmp" | Out-Null
+    @"
+    DROP TRIGGER IF EXISTS main.TRG_AFTER_UPDATE_Package_SRJournal;
+    UPDATE Package SET IsInbox=0 WHERE PackageFullName LIKE '%Microsoft%Edge%';
+    CREATE TRIGGER TRG_AFTER_UPDATE_Package_SRJournal AFTER UPDATE ON Package FOR EACH ROW WHEN is_srjournal_enabled()BEGIN UPDATE Sequence SET LastValue=LastValue+1 WHERE Id=2 ;INSERT INTO SRJournal(_Revision, _WorkId, ObjectType, Action, ObjectId, PackageIdentity, WhenOccurred, SequenceId)SELECT 1, workid(), 1, 2, NEW._PackageID, pi._PackageIdentityID, now(), s.LastValue FROM Sequence AS s CROSS JOIN PackageIdentity AS pi WHERE s.Id=2 AND pi.PackageFullName=NEW.PackageFullName;END;
+"@  | & $sqlite3_cmd "C:\.appx.tmp"
+    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /AppxInboxStage"
+
+    "- Removing Edge from Appx database..."
+    Stop-Service -Force StateRepository
+    Start-Service StateRepository
+    Get-AppxPackage -Name "*Microsoft*Edge*" | Remove-AppxPackage
+
+    if ($aggressive) {
+	    "- Attempting to remove Edge using setup tool..."
+	    $edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
+	    if (Test-Path "$edge_base") {
+		foreach ($item in Get-ChildItem -Path "$edge_base") {
+		    $setup = "$edge_base\$item\Installer\setup.exe"
+		    if (Test-Path "$setup") {
+			"  - Attempting to remove Edge installation: $setup"
+			& "$setup" --uninstall --msedge --system-level --verbose-logging --force-uninstall
+		    }
+		}
+	    }
+
+	    # Many folders to remove are protected by SYSTEM
+	    Write-Host "- Removing Edge from filesystem..." -NoNewline
+	    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /FilesystemStage"
+
+	    # Many registry keys to remove are protected by SYSTEM
+	    Write-Host "- Removing Edge from registry..." -NoNewline
+	    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
+	    if (Test-Path "C:\.PowerWashAmcacheStatus.tmp") {
+		$amcache_status = Get-Content "C:\.PowerWashAmcacheStatus.tmp"
+		Remove-Item "C:\.PowerWashAmcacheStatus.tmp"
+		if ($amcache_status -eq "Failure") {
+		    "  - NOTICE: Could not remove Edge from Amcache registry hive, probably because it is in use by another process. You can restart your computer and try again later."
+		}
+	    }
+
+	    "- Removing Edge services..."
+	    $services_to_delete = @(
+		"edgeupdate",
+		"edgeupdatem",
+		"MicrosoftEdgeElevationService"
+	    )
+	    $services_to_delete | ForEach-Object {
+		sc.exe stop $_ | Out-Null
+		sc.exe config $_ start=disabled | Out-Null
+		sc.exe delete $_ | Out-Null
+	    }
+
+	    "- Disabling Edge in Windows Update..."
+	    RegistryPut "HKLM:\SOFTWARE\Microsoft\EdgeUpdate" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
+    }
+    
+    "- Complete"
+}
+
 if (Confirm "Disable Cortana?" -Auto $true -ConfigKey "Debloat.DisableCortana") {
     RegistryPut $RK_Policy_Search -Key "AllowCortana" -Value 0 -VType "DWORD"
     RegistryPut $RK_Policy_Search -Key "DisableWebSearch" -Value 1 -VType "DWORD"
@@ -1267,104 +1363,6 @@ if (Confirm "Remove phantom applications?" -Auto $true -ConfigKey "Debloat.Remov
             }
         }
     }
-    "- Complete"
-}
-
-if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "Debloat.RemoveEdge") {
-    $aggressive = Confirm "--> Remove Microsoft Edge aggressively? (Removes extra traces of Edge from the filesystem and registry) (EXPERIMENTAL)" -Auto $false -ConfigKey "Debloat.RemoveEdge_ExtraTraces"
-    $aggressive_flag = $(If ($aggressive) { "/Aggressive" } Else { "" })
-
-    if (-not $has_sqlite) {
-        if (-not $has_winget) {
-            "- SQLite3 is required to remove Edge, and Winget is required to install SQLite3. Installing dependencies now..."
-            Install-Winget
-            "- Winget installed"
-        }
-
-        "- Installing required dependency SQLite3..."
-        & "winget" "install" "--accept-package-agreements" "--accept-source-agreements" "SQLite.SQLite"
-        "- SQLite3 installed"
-
-        $sqlite3_cmd = "$home\AppData\Local\Microsoft\WinGet\Links\sqlite3.exe"
-    }
-
-    "- NOTE: This feature is experimental and may not work completely or at all"
-	
-    "- Stopping Microsoft Edge..."
-    taskkill /f /im msedge.exe 2>$null | Out-Null
-    taskkill /f /im MicrosoftEdgeUpdate.exe 2>$null | Out-Null
-	
-    "- Marking Edge as removable..."
-    RegistryPut $RK_Uninst_Edge -Key "NoRemove" -Value 0 -VType "DWORD"
-    RegistryPut $RK_Uninst_Edge -Key "NoRepair" -Value 0 -VType "DWORD"
-	
-    if ($aggressive) {
-	    "- Attempting to remove Edge using setup tool..."
-	    $edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
-	    if (Test-Path "$edge_base") {
-		foreach ($item in Get-ChildItem -Path "$edge_base") {
-		    $setup = "$edge_base\$item\Installer\setup.exe"
-		    if (Test-Path "$setup") {
-			"  - Attempting to remove Edge installation: $setup"
-			& "$setup" --uninstall --msedge --system-level --verbose-logging --force-uninstall
-		    }
-		}
-	    }
-    }
-	
-    "- Removing Edge from provisioned packages..."
-    $provisioned = (Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Edge*" }).PackageName
-    if ($null -ne $provisioned) {
-        Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers 2>$null | Out-Null
-    }
-
-    Write-Host "- Marking Edge as removable in Appx database..." -NoNewline
-    $appx_db = "C:\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
-    Copy-Item -Path $appx_db -Dest "C:\.appx.tmp" | Out-Null
-    @"
-    DROP TRIGGER IF EXISTS main.TRG_AFTER_UPDATE_Package_SRJournal;
-    UPDATE Package SET IsInbox=0 WHERE PackageFullName LIKE '%Microsoft%Edge%';
-    CREATE TRIGGER TRG_AFTER_UPDATE_Package_SRJournal AFTER UPDATE ON Package FOR EACH ROW WHEN is_srjournal_enabled()BEGIN UPDATE Sequence SET LastValue=LastValue+1 WHERE Id=2 ;INSERT INTO SRJournal(_Revision, _WorkId, ObjectType, Action, ObjectId, PackageIdentity, WhenOccurred, SequenceId)SELECT 1, workid(), 1, 2, NEW._PackageID, pi._PackageIdentityID, now(), s.LastValue FROM Sequence AS s CROSS JOIN PackageIdentity AS pi WHERE s.Id=2 AND pi.PackageFullName=NEW.PackageFullName;END;
-"@  | & $sqlite3_cmd "C:\.appx.tmp"
-    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /AppxInboxStage"
-
-    "- Removing Edge from Appx database..."
-    Stop-Service -Force StateRepository
-    Start-Service StateRepository
-    Get-AppxPackage -Name "*Microsoft*Edge*" | Remove-AppxPackage
-
-    if ($aggressive) {
-	    # Many folders to remove are protected by SYSTEM
-	    Write-Host "- Removing Edge from filesystem..." -NoNewline
-	    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /FilesystemStage"
-
-	    # Many registry keys to remove are protected by SYSTEM
-	    Write-Host "- Removing Edge from registry..." -NoNewline
-	    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
-	    if (Test-Path "C:\.PowerWashAmcacheStatus.tmp") {
-		$amcache_status = Get-Content "C:\.PowerWashAmcacheStatus.tmp"
-		Remove-Item "C:\.PowerWashAmcacheStatus.tmp"
-		if ($amcache_status -eq "Failure") {
-		    "  - NOTICE: Could not remove Edge from Amcache registry hive, probably because it is in use by another process. You can restart your computer and try again later."
-		}
-	    }
-
-	    "- Removing Edge services..."
-	    $services_to_delete = @(
-		"edgeupdate",
-		"edgeupdatem",
-		"MicrosoftEdgeElevationService"
-	    )
-	    $services_to_delete | ForEach-Object {
-		sc.exe stop $_ | Out-Null
-		sc.exe config $_ start=disabled | Out-Null
-		sc.exe delete $_ | Out-Null
-	    }
-
-	    "- Disabling Edge in Windows Update..."
-	    RegistryPut "HKLM:\SOFTWARE\Microsoft\EdgeUpdate" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
-    }
-    
     "- Complete"
 }
 
