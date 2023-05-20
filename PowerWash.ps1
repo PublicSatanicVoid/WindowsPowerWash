@@ -1169,10 +1169,10 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
     if (-not $has_sqlite) {
         "- Installing required dependency SQLite3..."
         Invoke-WebRequest -Uri "https://sqlite.org/2023/sqlite-tools-win32-x86-3420000.zip" -OutFile "C:\sqlite.zip"
-        Expand-Archive "C:\sqlite.zip"
-        $subdir = (Get-ChildItem "C:\sqlite\sqlite")[0].Name
-        $sqlite3_cmd = "C:\sqlite\sqlite\$subdir\sqlite3.exe"
-        Add-Path "C:\sqlite\sqlite\$subdir"
+        Expand-Archive "C:\sqlite.zip" -DestinationPath "C:\sqlite"
+        $subdir = (Get-ChildItem "C:\sqlite")[0].Name
+        $sqlite3_cmd = "C:\sqlite\$subdir\sqlite3.exe"
+        Add-Path "C:\sqlite\$subdir"
         Remove-Item "C:\sqlite.zip"
         "- SQLite3 installed"
     }
@@ -1247,6 +1247,10 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
             sc.exe config $_ start=disabled | Out-Null
             sc.exe delete $_ | Out-Null
         }
+
+        "- Disabling Edge tasks..."
+        TryDisableTask "MicrosoftEdgeUpdateTaskMachineCore"
+        TryDisableTask "MicrosoftEdgeUpdateTaskMachineUA"
 
         "- Disabling Edge in Windows Update..."
         RegistryPut "HKLM:\SOFTWARE\Microsoft\EdgeUpdate" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
