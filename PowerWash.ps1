@@ -1201,8 +1201,8 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
 ""
 
 
-if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "Debloat.RemoveEdge") {
-    $aggressive = Confirm "--> Remove Microsoft Edge aggressively? (Removes extra traces of Edge from the filesystem and registry) (EXPERIMENTAL)" -Auto $false -ConfigKey "Debloat.RemoveEdge_ExtraTraces"
+if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveEdge") {
+    $aggressive = Confirm "--> Remove Microsoft Edge aggressively? (Removes extra traces of Edge from the filesystem and registry)" -Auto $false -ConfigKey "Debloat.RemoveEdge_ExtraTraces"
     $aggressive_flag = $(If ($aggressive) { "/Aggressive" } Else { "" })
 
     if (-not $has_sqlite) {
@@ -1215,8 +1215,6 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
         Remove-Item "C:\sqlite.zip"
         "- SQLite3 installed"
     }
-
-    "- NOTE: This feature is experimental and may not work completely or at all"
 
     "- Stopping Microsoft Edge..."
     taskkill /f /im msedge.exe 2>$null | Out-Null
@@ -1295,6 +1293,7 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
         RegistryPut "HKLM:\SOFTWARE\Microsoft\EdgeUpdate" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
     }
     
+    "- Note: May need to re-run this after Windows 'quality updates'"
     "- Complete"
 }
 
