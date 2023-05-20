@@ -33,6 +33,10 @@ Performance:
   # and rapid ramp-up in response to increased system load. Disables power throttling.
   PowerSettingsMaxPerformance: true
 
+  # Sets visual effects settings to maximum performance, e.g. disables many Windows animations.
+  # Does not disable font smoothing.
+  AdjustVisualEffects: false
+
   # Fast Startup can prevent some drivers from initializing properly. Disabling it may
   # cause your device to boot more slowly, but it's generally worth it. Too many issues
   # with Fast Startup have been reported.

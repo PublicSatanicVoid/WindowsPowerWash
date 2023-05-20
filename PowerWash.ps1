@@ -165,6 +165,7 @@ $global:feature_verbs = @{
     "Performance.MultimediaResponsiveness"         = "Applying high-performance multimedia settings";
     "Performance.NetworkResponsiveness"            = "Applying high-performance network adapter settings";
     "Performance.PowerSettingsMaxPerformance"      = "Applying high-performance power settings";
+    "Performance.AdjustVisualEffects"              = "Applying high-performance visual effects settings";
     "Performance.DisableFastStartup"               = "Disabling fast startup";
     "Performance.EnableDriverMsi"                  = "Enabling message-signaled interrupts on supported devices";
     "Performance.EnableDriverPrio"                 = "Prioritizing GPU and PCIe controller interrupts";
@@ -221,7 +222,8 @@ $RK_Defender_Features = "$RK_Defender\Features"
 $RK_Explorer = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer"
 $RK_Explorer_Advanced = "$RK_Explorer\Advanced"
 $RK_Explorer_Serialize = "$RK_Explorer\Serialize"
-#$RK_Startup = "$RK_Explorer\StartupApproved\Run"
+
+$RK_Ctl_Desktop = "HKCU:\Control Panel\Desktop"
 
 $RK_MMCSS = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
 $RK_MMCSS_ProAudio = "$RK_MMCSS\Tasks\Pro Audio"
@@ -246,11 +248,6 @@ $RK_AppxStores = @(
 $RK_AppxStores_Subkeys = @(
     "Applications", "Config", "DownlevelGather", "DownlevelInstalled", "InboxApplications", "$SID"
 )
-
-
-# OSIntegrationLevel: default 5
-# Protected by SYSTEM
-#$RK_Edge = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MicrosoftEdge"
 
 $RK_Privacy = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy"
 $RK_Store_Update = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate"
@@ -1058,6 +1055,48 @@ if (Confirm "Redline power settings for maximum performance? (May reduce latency
     "- Complete"
 }
 
+if (Confirm "Adjust visual settings for better performance?" -Auto $false -ConfigKey "Performance.AdjustVisualEffects") {
+    # Mostly from https://superuser.com/a/1246803
+    Add-Type -TypeDefinition @"
+        using System;
+        using System.Runtime.InteropServices;
+        [StructLayout(LayoutKind.Sequential)] public struct ANIMATIONINFO {
+            public uint cbSize;
+            public bool iMinAnimate;
+        }
+        public class AnimationParamMgr {
+            [DllImport("user32.dll")] public static extern bool SystemParametersInfoW(uint uiAction, uint uiParam, ref ANIMATIONINFO pvParam, uint fWinIni);
+        }
+
+        public class RegularParamMgr {
+            [DllImport("user32.dll")] public static extern bool SystemParametersInfoW(uint uiAction, uint uiParam, ref object pvParam, uint fWinIni);
+        }
+"@
+    $animInfo = New-Object ANIMATIONINFO
+    $animInfo.cbSize = 8
+    $animInfo.iMinAnimate = 0
+    [AnimationParamMgr]::SystemParametersInfoW(0x49, 0, [ref]$animInfo, 3) | Out-Null
+
+    $disable = @(
+        0x1025, # Drop shadow on windows
+        # 0x004B,  # Font smoothing - most will want to keep this enabled
+        0x1005, # Combo box animation
+        0x101B, # Cursor shadow
+        0x1009, # Window title bar gradient effect
+        # 0x1007,  # Smooth-scrolling for list boxes - most will want to keep this enabled
+        0x1003, # Disabling this disables all menu animation features
+        0x1015, # Selection fade effect
+        0x1017, # Tooltip fade effect
+        0x0025  # Show window contents while dragging
+    )
+    $disable | ForEach-Object {
+        [RegularParamMgr]::SystemParametersInfoW($_, 0, [ref]$false, 3) | Out-Null
+    }
+
+    RegistryPut $RK_Ctl_Desktop -Key "DragFullWindows" -Value 0 -VType "DWORD"
+
+    "- Complete"
+}
 
 if (Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true -ConfigKey "Performance.DisableFastStartup") {
     RegistryPut $RK_FastStartup -Key "HiberbootEnabled" -Value 0 -VType "DWORD"
