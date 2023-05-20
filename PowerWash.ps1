@@ -1290,6 +1290,10 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
 
     "- NOTE: This feature is experimental and may not work completely or at all"
 	
+    "- Stopping Microsoft Edge..."
+    taskkill /f /im msedge.exe 2>$null | Out-Null
+    taskkill /f /im MicrosoftEdgeUpdate.exe 2>$null | Out-Null
+	
     "- Marking Edge as removable..."
     RegistryPut $RK_Uninst_Edge -Key "NoRemove" -Value 0 -VType "DWORD"
     RegistryPut $RK_Uninst_Edge -Key "NoRepair" -Value 0 -VType "DWORD"
