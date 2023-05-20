@@ -953,7 +953,7 @@ if ("/ElevatedAction" -in $args) {
 
 # Disable HPET (high precision event timer)
 # Some systems will benefit from this, some will suffer. Only way is to benchmark and see
-if (Confirm "Do you want to disable the high-precision event timer? (May not improve performance on all systems)" -Auto $false -ConfigKey "Performance.DisableHpet") {
+if (Confirm "Disable the high-precision event timer? (May not improve performance on all systems)" -Auto $false -ConfigKey "Performance.DisableHpet") {
     Get-PnpDevice -FriendlyName "High precision event timer" | Disable-Pnpdevice -Confirm:$false
     "- Complete"
 }
@@ -964,7 +964,7 @@ if (Confirm "Enable hardware-accelerated GPU scheduling?" -Auto $true -ConfigKey
 }
 
 # Multimedia related settings to prioritize audio
-if ($do_all -or (Confirm "Do you want to optimize multimedia settings for pro audio?" -Auto $true -ConfigKey "Performance.MultimediaResponsiveness")) {
+if ($do_all -or (Confirm "Optimize multimedia settings for pro audio?" -Auto $true -ConfigKey "Performance.MultimediaResponsiveness")) {
     # Scheduling algorithm will reserve 10% (default is 20%) of CPU for low-priority tasks
     RegistryPut $RK_MMCSS -Key "SystemResponsiveness" -Value 10 -VType "DWORD"
 	
@@ -1061,7 +1061,7 @@ if (Confirm "Disable Fast Startup? (may fix responsiveness issues with some devi
 # Enable MSI mode for devices that support it
 # Message-signaled interrupts are an alternative to line-based interrupts,
 # supporting a larger number of interrupts and lower latencies.
-if (Confirm "Do you want to enable Message-Signaled Interrupts for all devices that support them?" -Auto $true -ConfigKey "Performance.EnableDriverMsi") {
+if (Confirm "Enable Message-Signaled Interrupts for all devices that support them?" -Auto $true -ConfigKey "Performance.EnableDriverMsi") {
     $do_priority = Confirm "--> Do you also want to prioritize interrupts from certain devices like the GPU and PCIe controller?" -Auto $true -ConfigKey "Performance.EnableDriverPrio"
 	
     "- Applying interrupt policies..."
@@ -1109,7 +1109,7 @@ if (Confirm "Do you want to enable Message-Signaled Interrupts for all devices t
 
 
 # Disable Microsoft telemetry as much as we can
-if (Confirm "Do you want to disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTelemetry") {
+if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTelemetry") {
     # Windows has 4 levels of telemetry: Security, Required, Enhanced, Optional
     # According to Microsoft, only Enterprise supports Security as min telemetry level, other platforms only support Required
     # However, we can just always set it to Security and Windows will apply the lowest allowed setting.
@@ -1434,7 +1434,7 @@ else {
 
 # Disable automatic updates
 if ($has_win_pro) {
-    if (Confirm "Do you want to disable automatic Windows updates?" -Auto $true -ConfigKey "WindowsUpdate.DisableAutoUpdate") {
+    if (Confirm "Disable automatic Windows updates?" -Auto $true -ConfigKey "WindowsUpdate.DisableAutoUpdate") {
         RegistryPut $RK_Policy_Update_AU -Key "NoAutoUpdate" -Value 1 -VType "DWORD"
         RegistryPut $RK_Policy_Update_AU -Key "AUOptions" -Value 2 -VType "DWORD"
         RegistryPut $RK_Policy_Update_AU -Key "AllowMUUpdateService" -Value 1 -VType "DWORD"
@@ -1451,7 +1451,7 @@ else {
 }
 
 # Disable all updates
-if (Confirm "Do you want to disable all Windows updates? (You will need to manually re-enable them when you want to check or install updates)" -Auto $false -ConfigKey "WindowsUpdate.DisableAllUpdate") {
+if (Confirm "Disable all Windows updates? (You will need to manually re-enable them when you want to check or install updates)" -Auto $false -ConfigKey "WindowsUpdate.DisableAllUpdate") {
     sc.exe stop UsoSvc | Out-Null
     sc.exe config UsoSvc start=disabled | Out-Null
 
@@ -1467,7 +1467,7 @@ if (Confirm "Do you want to disable all Windows updates? (You will need to manua
 # Add update toggle script to desktop
 # This is the next best thing for Home users to being able to disable automatic updates. They can toggle updates on when they want to check or install updates, and toggle updates back off when they're done.
 if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -or (-not (Test-Path "$home\Desktop\Toggle Updates.lnk"))) {
-    if (Confirm "Do you want to add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "WindowsUpdate.AddUpdateToggleScriptToDesktop") {
+    if (Confirm "Add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "WindowsUpdate.AddUpdateToggleScriptToDesktop") {
         Invoke-WebRequest -Uri "https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/extra/ToggleUpdates.bat" -OutFile $home\Documents\.ToggleUpdates.bat
         
         CreateShortcut -Dest "$home\Desktop\Toggle Updates.lnk" -Source "$home\Documents\.ToggleUpdates.bat" -Admin $true
@@ -1544,19 +1544,19 @@ if (Confirm "Disable app startup delay?" -Auto $true -ConfigKey "Convenience.Dis
 }
 
 # Seconds in taskbar
-if (Confirm "Do you want to show seconds in the taskbar clock?" -Auto $false -ConfigKey "Convenience.ShowSecondsInTaskbar") {
+if (Confirm "Show seconds in the taskbar clock?" -Auto $false -ConfigKey "Convenience.ShowSecondsInTaskbar") {
     RegistryPut $RK_Explorer_Advanced -Key "ShowSecondsInSystemClock" -Value 1 -VType "DWORD"
     "- Complete"
 }
 
 # Show "Run as different user"
-if (Confirm "Do you want to show 'Run as different user' in Start?" -Auto $true -ConfigKey "Convenience.ShowRunAsDifferentUser") {
+if (Confirm "Show 'Run as different user' in Start?" -Auto $true -ConfigKey "Convenience.ShowRunAsDifferentUser") {
     RegistryPut $RK_Policy_Explorer -Key "ShowRunAsDifferentUserInStart" -Value 1 -VType "DWORD"
     "- Complete"
 }
 
 # Show useful Explorer stuff
-if (Confirm "Do you want to show file extensions and hidden files in Explorer?" -Auto $true -ConfigKey "Convenience.ShowHiddenExplorer") {
+if (Confirm "Show file extensions and hidden files in Explorer?" -Auto $true -ConfigKey "Convenience.ShowHiddenExplorer") {
     RegistryPut $RK_Explorer_Advanced -Key "Hidden" -Value 1 -VType "DWORD"
     RegistryPut $RK_Explorer_Advanced -Key "HideFileExt" -Value 0 -VType "DWORD"
     "- Complete"
