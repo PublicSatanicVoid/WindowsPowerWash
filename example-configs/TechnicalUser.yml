@@ -29,6 +29,10 @@ Performance:
   # Disables settings on network adapters that add latency, such as packet coalescing.
   NetworkResponsiveness: true
 
+  # Sets visual effects settings to maximum performance, e.g. disables many Windows animations.
+  # Does not disable font smoothing.
+  AdjustVisualEffects: true
+
   # Enables Windows' "Ultimate" performance plan, with additional tweaks for low latency
   # and rapid ramp-up in response to increased system load. Disables power throttling.
   PowerSettingsMaxPerformance: true
