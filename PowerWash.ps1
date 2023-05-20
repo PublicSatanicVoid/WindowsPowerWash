@@ -1294,16 +1294,18 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
     RegistryPut $RK_Uninst_Edge -Key "NoRemove" -Value 0 -VType "DWORD"
     RegistryPut $RK_Uninst_Edge -Key "NoRepair" -Value 0 -VType "DWORD"
 	
-    "- Attempting to remove Edge using setup tool..."
-    $edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
-    if (Test-Path "$edge_base") {
-        foreach ($item in Get-ChildItem -Path "$edge_base") {
-            $setup = "$edge_base\$item\Installer\setup.exe"
-            if (Test-Path "$setup") {
-                "  - Attempting to remove Edge installation: $setup"
-                & "$setup" --uninstall --msedge --system-level --verbose-logging --force-uninstall
-            }
-        }
+    if ($aggressive) {
+	    "- Attempting to remove Edge using setup tool..."
+	    $edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
+	    if (Test-Path "$edge_base") {
+		foreach ($item in Get-ChildItem -Path "$edge_base") {
+		    $setup = "$edge_base\$item\Installer\setup.exe"
+		    if (Test-Path "$setup") {
+			"  - Attempting to remove Edge installation: $setup"
+			& "$setup" --uninstall --msedge --system-level --verbose-logging --force-uninstall
+		    }
+		}
+	    }
     }
 	
     "- Removing Edge from provisioned packages..."
@@ -1327,36 +1329,38 @@ if (Confirm "Uninstall Microsoft Edge? (EXPERIMENTAL)" -Auto $false -ConfigKey "
     Start-Service StateRepository
     Get-AppxPackage -Name "*Microsoft*Edge*" | Remove-AppxPackage
 
-    # Many folders to remove are protected by SYSTEM
-    Write-Host "- Removing Edge from filesystem..." -NoNewline
-    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /FilesystemStage"
+    if ($aggressive) {
+	    # Many folders to remove are protected by SYSTEM
+	    Write-Host "- Removing Edge from filesystem..." -NoNewline
+	    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /FilesystemStage"
 
-    # Many registry keys to remove are protected by SYSTEM
-    Write-Host "- Removing Edge from registry..." -NoNewline
-    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
-    if (Test-Path "C:\.PowerWashAmcacheStatus.tmp") {
-        $amcache_status = Get-Content "C:\.PowerWashAmcacheStatus.tmp"
-        Remove-Item "C:\.PowerWashAmcacheStatus.tmp"
-        if ($amcache_status -eq "Failure") {
-            "  - NOTICE: Could not remove Edge from Amcache registry hive, probably because it is in use by another process. You can restart your computer and try again later."
-        }
+	    # Many registry keys to remove are protected by SYSTEM
+	    Write-Host "- Removing Edge from registry..." -NoNewline
+	    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
+	    if (Test-Path "C:\.PowerWashAmcacheStatus.tmp") {
+		$amcache_status = Get-Content "C:\.PowerWashAmcacheStatus.tmp"
+		Remove-Item "C:\.PowerWashAmcacheStatus.tmp"
+		if ($amcache_status -eq "Failure") {
+		    "  - NOTICE: Could not remove Edge from Amcache registry hive, probably because it is in use by another process. You can restart your computer and try again later."
+		}
+	    }
+
+	    "- Removing Edge services..."
+	    $services_to_delete = @(
+		"edgeupdate",
+		"edgeupdatem",
+		"MicrosoftEdgeElevationService"
+	    )
+	    $services_to_delete | ForEach-Object {
+		sc.exe stop $_ | Out-Null
+		sc.exe config $_ start=disabled | Out-Null
+		sc.exe delete $_ | Out-Null
+	    }
+
+	    "- Disabling Edge in Windows Update..."
+	    RegistryPut "HKLM:\SOFTWARE\Microsoft\EdgeUpdate" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
     }
-
-    "- Removing Edge services..."
-    $services_to_delete = @(
-        "edgeupdate",
-        "edgeupdatem",
-        "MicrosoftEdgeElevationService"
-    )
-    $services_to_delete | ForEach-Object {
-        sc.exe stop $_ | Out-Null
-        sc.exe config $_ start=disabled | Out-Null
-        sc.exe delete $_ | Out-Null
-    }
-	
-    "- Disabling Edge in Windows Update..."
-    RegistryPut "HKLM:\SOFTWARE\Microsoft\EdgeUpdate" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
-
+    
     "- Complete"
 }
 
