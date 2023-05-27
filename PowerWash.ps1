@@ -198,7 +198,7 @@ $global:feature_verbs = @{
     "Scans.CheckIRQ"                               = "Checking for IRQ conflicts"
 }
 
-$SID = (Get-LocalUser -Name $env:USERNAME).Sid.Value
+$SID = (New-Object System.Security.Principal.NTAccount($env:USERNAME)).Translate([Security.Principal.SecurityIdentifier]).Value
 "User SID: $SID"
 
 
@@ -1247,7 +1247,11 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
 
     if ($aggressive) {
         "- Attempting to remove Edge using setup tool..."
-        $edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
+	
+	Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\ClientState" | ForEach { Remove-ItemProperty -Path "Registry::$_" -Name "experiment_control_labels" -EA SilentlyContinue }  
+        RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdateDev" -Key "AllowUninstall" -Value 1 -VType "DWORD"
+	
+	$edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
         if (Test-Path "$edge_base") {
             foreach ($item in Get-ChildItem -Path "$edge_base") {
                 $setup = "$edge_base\$item\Installer\setup.exe"
