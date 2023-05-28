@@ -12,7 +12,7 @@
 
 $development_computers = @("DESKTOP-DEPFV0F", "DESKTOP-OIDHB0U")
 $hostname = hostname
-$global:sys_account_debug_log = "C:\PowerWashSysActionsDbg.log"
+$global:sys_account_debug_log = "$env:SystemDrive\PowerWashSysActionsDbg.log"
 $global:is_debug = ($hostname -in $development_computers) -and $true
 if ($global:is_debug) {
     "POWERWASH DEBUG MODE IS ON"
@@ -361,8 +361,8 @@ function RegistryPut ($Path, $Key, $Value, $VType) {
 function RunScriptAsSystem($Path, $ArgString) {
     Write-Host "  [Invoking task as SYSTEM..." -NoNewline
 
-    "$home" | Out-File -FilePath "C:\.PowerWashHome.tmp" -Force -NoNewline
-    (Get-LocalUser -Name $env:USERNAME).Sid.Value | Out-File -FilePath "C:\.PowerWashSID.tmp" -Force -NoNewline
+    "$home" | Out-File -FilePath "$env:SystemDrive\.PowerWashHome.tmp" -Force -NoNewline
+    (Get-LocalUser -Name $env:USERNAME).Sid.Value | Out-File -FilePath "$env:SystemDrive\.PowerWashSID.tmp" -Force -NoNewline
 
     # Adapted from https://github.com/mkellerm1n/Invoke-CommandAs/blob/master/Invoke-CommandAs/Private/Invoke-ScheduledTask.ps1
     $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "$Path $ArgString"
@@ -374,8 +374,8 @@ function RunScriptAsSystem($Path, $ArgString) {
     $Task | Unregister-ScheduledTask -Confirm:$false
     Write-Host " Complete]"
 
-    Remove-Item -Path "C:\.PowerWashHome.tmp"
-    Remove-Item -Path "C:\.PowerWashSID.tmp"
+    Remove-Item -Path "$env:SystemDrive\.PowerWashHome.tmp"
+    Remove-Item -Path "$env:SystemDrive\.PowerWashSID.tmp"
 }
 
 function TryDisableTask ($TaskName) {
@@ -486,8 +486,8 @@ if ("/ElevatedAction" -in $args) {
         exit
     }
 
-    $UserHome = Get-Content "C:\.PowerWashHome.tmp"
-    $UserSID = Get-Content "C:\.PowerWashSID.tmp"
+    $UserHome = Get-Content "$env:SystemDrive\.PowerWashHome.tmp"
+    $UserSID = Get-Content "$env:SystemDrive\.PowerWashSID.tmp"
     $HKCU = "Registry::HKEY_USERS\$UserSID"  # SYSTEM user's HKCU is not the script user's HKCU
     $HKCU_Classes = "$($HKCU)_Classes"
     Set-Location $UserHome
@@ -690,10 +690,10 @@ if ("/ElevatedAction" -in $args) {
                 }
 
                 SysDebugLog "amcache"
-                $amcache_online = "C:\WINDOWS\AppCompat\Programs\Amcache.hve"
-                $amcache_offline = "C:\WINDOWS\AppCompat\Programs\AmcacheOffline.hve"
-                $amcache_offline_mod = "C:\WINDOWS\AppCompat\Programs\AmcacheOfflineMod.hve"
-                $amcache_offline_bak = "C:\WINDOWS\AppCompat\Programs\AmcacheOffline.hve.bak"
+                $amcache_online = "$env:SystemDrive\WINDOWS\AppCompat\Programs\Amcache.hve"
+                $amcache_offline = "$env:SystemDrive\WINDOWS\AppCompat\Programs\AmcacheOffline.hve"
+                $amcache_offline_mod = "$env:SystemDrive\WINDOWS\AppCompat\Programs\AmcacheOfflineMod.hve"
+                $amcache_offline_bak = "$env:SystemDrive\WINDOWS\AppCompat\Programs\AmcacheOffline.hve.bak"
                 $amcache_offline_mount = "HKLM\amcacheoffline"
                 $amcache_success = $true
                 try {
@@ -769,17 +769,17 @@ if ("/ElevatedAction" -in $args) {
                 }
 
                 if ($amcache_success) {
-                    "Success" | Out-File "C:\.PowerWashAmcacheStatus.tmp" -NoNewline
+                    "Success" | Out-File "$env:SystemDrive\.PowerWashAmcacheStatus.tmp" -NoNewline
                 }
                 else {
-                    "Failure" | Out-File "C:\.PowerWashAmcacheStatus.tmp" -NoNewline
+                    "Failure" | Out-File "$env:SystemDrive\.PowerWashAmcacheStatus.tmp" -NoNewline
                 }
             }
         }
         elseif ("/AppxInboxStage" -in $args) {
-            $appx_db = "C:\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
-            if (-not (Test-Path "C:\.appx.tmp")) {
-                SysDebugLog "Could not update live Appx database: C:\.appx.tmp is not found"
+            $appx_db = "$env:SystemDrive\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
+            if (-not (Test-Path "$env:SystemDrive\.appx.tmp")) {
+                SysDebugLog "Could not update live Appx database: $env:SystemDrive\.appx.tmp is not found"
             }
             else {
                 SysDebugLog "write over live appx sqlite database"
@@ -787,10 +787,10 @@ if ("/ElevatedAction" -in $args) {
                 Stop-Service -Force StateRepository | SysDebugLog
                 Remove-Item "$($appx_db)-shm"
                 Remove-Item "$($appx_db)-wal"
-                Copy-Item -Force -Path "C:\.appx.tmp" -Dest $appx_db | SysDebugLog
+                Copy-Item -Force -Path "$env:SystemDrive\.appx.tmp" -Dest $appx_db | SysDebugLog
                 sc.exe config StateRepository start=demand | Out-Null
                 Start-Service StateRepository | SysDebugLog
-                Remove-Item "C:\.appx.tmp"
+                Remove-Item "$env:SystemDrive\.appx.tmp"
                 SysDebugLog "-done"
             }
         }
@@ -803,21 +803,21 @@ if ("/ElevatedAction" -in $args) {
                 "$UserHome\MicrosoftEdgeBackups"
             )
             $folders_to_remove_by_subfolder = @(
-                "C:\ProgramData\Packages",
-                "C:\Windows\SystemApps",
-                "C:\Program Files\WindowsApps",
-                "C:\ProgramData\Microsoft\Windows\AppRepository",
-                "C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
+                "$env:SystemDrive\ProgramData\Packages",
+                "$env:SystemDrive\Windows\SystemApps",
+                "$env:SystemDrive\Program Files\WindowsApps",
+                "$env:SystemDrive\ProgramData\Microsoft\Windows\AppRepository",
+                "$env:SystemDrive\ProgramData\Microsoft\Windows\Start Menu\Programs",
                 "$UserHome\Desktop",
                 "$UserHome\AppData\Local",
                 "$userHome\AppData\Local\Microsoft",
                 "$UserHome\AppData\Local\Packages",
                 "$UserHome\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch",
-                "C:\Windows\Prefetch",
-                "C:\ProgramData\Microsoft"
+                "$env:SystemDrive\Windows\Prefetch",
+                "$env:SystemDrive\ProgramData\Microsoft"
             )
             $folders_to_remove_by_subfolder_aggressive = @(
-                "C:\Program Files (x86)\Microsoft"
+                "$env:SystemDrive\Program Files (x86)\Microsoft"
             )
 
             SysDebugLog "folders_to_remove"
@@ -1207,12 +1207,12 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
 
     if (-not $has_sqlite) {
         "- Installing required dependency SQLite3..."
-        Invoke-WebRequest -Uri "https://sqlite.org/2023/sqlite-tools-win32-x86-3420000.zip" -OutFile "C:\sqlite.zip"
-        Expand-Archive "C:\sqlite.zip" -DestinationPath "C:\sqlite"
-        $subdir = (Get-ChildItem "C:\sqlite")[0].Name
-        $sqlite3_cmd = "C:\sqlite\$subdir\sqlite3.exe"
-        Add-Path "C:\sqlite\$subdir"
-        Remove-Item "C:\sqlite.zip"
+        Invoke-WebRequest -Uri "https://sqlite.org/2023/sqlite-tools-win32-x86-3420000.zip" -OutFile "$env:SystemDrive\sqlite.zip"
+        Expand-Archive "$env:SystemDrive\sqlite.zip" -DestinationPath "$env:SystemDrive\sqlite"
+        $subdir = (Get-ChildItem "$env:SystemDrive\sqlite")[0].Name
+        $sqlite3_cmd = "$env:SystemDrive\sqlite\$subdir\sqlite3.exe"
+        Add-Path "$env:SystemDrive\sqlite\$subdir"
+        Remove-Item "$env:SystemDrive\sqlite.zip"
         "- SQLite3 installed"
     }
 
@@ -1231,13 +1231,13 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     }
 
     Write-Host "- Marking Edge as removable in Appx database..." -NoNewline
-    $appx_db = "C:\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
-    Copy-Item -Path $appx_db -Dest "C:\.appx.tmp" | Out-Null
+    $appx_db = "$env:SystemDrive\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
+    Copy-Item -Path $appx_db -Dest "$env:SystemDrive\.appx.tmp" | Out-Null
     @"
     DROP TRIGGER IF EXISTS main.TRG_AFTER_UPDATE_Package_SRJournal;
     UPDATE Package SET IsInbox=0 WHERE PackageFullName LIKE '%Microsoft%Edge%';
     CREATE TRIGGER TRG_AFTER_UPDATE_Package_SRJournal AFTER UPDATE ON Package FOR EACH ROW WHEN is_srjournal_enabled()BEGIN UPDATE Sequence SET LastValue=LastValue+1 WHERE Id=2 ;INSERT INTO SRJournal(_Revision, _WorkId, ObjectType, Action, ObjectId, PackageIdentity, WhenOccurred, SequenceId)SELECT 1, workid(), 1, 2, NEW._PackageID, pi._PackageIdentityID, now(), s.LastValue FROM Sequence AS s CROSS JOIN PackageIdentity AS pi WHERE s.Id=2 AND pi.PackageFullName=NEW.PackageFullName;END;
-"@  | & $sqlite3_cmd "C:\.appx.tmp"
+"@  | & $sqlite3_cmd "$env:SystemDrive\.appx.tmp"
     RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /AppxInboxStage"
 
     "- Removing Edge from Appx database..."
@@ -1248,10 +1248,11 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     if ($aggressive) {
         "- Attempting to remove Edge using setup tool..."
 	
-	Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\ClientState" | ForEach { Remove-ItemProperty -Path "Registry::$_" -Name "experiment_control_labels" -EA SilentlyContinue }  
+        # https://gist.github.com/ave9858/c3451d9f452389ac7607c99d45edecc6
+        Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\ClientState" | ForEach-Object { Remove-ItemProperty -Path "Registry::$_" -Name "experiment_control_labels" -EA SilentlyContinue }  
         RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdateDev" -Key "AllowUninstall" -Value 1 -VType "DWORD"
 	
-	$edge_base = "C:\Program Files (x86)\Microsoft\Edge\Application\"
+        $edge_base = "$env:SystemDrive\Program Files (x86)\Microsoft\Edge\Application\"
         if (Test-Path "$edge_base") {
             foreach ($item in Get-ChildItem -Path "$edge_base") {
                 $setup = "$edge_base\$item\Installer\setup.exe"
@@ -1267,11 +1268,11 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /FilesystemStage"
 
         # Many registry keys to remove are protected by SYSTEM
-        Write-Host "- Removing Edge from registry..." -NoNewline
+        Write-Host "- Removing traces of Edge from registry..." -NoNewline
         RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
-        if (Test-Path "C:\.PowerWashAmcacheStatus.tmp") {
-            $amcache_status = Get-Content "C:\.PowerWashAmcacheStatus.tmp"
-            Remove-Item "C:\.PowerWashAmcacheStatus.tmp"
+        if (Test-Path "$env:SystemDrive\.PowerWashAmcacheStatus.tmp") {
+            $amcache_status = Get-Content "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
+            Remove-Item "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
             if ($amcache_status -eq "Failure") {
                 "  - NOTICE: Could not remove Edge from Amcache registry hive, probably because it is in use by another process. You can restart your computer and try again later."
             }
@@ -1294,7 +1295,14 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         TryDisableTask "MicrosoftEdgeUpdateTaskMachineUA"
 
         "- Disabling Edge in Windows Update..."
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\EdgeUpdate" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
+        # https://github.com/AveYo/fox/blob/main/Edge_Removal.bat
+        $update_locations = @("HKLM:\SOFTWARE\Microsoft\EdgeUpdate", "HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate")
+        $update_locations | ForEach-Object {
+            RegistryPut "$_" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
+            RegistryPut "$_" -Key "InstallDefault" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Install{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Install{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}" -Value 0 -VType "DWORD"
+        }
     }
     
     "- Note: May need to re-run this after Windows 'quality updates'"
@@ -1435,14 +1443,14 @@ if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Group Poli
 
 if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Hyper-V? (Not installed by default on Home editions)" -Auto $false -ConfigKey "Install.InstallHyperV")) {
     "- Enumerating packages..."
-    $pkgs = Get-ChildItem C:\Windows\servicing\Packages | Where-Object { $_.Name -like "*Hyper*V*mum" }
+    $pkgs = Get-ChildItem $env:SystemDrive\Windows\servicing\Packages | Where-Object { $_.Name -like "*Hyper*V*mum" }
     
     "- Installing packages..."
     $i = 1
     $pkgs | ForEach-Object {
         $pkg = $_.Name
         "  - ($i/$($pkgs.Length)) $pkg"
-        DISM.exe /Online /NoRestart /Add-Package:"C:\Windows\servicing\Packages\$pkg" 2>$null | Out-Null
+        DISM.exe /Online /NoRestart /Add-Package:"$env:SystemDrive\Windows\servicing\Packages\$pkg" 2>$null | Out-Null
         $i++
     }    
 

@@ -2,7 +2,7 @@
 The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications. Removes MS/OEM bloatware, telemetry, and applies aggressive performance settings, including many that are normally hidden from the user. Works on a new or existing Windows installation.
 
 ### [Click here for features list](https://universecraft.github.io/WindowsPowerWash/docs/features)
-* Includes the ONLY known working Microsoft Edge removal process as of 5/20/23
+* Includes the MOST COMPLETE known Microsoft Edge removal process as of 5/20/23
 
 **Quick start:** Open an admin PowerShell prompt and enter:
 
