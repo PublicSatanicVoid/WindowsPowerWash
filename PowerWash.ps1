@@ -1249,7 +1249,7 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         "- Attempting to remove Edge using setup tool..."
 	
         # https://gist.github.com/ave9858/c3451d9f452389ac7607c99d45edecc6
-        Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\ClientState" | ForEach-Object { Remove-ItemProperty -Path "Registry::$_" -Name "experiment_control_labels" -EA SilentlyContinue }  
+        Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\ClientState" -EA SilentlyContinue | ForEach-Object { Remove-ItemProperty -Path "Registry::$_" -Name "experiment_control_labels" -EA SilentlyContinue }  
         RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdateDev" -Key "AllowUninstall" -Value 1 -VType "DWORD"
 	
         $edge_base = "$env:SystemDrive\Program Files (x86)\Microsoft\Edge\Application\"
