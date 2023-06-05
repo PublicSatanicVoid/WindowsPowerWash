@@ -463,9 +463,11 @@ function Install-Winget {
     Add-AppxPackage ".\microsoft.ui.xaml.2.7.3\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx"
 
     "- Installing Winget..."
-    Invoke-WebRequest -Uri "https://github.com/microsoft/winget-cli/releases/download/v1.4.10173/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -OutFile ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
-    Add-AppxPackage ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
-	
+    Invoke-WebRequest -Uri "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -OutFile ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+    Invoke-WebRequest -Uri "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml" -OutFile ".\5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
+
+    Add-AppxProvisionedPackage -Online -PackagePath ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -LicensePath ".\5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
+
     $global:has_winget = $true
 }
 
