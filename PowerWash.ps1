@@ -901,6 +901,7 @@ if ("/ElevatedAction" -in $args) {
         }
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
+	RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
 
