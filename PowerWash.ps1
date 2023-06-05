@@ -198,7 +198,11 @@ $global:feature_verbs = @{
     "Scans.CheckIRQ"                               = "Checking for IRQ conflicts"
 }
 
-$SID = (New-Object System.Security.Principal.NTAccount($env:USERNAME)).Translate([Security.Principal.SecurityIdentifier]).Value
+function Get-SID() {
+    return (New-Object System.Security.Principal.NTAccount($env:USERNAME)).Translate([Security.Principal.SecurityIdentifier]).Value
+}
+
+$SID = Get-SID
 "User SID: $SID"
 
 
@@ -362,7 +366,7 @@ function RunScriptAsSystem($Path, $ArgString) {
     Write-Host "  [Invoking task as SYSTEM..." -NoNewline
 
     "$home" | Out-File -FilePath "$env:SystemDrive\.PowerWashHome.tmp" -Force -NoNewline
-    (Get-LocalUser -Name $env:USERNAME).Sid.Value | Out-File -FilePath "$env:SystemDrive\.PowerWashSID.tmp" -Force -NoNewline
+    Get-SID | Out-File -FilePath "$env:SystemDrive\.PowerWashSID.tmp" -Force -NoNewline
 
     # Adapted from https://github.com/mkellerm1n/Invoke-CommandAs/blob/master/Invoke-CommandAs/Private/Invoke-ScheduledTask.ps1
     $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "$Path $ArgString"
