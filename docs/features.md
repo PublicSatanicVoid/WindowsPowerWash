@@ -8,11 +8,12 @@ PowerWash modifies various aspects of your Windows installation. It configures y
 ### Highlights
 
 These are some of the most commonly wanted modifications to a standard Windows install, and PowerWash has all of them!
-- Disable Microsoft **telemetry** / "phoning home"
-- Disable **automatic updates**
-- Remove useless or unwanted **preinstalled applications** -- including **Microsoft Edge**, if desired
-- Throttle "**MsMpEng**.exe" / "Antimalware Service Executable"
-- Configure and activate **maximum performance** power plan
+- Disable Microsoft **[telemetry](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization#diagnostic-data-settings)** / "phoning home"
+- Disable **[automatic updates](https://learn.microsoft.com/en-us/windows/deployment/update/waas-wu-settings#configuring-automatic-updates-by-editing-the-registry)**
+- Remove useless or unwanted **[preinstalled applications](https://www.howtogeek.com/163303/how-computer-manufacturers-are-paid-to-make-your-laptop-worse/)** -- including **Microsoft Edge**, if desired
+- Throttle "**[MsMpEng.exe](https://learn.microsoft.com/en-us/powershell/module/defender/set-mppreference?view=windowsserver2019-ps#-scanavgcpuloadfactor)**" / "Antimalware Service Executable"
+- Configure and activate **[maximum performance](https://social.technet.microsoft.com/wiki/contents/articles/52059.windows-10-the-ultimate-performance-power-policy.aspx)** power settings
+- Toggle **[soft real-time scheduling](https://learn.microsoft.com/en-us/windows/iot/iot-enterprise/soft-real-time/soft-real-time)** for IoT Enterprise SKUs (standalone scripts [here](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/extra))
 
 ## Full Listing
 

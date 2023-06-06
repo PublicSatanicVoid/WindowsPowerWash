@@ -41,3 +41,29 @@ While they take a bit of DISM-fu to install, both Group Policy Editor and Hyper-
 I really hate this one. Edge is **NOT** an essential component of Windows. Microsoft has, however, tried incredibly hard to artificially make this the case by marking it as non-removable, non-repairable, and as an "in-box" application which means that ordinary administrative methods will fail to remove it. However, as you can see if you use PowerWash to remove Edge, literally nothing breaks with this supposedly "essential" program gone.
 
 Removing Edge from Windows and preventing it from coming back require a number of carefully orchestrated steps - not because (as Microsoft would probably have you believe) it needs to be carefully disentangled from all the other "essential" components that depend on it, but *only because Microsoft makes it incredibly hard to remove* ... probably because of all the advertising revenue and behavioral data collection they get from people using Edge.
+
+
+### "'Required' telemetry is required"
+
+> Required (Basic): Minimum data required to keep the device secure, up to date, and performing as expected.
+-[Microsoft Learn -- accessed 6/5/2023](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
+
+This is a *really* braindead one, because just a little farther down on the same page they say:
+
+> If you choose [Diagnostic Data Off], devices in your organization will still be secure.
+
+It would seem that Microsoft's "party line" changes so often that they can't even keep track of their own lies *on the same page*.
+
+
+### "LTSC editions shouldn't be used by consumers"
+
+The overwhelming messaging from Microsoft is that LTSC should be used only for "mission-critical" systems, not consumer devices. They haven't explicitly said not to use it on consumer devices, but they've heavily implied as much [here](https://learn.microsoft.com/en-us/windows/whats-new/ltsc/overview) and [here](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181), for example.
+
+A particularly humorous "oopsies" on Microsoft's part is the repeated claim that 
+
+> Windows 10 LTSC [...] does not contain any of the components of Windows 10 that may change over the life of the release. These components include Microsoft Edge
+-[Microsoft Tech Community -- accessed 6/5/2023](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181)
+
+Just install a current LTSC edition and find out for yourself how this statement is completely false. Ironically, this lie (or significant oversight, at least) is obviously trying to dissuade users from using LTSC (oh no, it won't have Edge, my favorite browser!!!!) when in reality it probably has done exactly the opposite.
+
+Oh, Microsoft.
