@@ -5,6 +5,10 @@ function RunMeAsSystem() {
 
 ### UTILITY FUNCTIONS ###
 
+function Get-SID() {
+    return (New-Object System.Security.Principal.NTAccount($env:USERNAME)).Translate([Security.Principal.SecurityIdentifier]).Value
+}
+
 function RegistryPut ($Path, $Key, $Value, $VType) {
     if ($null -eq $Path) {
         "ERROR: Null registry key passed"
@@ -20,7 +24,7 @@ function RunScriptAsSystem($Path, $ArgString) {
     Write-Host "  [Invoking task as SYSTEM..." -NoNewline
 
     "$home" | Out-File -FilePath "C:\.SystemTaskUserHome.tmp" -Force -NoNewline
-    (Get-LocalUser -Name $env:USERNAME).Sid.Value | Out-File -FilePath "C:\.SystemTaskUserSID.tmp" -Force -NoNewline
+    Get-SID | Out-File -FilePath "C:\.SystemTaskUserSID.tmp" -Force -NoNewline
 
     # Adapted from https://github.com/mkellerm1n/Invoke-CommandAs/blob/master/Invoke-CommandAs/Private/Invoke-ScheduledTask.ps1
     $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "$Path $ArgString"
