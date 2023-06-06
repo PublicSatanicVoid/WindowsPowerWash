@@ -1311,13 +1311,13 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
             RegistryPut "$_" -Key "InstallDefault" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "UpdateDefault" -Value 0 -VType "DWORD"
 	    
-            RegistryPut "$_" -Key "Install{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Install{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1-VType "DWORD"
 	    RegistryPut "$_" -Key "Install{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
 	    RegistryPut "$_" -Key "Install{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
 	    RegistryPut "$_" -Key "Install{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Install{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}" -Value 0 -VType "DWORD"
 	    
-            RegistryPut "$_" -Key "Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1-VType "DWORD"
 	    RegistryPut "$_" -Key "Update{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
 	    RegistryPut "$_" -Key "Update{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
 	    RegistryPut "$_" -Key "Update{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
