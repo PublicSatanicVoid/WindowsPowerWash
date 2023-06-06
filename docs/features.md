@@ -84,6 +84,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 | Warn if third-party antivirus found |           ✅           |          ✅           |                   ✅                   | Windows Defender is generally faster and better; third-party antivirus software can slow the system down substantially - must be uninstalled manually, though                                                                                              |
 
 ## Suggestions and Tips
+- For a hassle-free Windows experience with the maximum length of support, I recommend following one of the many online guides to installing Windows IoT Enterprise 2021 LTSC. It's the cleanest out-of-the-box edition of Windows. 
 - I recommend you use programs like [LatencyMon](https://www.resplendence.com/latencymon) and [WhySoSlow](https://www.resplendence.com/whysoslow) to benchmark your system before and after running PowerWash and any other optimizations.
 - This script should be accompanied by a manual review of preinstalled programs, devices, services, etc. to disable or uninstall unwanted software.
 - Adequate thermal management is imperative to stable device functioning. Make sure your device is being cooled adequately.
