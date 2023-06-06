@@ -102,7 +102,7 @@ Remove-ItemProperty -Force -Path "HKLM:\Software\Policies\Microsoft\Windows\Wind
 Remove-ItemProperty -Force -Path "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate" -Name "DisableWindowsUpdateAccess" -EA SilentlyContinue
 Remove-ItemProperty -Force -Path "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate" -Name "WUServer" -EA SilentlyContinue
 Remove-ItemProperty -Force -Path "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate" -Name "WUStatusServer" -EA SilentlyContinue
-Remove-ItemProperty -Force -Path "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate" -Name "UpdateServiceUrlAlternative" -EA SilentlyContinue
+Remove-ItemProperty -Force -Path "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate" -Name "UpdateServiceUrlAlternate" -EA SilentlyContinue
 Remove-ItemProperty -Force -Path "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "UseWUServer" -EA SilentlyContinue
 sc.exe config UsoSvc start=delayed-auto | Out-Null
 sc.exe start UsoSvc | Out-Null
