@@ -345,8 +345,11 @@ $has_win_enterprise = ($edition -Like "*Enterprise*") -or ($edition -Like "*Edu*
 ""
 
 # Check if we have Winget already
-Get-Command winget 2>$null | Out-Null
+$_winget = Get-Command winget -EA SilentlyContinue
 $global:has_winget = $?
+if ($global:has_winget) {
+    $global:winget_cmd = $_winget.Source
+}
 
 
 ### UTILITY FUNCTIONS ###
@@ -421,8 +424,13 @@ function Confirm ($Prompt, $Auto = $false, $ConfigKey = $null) {
 
 function UnpinApp($appname) {
     # https://learn.microsoft.com/en-us/answers/questions/214599/unpin-icons-from-taskbar-in-windows-10-20h2
-	((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() `
-    | Where-Object { $_.Name -eq $appname }).Verbs() `
+	$AppItems = ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() `
+    | Where-Object { $_.Name -eq $appname })
+    if (-not $AppItems) {
+        # That app does not exist or is not pinned to the taskbar
+        return
+    }
+    $AppItems.Verbs() `
     | Where-Object { $_.Name.replace('&', '') -match 'Unpin from taskbar' } `
     | ForEach-Object { $_.DoIt() } 2>$null | Out-Null
 }
@@ -473,6 +481,7 @@ function Install-Winget {
     Add-AppxProvisionedPackage -Online -PackagePath ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -LicensePath ".\5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
 
     $global:has_winget = $true
+    $global:winget_cmd = "$home\AppData\Local\Microsoft\WindowsApps\winget.exe"
 }
 
 function Add-Path($Path) {
@@ -1196,7 +1205,7 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
     TryDisableTask "KernelCeipTask"
     Disable-ScheduledTask -TaskName "CreateObjectTask" -TaskPath "\Microsoft\Windows\CloudExperienceHost" -EA SilentlyContinue | Out-Null
 	
-    Set-MpPreference -DisableNetworkProtectionPerfTelemetry $true | Out-Null
+    Set-MpPreference -DisableNetworkProtectionPerfTelemetry $true 2>$null | Out-Null
 	
     "- Complete"
 }
@@ -1492,7 +1501,7 @@ if ((-not $global:has_winget) -and (Confirm "Install Winget package manager?" -A
 if ($global:has_winget) {
     if (Confirm "Install configured applications?" -Auto $false -ConfigKey "Install.InstallConfigured") {
         foreach ($params in $global:config_map.Install.InstallConfiguredList) {
-            & "winget" "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
+            & $global:winget_cmd "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
         }
         "- Complete"
     }
