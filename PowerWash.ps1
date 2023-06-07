@@ -1671,6 +1671,20 @@ if ((-not $global:has_winget) -and (Confirm "Install Winget package manager?" -A
     "- Installing Winget dependencies..."
 	
     Install-Winget
+    Start-Sleep -Seconds 1;
+
+    "- Winget installed, waiting up to 10s for path to show up"
+    $retry = 0
+    while ($retry -lt 10 -and -not (Test-Path $global:winget_cmd)) {
+        $retry += 1;
+        Start-Sleep -Seconds 1;
+    }
+    if (Test-Path $global:winget_cmd) {
+        "  (Winget path shows up)"
+    }
+    else {
+        "  (Timed out - warning, Winget may not be installed correctly)"
+    }
 	
     "- Complete"
 }
