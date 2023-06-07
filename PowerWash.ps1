@@ -1456,64 +1456,6 @@ if (Confirm "Remove phantom applications?" -Auto $true -ConfigKey "Debloat.Remov
 
 ""
 ""
-"### INSTALLATION CONFIGURATION ###"
-""
-
-
-# Install Group Policy editor, which isn't installed by default on Home editions
-# Allows easy tweaking of a wide range of settings without needing to edit registry
-if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true -ConfigKey "Install.InstallGpEdit")) {
-    "- Installing Group Policy editor..."
-    cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
-    cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
-	
-    "- Complete"
-}
-
-if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Hyper-V? (Not installed by default on Home editions)" -Auto $false -ConfigKey "Install.InstallHyperV")) {
-    "- Enumerating packages..."
-    $pkgs = Get-ChildItem $env:SystemDrive\Windows\servicing\Packages | Where-Object { $_.Name -like "*Hyper*V*mum" }
-    
-    "- Installing packages..."
-    $i = 1
-    $pkgs | ForEach-Object {
-        $pkg = $_.Name
-        "  - ($i/$($pkgs.Length)) $pkg"
-        DISM.exe /Online /NoRestart /Add-Package:"$env:SystemDrive\Windows\servicing\Packages\$pkg" 2>$null | Out-Null
-        $i++
-    }    
-
-    "- Enabling Hyper-V..."
-    # DISM.exe /Online /NoRestart /Enable-Feature /featurename:Microsoft-Hyper-V -All /LimitAccess /All 2>$null | Out-Null
-    Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
-
-    "- Complete"
-}
-
-if ((-not $global:has_winget) -and (Confirm "Install Winget package manager?" -Auto $false -ConfigKey "Install.InstallWinget")) {
-    "- Installing Winget dependencies..."
-	
-    Install-Winget
-	
-    "- Complete"
-}
-
-if ($global:has_winget) {
-    if (Confirm "Install configured applications?" -Auto $false -ConfigKey "Install.InstallConfigured") {
-        foreach ($params in $global:config_map.Install.InstallConfiguredList) {
-            & $global:winget_cmd "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
-        }
-        "- Complete"
-    }
-}
-else {
-    "Skipping install of configured applications: Winget not installed"
-}
-
-
-
-""
-""
 "### WINDOWS UPDATE CONFIGURATION ###"
 ""
 
@@ -1685,6 +1627,64 @@ if ($searchbox_mode -ne "NoChange") {
     taskkill /f /im explorer.exe | Out-Null
     Start-Process explorer.exe
     "- Complete"
+}
+
+
+
+""
+""
+"### INSTALLATION CONFIGURATION ###"
+""
+
+
+# Install Group Policy editor, which isn't installed by default on Home editions
+# Allows easy tweaking of a wide range of settings without needing to edit registry
+if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true -ConfigKey "Install.InstallGpEdit")) {
+    "- Installing Group Policy editor..."
+    cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
+    cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
+	
+    "- Complete"
+}
+
+if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Hyper-V? (Not installed by default on Home editions)" -Auto $false -ConfigKey "Install.InstallHyperV")) {
+    "- Enumerating packages..."
+    $pkgs = Get-ChildItem $env:SystemDrive\Windows\servicing\Packages | Where-Object { $_.Name -like "*Hyper*V*mum" }
+    
+    "- Installing packages..."
+    $i = 1
+    $pkgs | ForEach-Object {
+        $pkg = $_.Name
+        "  - ($i/$($pkgs.Length)) $pkg"
+        DISM.exe /Online /NoRestart /Add-Package:"$env:SystemDrive\Windows\servicing\Packages\$pkg" 2>$null | Out-Null
+        $i++
+    }    
+
+    "- Enabling Hyper-V..."
+    # DISM.exe /Online /NoRestart /Enable-Feature /featurename:Microsoft-Hyper-V -All /LimitAccess /All 2>$null | Out-Null
+    Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
+
+    "- Complete"
+}
+
+if ((-not $global:has_winget) -and (Confirm "Install Winget package manager?" -Auto $false -ConfigKey "Install.InstallWinget")) {
+    "- Installing Winget dependencies..."
+	
+    Install-Winget
+	
+    "- Complete"
+}
+
+if ($global:has_winget) {
+    if (Confirm "Install configured applications?" -Auto $false -ConfigKey "Install.InstallConfigured") {
+        foreach ($params in $global:config_map.Install.InstallConfiguredList) {
+            & $global:winget_cmd "install" "--accept-package-agreements" "--accept-source-agreements" "$params"
+        }
+        "- Complete"
+    }
+}
+else {
+    "Skipping install of configured applications: Winget not installed"
 }
 
 

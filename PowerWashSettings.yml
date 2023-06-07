@@ -135,39 +135,6 @@ WindowsUpdate:
   # except when they specifically want to update.
   AddUpdateToggleScriptToDesktop: false
 
-# Optional utilities and commonly loaded programs to install.
-Install:
-  # HOME EDITION ONLY
-  # Installs Group Policy Editor (gpedit.msc). On non-Home editions, this is available by
-  # default. On Home editions, once installed here, it won't show up in Windows search, but
-  # is accessible via Win+R, "gpedit.msc"
-  InstallGpEdit: true
-
-  # HOME EDITION ONLY
-  # Installs Hyper-V. On non-Home editions, this is available by default.
-  # Can take a bit of time to install all the required packages.
-  InstallHyperV: false
-
-  # Installs Winget package manager. Convenient way to install a wide range of software
-  # from the command line, with no user interaction needed.
-  InstallWinget: true
-
-  # Installs below list of Winget packages
-  # Requires Winget to be installed.
-  InstallConfigured: false
-  InstallConfiguredList:
-    - Notepad++.Notepad++
-    - Microsoft.WindowsTerminal
-    - Gyan.FFmpeg
-    - Git.Git
-    - Microsoft.PowerToys
-    - Microsoft.Sysinternals.ProcessMonitor
-    - 7zip.7zip
-    - Google.Chrome
-    #- Microsoft.VisualStudioCode
-    #- Discord.Discord
-    #- Valve.Steam
-
 # Settings related to Windows Defender.
 Defender:
   # Configures Defender and related software for high security.
@@ -217,6 +184,39 @@ Convenience:
   # - "Icon": Shows just the search icon
   # - "Hidden": Hides the search box and icon
   TaskbarSearchboxMode: Hidden
+
+# Optional utilities and commonly loaded programs to install.
+Install:
+  # HOME EDITION ONLY
+  # Installs Group Policy Editor (gpedit.msc). On non-Home editions, this is available by
+  # default. On Home editions, once installed here, it won't show up in Windows search, but
+  # is accessible via Win+R, "gpedit.msc"
+  InstallGpEdit: true
+
+  # HOME EDITION ONLY
+  # Installs Hyper-V. On non-Home editions, this is available by default.
+  # Can take a bit of time to install all the required packages.
+  InstallHyperV: false
+
+  # Installs Winget package manager. Convenient way to install a wide range of software
+  # from the command line, with no user interaction needed.
+  InstallWinget: true
+
+  # Installs below list of Winget packages
+  # Requires Winget to be installed.
+  InstallConfigured: false
+  InstallConfiguredList:
+    - Notepad++.Notepad++
+    - Microsoft.WindowsTerminal
+    - Gyan.FFmpeg
+    - Git.Git
+    - Microsoft.PowerToys
+    - Microsoft.Sysinternals.ProcessMonitor
+    - 7zip.7zip
+    - Google.Chrome
+    #- Microsoft.VisualStudioCode
+    #- Discord.Discord
+    #- Valve.Steam
 
 # Settings for scans to perform.
 Scans:
