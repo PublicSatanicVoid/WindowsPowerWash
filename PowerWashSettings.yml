@@ -209,11 +209,11 @@ Install:
     - Notepad++.Notepad++
     - Microsoft.WindowsTerminal
     - Gyan.FFmpeg
-    - Git.Git
-    - Microsoft.PowerToys
-    - Microsoft.Sysinternals.ProcessMonitor
     - 7zip.7zip
     - Google.Chrome
+    #- Git.Git
+    #- Microsoft.PowerToys
+    #- Microsoft.Sysinternals.ProcessMonitor
     #- Microsoft.VisualStudioCode
     #- Discord.Discord
     #- Valve.Steam

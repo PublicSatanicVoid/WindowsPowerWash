@@ -1205,7 +1205,7 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
     TryDisableTask "KernelCeipTask"
     Disable-ScheduledTask -TaskName "CreateObjectTask" -TaskPath "\Microsoft\Windows\CloudExperienceHost" -EA SilentlyContinue | Out-Null
 	
-    Set-MpPreference -DisableNetworkProtectionPerfTelemetry $true 2>$null | Out-Null
+    try { Set-MpPreference -DisableNetworkProtectionPerfTelemetry $true -EA SilentlyContinue | Out-Null } catch {}
 	
     "- Complete"
 }
