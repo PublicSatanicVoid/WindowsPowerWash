@@ -104,6 +104,9 @@ Debloat:
   # Attempts to remove additional traces of Edge. May or may not be necessary to keep it from
   # reinstalling or showing up in e.g. package caches.
   RemoveEdge_ExtraTraces: false
+  
+  # Removes Windows Store.
+  RemoveStore: false
 
 # Settings pertaining to Windows Update
 WindowsUpdate:
