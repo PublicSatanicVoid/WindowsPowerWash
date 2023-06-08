@@ -19,10 +19,22 @@ if ($global:is_debug) {
     ""
 }
 
+
+$global:is_msert = "/msert" -in $args  # Microsoft Edge Removal Tool- specifies to only run Edge removal features of PowerWash
+if ($global:is_msert) {
+    $global:tool_name = "MSERT"
+}
+else {
+    $global:tool_name = "PowerWash"
+}
+
+
+if (-not $global:is_msert) {
+    ""
+    "IMPORTANT NOTICE: It is recommended to restart before running PowerWash, to minimize the chance that certain system files will be in use by other programs. This is especially important if you are trying to remove Edge."
+}
 ""
-"IMPORTANT NOTICE: It is recommended to restart before running PowerWash, to minimize the chance that certain system files will be in use by other programs. This is especially important if you are trying to remove Edge."
-""
-"IMPORTANT NOTICE: It is recommended to create a system restore point before running PowerWash. The author of PowerWash takes no responsibility for its effects on the user's system; see"
+"IMPORTANT NOTICE: It is recommended to create a system restore point before running $global:tool_name. The author of $global:tool_name takes no responsibility for its effects on the user's system; see"
 "    https://github.com/UniverseCraft/WindowsPowerWash/blob/main/LICENSE"
 "for more details."
 ""
@@ -45,16 +57,18 @@ if ("/?" -in $args) {
 
 
 "Loading dependencies..."
-"- NuGet package manager"
-if ("NuGet" -notin (Get-PackageProvider | Select-Object Name).Name) {
-    Install-PackageProvider -Name NuGet -Force | Out-Null
-    "  - Installed NuGet package manager"
-}
-"- powershell-yaml module"
-Import-Module powershell-yaml 2>$null | Out-Null
-if (-not $?) {
-    Install-Module -Name powershell-yaml -Force
-    " - Installed powershell-yaml module"
+if (-not $global:is_msert) {
+    "- NuGet package manager"
+    if ("NuGet" -notin (Get-PackageProvider | Select-Object Name).Name) {
+        Install-PackageProvider -Name NuGet -Force | Out-Null
+        "  - Installed NuGet package manager"
+    }
+    "- powershell-yaml module"
+    Import-Module powershell-yaml 2>$null | Out-Null
+    if (-not $?) {
+        Install-Module -Name powershell-yaml -Force
+        " - Installed powershell-yaml module"
+    }
 }
 "- sqlite3"
 Get-Command sqlite3 2>$null | Out-Null
@@ -182,6 +196,7 @@ $global:feature_verbs = @{
     "WindowsUpdate.DisableAllUpdate"               = "Disabling Windows Update completely";
     "WindowsUpdate.AddUpdateToggleScriptToDesktop" = "Adding script to desktop to toggle Windows Update on/off";
     "Install.InstallGpEdit"                        = "Installing Group Policy Editor (gpedit.msc)";
+    "Install.InstallHyperV"                        = "Installing Hyper-V";
     "Install.InstallWinget"                        = "Installing Winget package manager";
     "Install.InstallConfigured"                    = "Installing configured list of Winget packages";
     "Defender.ApplyRecommendedSecurityPolicies"    = "Applying recommended security policies";
@@ -354,6 +369,12 @@ if ($global:has_winget) {
 
 ### UTILITY FUNCTIONS ###
 
+function PowerWashText ($Text) {
+    if (-not $global:is_msert) {
+        "$Text"
+    }
+}
+
 function RegistryPut ($Path, $Key, $Value, $VType) {
     if ($null -eq $Path) {
         "ERROR: Null registry key passed"
@@ -403,6 +424,9 @@ function GetNested($Object, $Path) {
 }
 
 function Confirm ($Prompt, $Auto = $false, $ConfigKey = $null) {
+    if ($global:is_msert) {
+        return ($ConfigKey -eq "Debloat.RemoveEdge" -or $ConfigKey -eq "Debloat.RemoveEdge_ExtraTraces")
+    }
     if ($global:do_all) {
         return $true
     }
@@ -914,7 +938,7 @@ if ("/ElevatedAction" -in $args) {
         }
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
-	RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
+	    RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
 
@@ -943,7 +967,7 @@ if ("/ElevatedAction" -in $args) {
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_ShowSharedAccessUI" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_StdDomainUserSetLocation" -Value 1 -VType "DWORD"
-	#RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
+	    #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "UserAuthentication" -Value 1 -VType "DWORD"
         
@@ -966,9 +990,9 @@ if ("/ElevatedAction" -in $args) {
 
 
 
-""
-"### PERFORMANCE FEATURES ###"
-""
+PowerWashText ""
+PowerWashText "### PERFORMANCE FEATURES ###"
+PowerWashText ""
 
 
 # Disable HPET (high precision event timer)
@@ -1164,10 +1188,10 @@ if (Confirm "Enable Message-Signaled Interrupts for all devices that support the
 
 
 
-""
-""
-"### TELEMETRY CONFIGURATION ###"
-""
+PowerWashText ""
+PowerWashText ""
+PowerWashText "### TELEMETRY CONFIGURATION ###"
+PowerWashText ""
 
 
 # Disable Microsoft telemetry as much as we can
@@ -1212,10 +1236,10 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
 
 
 
-""
-""
-"### BLOATWARE REMOVAL ###"
-""
+PowerWashText ""
+PowerWashText ""
+PowerWashText "### BLOATWARE REMOVAL ###"
+PowerWashText ""
 
 
 if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveEdge") {
@@ -1287,7 +1311,7 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         # Many registry keys to remove are protected by SYSTEM
         Write-Host "- Removing traces of Edge from registry..." -NoNewline
         RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
-        if (Test-Path "$env:SystemDrive\.PowerWashAmcacheStatus.tmp") {
+        if (Test-Path "$env:SystemDrive\.PowerWashAmcacheStatus.tmp") {  # Removal from Amcache is totally overkill, but it's fun and technically implied by "removing traces from registry"
             $amcache_status = Get-Content "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
             Remove-Item "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
             if ($amcache_status -eq "Failure") {
@@ -1316,20 +1340,20 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         $update_locations = @("HKLM:\SOFTWARE\Microsoft\EdgeUpdate", "HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate")
         $update_locations | ForEach-Object {
             RegistryPut "$_" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
-	    RegistryPut "$_" -Key "UpdaterExperimentationAndConfigurationServiceControl" -Value 0 -VType "DWORD"
+	        RegistryPut "$_" -Key "UpdaterExperimentationAndConfigurationServiceControl" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "InstallDefault" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "UpdateDefault" -Value 0 -VType "DWORD"
 	    
             RegistryPut "$_" -Key "Install{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1 -VType "DWORD"
-	    RegistryPut "$_" -Key "Install{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
-	    RegistryPut "$_" -Key "Install{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
-	    RegistryPut "$_" -Key "Install{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
+	        RegistryPut "$_" -Key "Install{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
+	        RegistryPut "$_" -Key "Install{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
+	        RegistryPut "$_" -Key "Install{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Install{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}" -Value 0 -VType "DWORD"
 	    
             RegistryPut "$_" -Key "Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1 -VType "DWORD"
-	    RegistryPut "$_" -Key "Update{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
-	    RegistryPut "$_" -Key "Update{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
-	    RegistryPut "$_" -Key "Update{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
+	        RegistryPut "$_" -Key "Update{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
+	        RegistryPut "$_" -Key "Update{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
+	        RegistryPut "$_" -Key "Update{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Update{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}" -Value 0 -VType "DWORD"
         }
     }
@@ -1454,10 +1478,10 @@ if (Confirm "Remove phantom applications?" -Auto $true -ConfigKey "Debloat.Remov
 
 
 
-""
-""
-"### WINDOWS UPDATE CONFIGURATION ###"
-""
+PowerWashText ""
+PowerWashText ""
+PowerWashText "### WINDOWS UPDATE CONFIGURATION ###"
+PowerWashText ""
 
 
 # Disable automatic updates
@@ -1510,10 +1534,10 @@ else {
 
 
 
-""
-""
-"### WINDOWS DEFENDER CONFIGURATION ###"
-""
+PowerWashText ""
+PowerWashText ""
+PowerWashText "### WINDOWS DEFENDER CONFIGURATION ###"
+PowerWashText ""
 
 
 if (Confirm "Apply high-security Defender policies? (Attack Surface Reduction, etc.)" -Auto $false -ConfigKey "Defender.ApplyRecommendedSecurityPolicies") {
@@ -1560,10 +1584,10 @@ if (Confirm "Disable real-time protection from Windows Defender? (CAUTION) (EXPE
 
 
 
-""
-""
-"### CONVENIENCE SETTINGS ###"
-""
+PowerWashText ""
+PowerWashText ""
+PowerWashText "### CONVENIENCE SETTINGS ###"
+PowerWashText ""
 
 
 if (Confirm "Disable app startup delay?" -Auto $true -ConfigKey "Convenience.DisableStartupDelay") {
@@ -1631,10 +1655,10 @@ if ($searchbox_mode -ne "NoChange") {
 
 
 
-""
-""
-"### INSTALLATION CONFIGURATION ###"
-""
+PowerWashText ""
+PowerWashText ""
+PowerWashText "### INSTALLATION CONFIGURATION ###"
+PowerWashText ""
 
 
 # Install Group Policy editor, which isn't installed by default on Home editions
@@ -1703,10 +1727,10 @@ else {
 
 
 
-""
-""
-"### SCANS AND AUTOMATIC REPAIRS ###"
-""
+PowerWashText ""
+PowerWashText ""
+PowerWashText "### SCANS AND AUTOMATIC REPAIRS ###"
+PowerWashText ""
 
 
 # Check system file integrity
@@ -1747,9 +1771,9 @@ if ((-not $global:do_config) -or ($global:config_map.Scans.WarnAV)) {
 
 
 
+PowerWashText ""
 ""
-""
-"### POWERWASH COMPLETE ###"
+PowerWashText "### POWERWASH COMPLETE ###"
 "A restart is recommended"
 ""
 
