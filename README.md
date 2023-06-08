@@ -1,4 +1,5 @@
 # PowerWash: Reclaim Windows
+### Maximize performance ・ Disable updates ・ Remove bloatware ・ Cleanup UI ・ Fully configurable
 The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications. Removes MS/OEM bloatware, telemetry, and applies aggressive performance settings, including many that are normally hidden from the user. Works on a new or existing Windows installation.
 
 ### [Click here for features list](https://universecraft.github.io/WindowsPowerWash/docs/features)
