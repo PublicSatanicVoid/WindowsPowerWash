@@ -133,6 +133,9 @@ if ("/warnconfig" -in $args) {
             "  - Will attempt to remove additional traces of Edge"
         }
     }
+    if ($global:config_map.Debloat.RemoveStore) {
+        "* Will remove Windows Store"
+    }
     if ($global:config_map.Debloat.RemovePreinstalled) {
         "* Will remove the following preinstalled apps:"
         foreach ($app in $global:config_map.Debloat.RemovePreinstalledList) {
@@ -192,6 +195,7 @@ $global:feature_verbs = @{
     "Debloat.RemovePhantom"                        = "Removing phantom applications";
     "Debloat.RemoveEdge"                           = "Removing Microsoft Edge";
     "Debloat.RemoveEdge_ExtraTraces"               = "Removing extra traces of Microsoft Edge";
+    "Debloat.RemoveStore"			   = "Removing Windows Store";
     "WindowsUpdate.DisableAutoUpdate"              = "Disabling automatic Windows updates";
     "WindowsUpdate.DisableAllUpdate"               = "Disabling Windows Update completely";
     "WindowsUpdate.AddUpdateToggleScriptToDesktop" = "Adding script to desktop to toggle Windows Update on/off";
@@ -1359,6 +1363,12 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     }
     
     "- Note: May need to re-run this after Windows 'quality updates'"
+    "- Complete"
+}
+
+if (Confirm "Remove Store?" -Auto $false -ConfigKey "Debloat.RemoveStore") {
+    Get-AppxPackage -Name "Microsoft.StorePurchaseApp" | Remove-AppxPackage
+    Get-AppxPackage -Name "Microsoft.WindowsStore" | Remove-AppxPackage
     "- Complete"
 }
 
