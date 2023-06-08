@@ -57,13 +57,15 @@ It would seem that Microsoft's "party line" changes so often that they can't eve
 
 ### "LTSC editions shouldn't be used by consumers"
 
-The overwhelming messaging from Microsoft is that LTSC should be used only for "mission-critical" systems, not consumer devices. They haven't explicitly said not to use it on consumer devices, but they've heavily implied as much [here](https://learn.microsoft.com/en-us/windows/whats-new/ltsc/overview) and [here](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181), for example.
+The overwhelming messaging from Microsoft is that LTSC should be used only for "business-critical" systems, not consumer devices. They haven't explicitly said not to use it on consumer devices, but they've heavily implied as much [here](https://learn.microsoft.com/en-us/windows/whats-new/ltsc/overview) and [here](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181), for example.
 
 A particularly humorous "oopsies" on Microsoft's part is the repeated claim that 
 
 > Windows 10 LTSC [...] does not contain any of the components of Windows 10 that may change over the life of the release. These components include Microsoft Edge
 -[Microsoft Tech Community -- accessed 6/5/2023](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181)
 
-Just install a current LTSC edition and find out for yourself how this statement is completely false. Ironically, this lie (or significant oversight, at least) is obviously trying to dissuade users from using LTSC (oh no, it won't have Edge, my favorite browser!!!!) when in reality it probably has done exactly the opposite.
+Just install a current LTSC edition and find out for yourself how this statement is completely false. Ironically, this lie (or significant oversight, at least) is likely trying to dissuade users from using LTSC (oh no, it won't have Edge, my favorite browser!!!!) when in reality it probably has done exactly the opposite.
+
+(And by the way, if you are fine with a slower release cycle for feature updates, and aren't particularly fond of the default mail/store/etc apps, LTSC really is the no-brainer choice of Windows edition.)
 
 Oh, Microsoft.
