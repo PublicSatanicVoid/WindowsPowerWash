@@ -1501,6 +1501,7 @@ if ($has_win_pro) {
         RegistryPut $RK_Policy_Update_AU -Key "NoAutoUpdate" -Value 1 -VType "DWORD"
         RegistryPut $RK_Policy_Update_AU -Key "AUOptions" -Value 2 -VType "DWORD"
         RegistryPut $RK_Policy_Update_AU -Key "AllowMUUpdateService" -Value 1 -VType "DWORD"
+	RegistryPut $RK_Policy_Update_AU -Key "EnableFeaturedSoftware" -Value 0 -VType "DWORD"
         RegistryPut $RK_Store_Update -Key "AutoDownload" -Value 5 -VType "DWORD"
         RegistryPut $RK_Policy_Store -Key "AutoDownload" -Value 4 -VType "DWORD"
         RegistryPut $RK_Policy_Store -Key "DisableOSUpgrade" -Value 1 -VType "DWORD"
