@@ -1509,8 +1509,8 @@ if ($has_win_pro) {
     }
 }
 else {
-    "Windows Home edition does not support disabling only automatic updates, skipping this feature"
-    "If you want to disable automatic updates on Home, you can try setting your internet connection to Metered. Otherwise, you can disable updates entirely below."
+    PowerWashText "Windows Home edition does not support disabling only automatic updates, skipping this feature"
+    PowerWashText "If you want to disable automatic updates on Home, you can try setting your internet connection to Metered. Otherwise, you can disable updates entirely below."
 }
 
 # Disable all updates
@@ -1539,7 +1539,7 @@ if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -or (-not (Test-Path
     }
 }
 else {
-    "Windows Update toggle script already exists, skipping this feature"
+    PowerWashText "Windows Update toggle script already exists, skipping this feature"
 }
 
 
@@ -1733,7 +1733,7 @@ if ($global:has_winget) {
     }
 }
 else {
-    "Skipping install of configured applications: Winget not installed"
+    PowerWashText "Skipping install of configured applications: Winget not installed"
 }
 
 
