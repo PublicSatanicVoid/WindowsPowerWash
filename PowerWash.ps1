@@ -9,6 +9,7 @@
 # USE AT YOUR OWN RISK. BACKUP SYSTEM BEFORE USING.
 #
 
+$global:ScriptName = $MyInvocation.MyCommand.Name
 
 $development_computers = @("DESKTOP-DEPFV0F", "DESKTOP-OIDHB0U")
 $hostname = hostname
@@ -43,7 +44,7 @@ if (-not $global:is_msert) {
 
 ### USAGE INFORMATION ###
 if ("/?" -in $args) {
-    ".\PowerWash.ps1 [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
+    ".\$global:ScriptName [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
     "	/all			Runs all PowerWash features without prompting"
     "	/auto			Runs a default subset of PowerWash features, without prompting"
     "	/config			Runs actions enabled in PowerWashSettings.json, without prompting"
@@ -90,7 +91,7 @@ $global:do_all_auto = "/auto" -in $args
 $global:do_config = "/config" -in $args
 if ($global:do_all -and $global:do_all_auto) {
     "Error: Can only specify one of /all or /auto"
-    "Do '.\PowerWash.ps1 /?' for help"
+    "Do '.\$global:ScriptName /?' for help"
     exit
 }
 $global:config_map = If (Test-Path ".\PowerWashSettings.yml") {
@@ -1283,7 +1284,7 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     UPDATE Package SET IsInbox=0 WHERE PackageFullName LIKE '%Microsoft%Edge%';
     CREATE TRIGGER TRG_AFTER_UPDATE_Package_SRJournal AFTER UPDATE ON Package FOR EACH ROW WHEN is_srjournal_enabled()BEGIN UPDATE Sequence SET LastValue=LastValue+1 WHERE Id=2 ;INSERT INTO SRJournal(_Revision, _WorkId, ObjectType, Action, ObjectId, PackageIdentity, WhenOccurred, SequenceId)SELECT 1, workid(), 1, 2, NEW._PackageID, pi._PackageIdentityID, now(), s.LastValue FROM Sequence AS s CROSS JOIN PackageIdentity AS pi WHERE s.Id=2 AND pi.PackageFullName=NEW.PackageFullName;END;
 "@  | & $sqlite3_cmd "$env:SystemDrive\.appx.tmp"
-    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /AppxInboxStage"
+    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /AppxInboxStage"
 
     "- Removing Edge from Appx database..."
     Stop-Service -Force StateRepository
@@ -1310,11 +1311,11 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
 
         # Many folders to remove are protected by SYSTEM
         Write-Host "- Removing Edge from filesystem..." -NoNewline
-        RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /FilesystemStage"
+        RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /FilesystemStage"
 
         # Many registry keys to remove are protected by SYSTEM
         Write-Host "- Removing traces of Edge from registry..." -NoNewline
-        RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
+        RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
         if (Test-Path "$env:SystemDrive\.PowerWashAmcacheStatus.tmp") {  # Removal from Amcache is totally overkill, but it's fun and technically implied by "removing traces from registry"
             $amcache_status = Get-Content "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
             Remove-Item "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
@@ -1552,7 +1553,7 @@ PowerWashText ""
 
 if (Confirm "Apply high-security Defender policies? (Attack Surface Reduction, etc.)" -Auto $false -ConfigKey "Defender.ApplyRecommendedSecurityPolicies") {
     Write-Host "- Applying policies..." -Nonewline
-    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /ApplySecurityPolicy"
+    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy"
     "- Complete"
 }
 
@@ -1587,7 +1588,7 @@ if (Confirm "Run Defender tasks at a lower priority?" -Auto $true -ConfigKey "De
 
 if (Confirm "Disable real-time protection from Windows Defender? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "Defender.DisableRealtimeMonitoringCAUTION") {
     $disable_all_defender = Confirm "--> Disable Windows Defender entirely? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "Defender.DisableAllDefenderCAUTIONCAUTION"
-    RunScriptAsSystem -Path "$PSScriptRoot/PowerWash.ps1" -ArgString "/ElevatedAction /DisableRealtimeMonitoring $(If ($disable_all_defender) {'/DisableAllDefender'} Else {''})"
+    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /DisableRealtimeMonitoring $(If ($disable_all_defender) {'/DisableAllDefender'} Else {''})"
 	
     "- Complete (requires Tamper Protection disabled to take effect)"
 }
