@@ -7,11 +7,11 @@ The fresh, snappy out-of-box experience you've always wanted in Windows - ready 
 
 **Quick start:** Open an admin PowerShell prompt and enter:
 
-```curl -o bootstrap-manual.ps1 https://github.com/UniverseCraft/WindowsPowerWash/raw/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1```
+```curl -o bootstrap-manual.ps1 https://github.com/UniverseCraft/WindowsPowerWash/raw/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force; .\bootstrap-manual.ps1```
 
 Just here for the **MS Edge Removal Tool**? Open an admin PowerShell prompt and enter:
 
-```curl -o MSERT.ps1 https://github.com/UniverseCraft/WindowsPowerWash/raw/main/MSERT.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\MSERT.ps1```
+```curl -o MSERT.ps1 https://github.com/UniverseCraft/WindowsPowerWash/raw/main/MSERT.ps1; Set-ExecutionPolicy Unrestricted -Force; .\MSERT.ps1```
 
 ## About PowerWash
 
