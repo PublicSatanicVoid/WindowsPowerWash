@@ -1241,7 +1241,8 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     Get-AppxPackage -Name "*Microsoft*Edge*" | ForEach-Object {
         $Pkg = $_
         $RK_AppxStores | ForEach-Object {
-            New-Item -Path "$_\EndOfLife\$SID" -Name $Pkg.PackageFullName
+            New-Item -Path "$_\EndOfLife" -Name "$SID" -Force
+            New-Item -Path "$_\EndOfLife\$SID" -Name $Pkg.PackageFullName -Force
         }
     }
 
