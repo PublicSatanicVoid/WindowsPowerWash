@@ -1380,9 +1380,9 @@ if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKe
     }
     Get-AppxProvisionedPackage -Online | ForEach-Object {
         $Package = $_
-        if ($Package.displayName -in $global:config_map.Debloat.RemovePreinstalledList) {
+        if ($Package.DisplayName -in $global:config_map.Debloat.RemovePreinstalledList) {
             "- Attempting removal of $($Package.displayName) provisioned package..."
-            Remove-AppxProvisionedPackage -online -packagename $ProvisionedPackage.PackageName 2>$null | Out-Null
+            Remove-AppxProvisionedPackage -online -packagename $Package.PackageName 2>$null | Out-Null
         }
     }
     "- Complete"
