@@ -894,21 +894,23 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
         #RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
+        
+        # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/attack-surface-reduction-rules-reference?view=o365-worldwide#asr-rule-to-guid-matrix
         $asr_guids = @(
-            "26190899-1602-49e8-8b27-eb1d0a1ce869",
-            "3b576869-a4ec-4529-8536-b80a7769e899",
-            "56a863a9-875e-4185-98a7-b882c64b5ce5",
-            "5beb7efe-fd9a-4556-801d-275e5ffc04cc",
-            "75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84",
-            "7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c",
-            "92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b",
-            "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2",
-            "b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4",
-            "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550",
-            "c1db55ab-c21a-4637-bb3f-a12568109d35",
-            "d3e037e1-3eb8-44c8-a917-57927947596d",
-            "e6db77e5-3df2-4cf1-b95a-636979351e5b",
-            "d4f940ab-401b-4efc-aadc-ad5f3c50688a"
+            "26190899-1602-49e8-8b27-eb1d0a1ce869",  # Block Office communication application from creating child processes
+            "3b576869-a4ec-4529-8536-b80a7769e899",  # Block Office applications from creating executable content
+            "56a863a9-875e-4185-98a7-b882c64b5ce5",  # Block abuse of exploited vulnerable signed drivers
+            "5beb7efe-fd9a-4556-801d-275e5ffc04cc",  # Block execution of potentially obfuscated scripts
+            "75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84",  # Block Office applications from injecting code into other processes
+            "7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c",  # Block Adobe Reader from creating child processes
+            "92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b",  # Block Win32 API calls from Office macros
+            "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2",  # Block credential stealing from the Windows local security authority subsystem (lsass.exe)
+            "b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4",  # Block untrusted and unsigned processes that run from USB
+            "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550",  # Block executable content from email client and webmail
+            "c1db55ab-c21a-4637-bb3f-a12568109d35",  # Use advanced protection against ransomware
+            "d3e037e1-3eb8-44c8-a917-57927947596d",  # Block JavaScript or VBScript from launching downloaded executable content
+            "e6db77e5-3df2-4cf1-b95a-636979351e5b",  # Block persistence through WMI event subscription
+            "d4f940ab-401b-4efc-aadc-ad5f3c50688a"   # Block all Office applications from creating child processes
         )
         $asr_guids | ForEach-Object {
             RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 1 -VType "String"
@@ -928,6 +930,7 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoAutorun" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoDriveTypeAutoRun" -Value 255 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
+        
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
         
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
@@ -1309,10 +1312,16 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
 
         "- Disabling Edge in Windows Update..."
         # https://github.com/AveYo/fox/blob/main/Edge_Removal.bat
+        # https://learn.microsoft.com/en-us/deployedge/microsoft-edge-update-policies
         $update_locations = @("HKLM:\SOFTWARE\Microsoft\EdgeUpdate", "HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate")
         $update_locations | ForEach-Object {
             RegistryPut "$_" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
 	        RegistryPut "$_" -Key "UpdaterExperimentationAndConfigurationServiceControl" -Value 0 -VType "DWORD"
+
+            RegistryPut "$_" -Key "UpdatesSuppressedStartHour" -Value 0x0 -VType "DWORD"
+            RegistryPut "$_" -Key "UpdatesSuppressedStartMin" -Value 0x0 -VType "DWORD"
+            RegistryPut "$_" -Key "UpdatesSuppressedDurationMin" -Value 0x5A0 -VType "DWORD"  # 1440 mins, or 24 hours
+
             RegistryPut "$_" -Key "InstallDefault" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "UpdateDefault" -Value 0 -VType "DWORD"
 	    

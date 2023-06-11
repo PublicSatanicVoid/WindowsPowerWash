@@ -40,8 +40,6 @@ But if you try to do that, you get a rather nasty error message saying that the 
 
 Thankfully, there's nothing fundamentally different about an inbox application - there's just a boolean field in a database somewhere specifying whether a given package is inbox or not. Clear that boolean, and the package can be removed.
 
-The details of editing that field are a bit hairy, because it resides in an actively open database with specialized logic that normally prevents external modifications, but by killing the services that have the database open and temporarily removing that specialized logic, we can edit the "Is Inbox?" field, package things back up (this is also hairy; if you do something in the wrong order it bricks your whole Appx repository), and now the `Remove-AppxPackage` cmdlet completes successfully, after showing an *extremely satisfying* "Deployment operation" progress bar for removing Edge.
-
 There are some other relatively unimportant steps to delete some lingering traces of Edge, but these are the major hurdles to overcome.
 
 ### Windows Update
