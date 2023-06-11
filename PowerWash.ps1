@@ -71,16 +71,6 @@ if (-not $global:is_msert) {
         " - Installed powershell-yaml module"
     }
 }
-"- sqlite3"
-Get-Command sqlite3 2>$null | Out-Null
-if (-not $?) {
-    $has_sqlite = $false
-    "  - Could not find sqlite3 installation. Will install it automatically if/when needed."
-}
-else {
-    $has_sqlite = $true
-    $sqlite3_cmd = (Get-Command sqlite3).Source
-}
 
 ""
 
@@ -820,24 +810,6 @@ if ("/ElevatedAction" -in $args) {
                 }
             }
         }
-        elseif ("/AppxInboxStage" -in $args) {
-            $appx_db = "$env:SystemDrive\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
-            if (-not (Test-Path "$env:SystemDrive\.appx.tmp")) {
-                SysDebugLog "Could not update live Appx database: $env:SystemDrive\.appx.tmp is not found"
-            }
-            else {
-                SysDebugLog "write over live appx sqlite database"
-                sc.exe config StateRepository start=disabled | Out-Null
-                Stop-Service -Force StateRepository | SysDebugLog
-                Remove-Item "$($appx_db)-shm"
-                Remove-Item "$($appx_db)-wal"
-                Copy-Item -Force -Path "$env:SystemDrive\.appx.tmp" -Dest $appx_db | SysDebugLog
-                sc.exe config StateRepository start=demand | Out-Null
-                Start-Service StateRepository | SysDebugLog
-                Remove-Item "$env:SystemDrive\.appx.tmp"
-                SysDebugLog "-done"
-            }
-        }
         elseif ("/FilesystemStage" -in $args) {
 
             $folders_to_remove = @(
@@ -1251,17 +1223,6 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     $aggressive = Confirm "--> Remove Microsoft Edge aggressively? (Removes extra traces of Edge from the filesystem and registry)" -Auto $false -ConfigKey "Debloat.RemoveEdge_ExtraTraces"
     $aggressive_flag = $(If ($aggressive) { "/Aggressive" } Else { "" })
 
-    if (-not $has_sqlite) {
-        "- Installing required dependency SQLite3..."
-        Invoke-WebRequest -Uri "https://sqlite.org/2023/sqlite-tools-win32-x86-3420000.zip" -OutFile "$env:SystemDrive\sqlite.zip"
-        Expand-Archive "$env:SystemDrive\sqlite.zip" -DestinationPath "$env:SystemDrive\sqlite"
-        $subdir = (Get-ChildItem "$env:SystemDrive\sqlite")[0].Name
-        $sqlite3_cmd = "$env:SystemDrive\sqlite\$subdir\sqlite3.exe"
-        Add-Path "$env:SystemDrive\sqlite\$subdir"
-        Remove-Item "$env:SystemDrive\sqlite.zip"
-        "- SQLite3 installed"
-    }
-
     "- Stopping Microsoft Edge..."
     taskkill /f /im msedge.exe 2>$null | Out-Null
     taskkill /f /im MicrosoftEdgeUpdate.exe 2>$null | Out-Null
@@ -1276,20 +1237,24 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         Remove-AppxProvisionedPackage -PackageName $provisioned -Online -AllUsers 2>$null | Out-Null
     }
 
-    Write-Host "- Marking Edge as removable in Appx database..." -NoNewline
-    $appx_db = "$env:SystemDrive\ProgramData\Microsoft\Windows\AppRepository\StateRepository-Machine.srd"
-    Copy-Item -Path $appx_db -Dest "$env:SystemDrive\.appx.tmp" | Out-Null
-    @"
-    DROP TRIGGER IF EXISTS main.TRG_AFTER_UPDATE_Package_SRJournal;
-    UPDATE Package SET IsInbox=0 WHERE PackageFullName LIKE '%Microsoft%Edge%';
-    CREATE TRIGGER TRG_AFTER_UPDATE_Package_SRJournal AFTER UPDATE ON Package FOR EACH ROW WHEN is_srjournal_enabled()BEGIN UPDATE Sequence SET LastValue=LastValue+1 WHERE Id=2 ;INSERT INTO SRJournal(_Revision, _WorkId, ObjectType, Action, ObjectId, PackageIdentity, WhenOccurred, SequenceId)SELECT 1, workid(), 1, 2, NEW._PackageID, pi._PackageIdentityID, now(), s.LastValue FROM Sequence AS s CROSS JOIN PackageIdentity AS pi WHERE s.Id=2 AND pi.PackageFullName=NEW.PackageFullName;END;
-"@  | & $sqlite3_cmd "$env:SystemDrive\.appx.tmp"
-    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /AppxInboxStage"
+    "- Marking Edge as removable in Appx database..."
+    Get-AppxPackage -Name "*Microsoft*Edge*" | ForEach-Object {
+        $Pkg = $_
+        $RK_AppxStores | ForEach-Object {
+            New-Item -Path "$_\EndOfLife\$SID" -Name $Pkg.PackageFullName
+        }
+    }
 
     "- Removing Edge from Appx database..."
-    Stop-Service -Force StateRepository
-    Start-Service StateRepository
     Get-AppxPackage -Name "*Microsoft*Edge*" | Remove-AppxPackage
+
+    "- Cleaning up Edge entries in Appx database..."
+    Get-AppxPackage -Name "*Microsoft*Edge*" | ForEach-Object {
+        $Pkg = $_
+        $RK_AppxStores | ForEach-Object {
+            Remove-Item -Path "$_\EndOfLife\$SID" -Name $Pkg.PackageFullName
+        }
+    }
 
     if ($aggressive) {
         "- Attempting to remove Edge using setup tool..."
@@ -1403,24 +1368,18 @@ if ($has_win_enterprise -and (Confirm "Disable preinstalled apps?" -Auto $true -
 
 if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKey "Debloat.RemovePreinstalled") {
     # Adapted from  https://www.kapilarya.com/how-to-uninstall-built-in-apps-in-windows-10
-    ForEach ($App in $global:config_map.Debloat.RemovePreinstalledList) {
-        $Packages = Get-AppxPackage | Where-Object { $_.Name -eq $App }
-        if ($null -eq $Packages) {
-            "- No installed packages found for $App, skipping"
+    Get-AppxPackage | ForEach-Object {
+        $Package = $_
+        if ($Package.Name -in $global:config_map.Debloat.RemovePreinstalledList) {
+            "- Attempting removal of $($Package.Name) installed package..."
+            Set-NonRemovableAppsPolicy -Online -PackageFamilyName $Package.PackageFamilyName -NonRemovable 0 | Out-Null
+            Remove-AppxPackage -package $Package.PackageFullName 2>$null | Out-Null
         }
-        else {
-            "- Attempting removal of $App installed package..."
-            foreach ($Package in $Packages) {
-                Set-NonRemovableAppsPolicy -Online -PackageFamilyName $Package.PackageFamilyName -NonRemovable 0 | Out-Null
-                Remove-AppxPackage -package $Package.PackageFullName 2>$null | Out-Null
-            }
-        }
-        $ProvisionedPackage = Get-AppxProvisionedPackage -online | Where-Object { $_.displayName -eq $App }
-        if ($null -eq $ProvisionedPackage) {
-            "- No provisioned package found for $App, skipping"
-        }
-        else {
-            "- Attempting removal of $App provisioned package..."
+    }
+    Get-AppxProvisionedPackage -Online | ForEach-Object {
+        $Package = $_
+        if ($Package.displayName -in $global:config_map.Debloat.RemovePreinstalledList) {
+            "- Attempting removal of $($Package.displayName) provisioned package..."
             Remove-AppxProvisionedPackage -online -packagename $ProvisionedPackage.PackageName 2>$null | Out-Null
         }
     }
