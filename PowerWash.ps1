@@ -1227,7 +1227,7 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     taskkill /f /im msedge.exe 2>$null | Out-Null
     taskkill /f /im MicrosoftEdgeUpdate.exe 2>$null | Out-Null
 	
-    "- Marking Edge as removable..."
+    "- Marking Edge as removable in registry..."
     RegistryPut $RK_Uninst_Edge -Key "NoRemove" -Value 0 -VType "DWORD"
     RegistryPut $RK_Uninst_Edge -Key "NoRepair" -Value 0 -VType "DWORD"
 
@@ -1238,24 +1238,31 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     }
 
     "- Marking Edge as removable in Appx database..."
+    $EdgePackages = @()
     Get-AppxPackage -Name "*Microsoft*Edge*" | ForEach-Object {
         $Pkg = $_
+        $EdgePackages += $Pkg.PackageFullName
         $RK_AppxStores | ForEach-Object {
-            New-Item -Path "$_\EndOfLife" -Name "$SID" -Force
-            New-Item -Path "$_\EndOfLife\$SID" -Name $Pkg.PackageFullName -Force
+            New-Item -Path "$_\EndOfLife\$SID\$($Pkg.PackageFullName)" -Force | Out-Null
         }
     }
+
+    read-host "debug"
 
     "- Removing Edge from Appx database..."
     Get-AppxPackage -Name "*Microsoft*Edge*" | Remove-AppxPackage
 
+    read-host "debug"
+
     "- Cleaning up Edge entries in Appx database..."
-    Get-AppxPackage -Name "*Microsoft*Edge*" | ForEach-Object {
-        $Pkg = $_
+    $EdgePackages | ForEach-Object {
+        $PkgName = $_
         $RK_AppxStores | ForEach-Object {
-            Remove-Item -Path "$_\EndOfLife\$SID" -Name $Pkg.PackageFullName
+            Remove-Item -Path "$_\EndOfLife\$SID\$PkgName" -Force | Out-Null
         }
     }
+
+    read-host "debug"
 
     if ($aggressive) {
         "- Attempting to remove Edge using setup tool..."
