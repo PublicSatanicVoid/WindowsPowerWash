@@ -44,7 +44,16 @@ PowerWash should be used as part of a comprehensive approach to optimizing and s
 
 **NOTE:** This script is NOT designed to repair a broken/corrupted Windows installation! It is designed to run on a fully functioning system and further optimize it for high-performance use cases. A clean install prior to using this is ideal! (In fact, you can even [load PowerWash onto Windows installation media!](https://universecraft.github.io/WindowsPowerWash/docs/usage/deployment))
 
-**Security.** To maximize security without sacrificing performance, I recommend using the enterprise version of Microsoft Defender, such as Defender for Business, along with Windows 10 Enterprise (preferably IoT Enterprise LTSC, for the stability and long-term guaranteed security patches). The free version of Windows Defender does not adequately provide techniques such as Attack Surface Reduction, vulnerability tracking, etc., while third-party antivirus solutions tend to slow down your computer substantially. You can obtain permanent license keys to Enterprise from any number of reputable websites for ~$12 and easily purchase a Defender for Business subscription for ~$4/month if you have an email under a custom domain name. In my opinion, the setup is well worth it, and this will enable you to fully benefit from the "Apply Security Policies" PowerWash feature. I also recommend using BitLocker for drive encryption, and using hardware rather than software encryption if possible.
+**Security.** To maximize security without sacrificing performance, I recommend the following in addition to PowerWash:
+- Using an enterprise version of Microsoft Defender, such as [Defender for Business](https://www.microsoft.com/en-us/security/business/endpoint-security/microsoft-defender-business)
+  - Monthly subscription costs ~$4/month if you have an email under a custom domain name
+  - This will allow you to fully benefit from the Attack Surface Reduction and other security rules enabled by PowerWash
+  - Third-party antivirus solutions tend to slow down your device substantially and are often intrusive / hard to uninstall. All editions of Defender are from Microsoft and integrate much better with Windows.
+- Using a long-term support version of Windows, such as [IoT Enterprise LTSC](https://www.microsoft.com/en-us/security/business/endpoint-security/microsoft-defender-business)
+  - Permanent license keys are available from reputable websites for ~$12
+- Setting up [BitLocker drive encryption](https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/)
+  - Hardware encryption will provide better performance than software encryption
+- Use a browser like [Brave](https://brave.com/) for better tracking prevention (and speed!) and a VPN like [NordVPN](https://nordvpn.com/) for better anonymity.
 
 **Device Health.** Keep up with regular hardware and software maintenance tasks, including but not limited to: running the Disk Cleanup and Defragment utilities, installing Windows/driver/firmware updates, running DISM and SFC to check for corrupted system files, removing unused programs and files, uninstalling or disabling unused devices, cleaning computer fans, and periodically stress-testing your system to ensure it remains stable under load.
 
