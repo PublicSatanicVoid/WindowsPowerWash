@@ -1247,12 +1247,8 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         }
     }
 
-    read-host "debug"
-
     "- Removing Edge from Appx database..."
     Get-AppxPackage -Name "*Microsoft*Edge*" | Remove-AppxPackage
-
-    read-host "debug"
 
     "- Cleaning up Edge entries in Appx database..."
     $EdgePackages | ForEach-Object {
@@ -1261,8 +1257,6 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
             Remove-Item -Path "$_\EndOfLife\$SID\$PkgName" -Force | Out-Null
         }
     }
-
-    read-host "debug"
 
     if ($aggressive) {
         "- Attempting to remove Edge using setup tool..."
