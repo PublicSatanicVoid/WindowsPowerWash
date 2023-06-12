@@ -10,6 +10,7 @@
 #
 
 $global:ScriptName = $MyInvocation.MyCommand.Name
+$global:WebClient = $wc = New-Object net.webclient  # For downloading dependencies
 
 $development_computers = @("DESKTOP-DEPFV0F", "DESKTOP-OIDHB0U")
 $hostname = hostname
@@ -489,13 +490,13 @@ function Install-Winget {
     # https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
     Add-AppxPackage -Path "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
 
-    Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3" -OutFile ".\microsoft.ui.xaml.2.7.3.zip"
+    $global:WebClient.DownloadFile("https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3", ".\microsoft.ui.xaml.2.7.3.zip")
     Expand-Archive ".\microsoft.ui.xaml.2.7.3.zip"
     Add-AppxPackage ".\microsoft.ui.xaml.2.7.3\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx"
 
     "- Installing Winget..."
-    Invoke-WebRequest -Uri "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -OutFile ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
-    Invoke-WebRequest -Uri "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml" -OutFile ".\5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
+    $global:WebClient.DownloadFile("https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle", ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle")
+    $global:WebClient.DownloadFile("https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml", ".\5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml")
 
     Add-AppxProvisionedPackage -Online -PackagePath ".\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -LicensePath ".\5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
 
@@ -1502,7 +1503,7 @@ if (Confirm "Disable all Windows updates? (You will need to manually re-enable t
 # This is the next best thing for Home users to being able to disable automatic updates. They can toggle updates on when they want to check or install updates, and toggle updates back off when they're done.
 if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -or (-not (Test-Path "$home\Desktop\Toggle Updates.lnk"))) {
     if (Confirm "Add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "WindowsUpdate.AddUpdateToggleScriptToDesktop") {
-        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/extra/ToggleUpdates.bat" -OutFile $home\Documents\.ToggleUpdates.bat
+        $global:WebClient.DownloadFile("https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/extra/ToggleUpdates.bat", "$home\Documents\.ToggleUpdates.bat")
         
         CreateShortcut -Dest "$home\Desktop\Toggle Updates.lnk" -Source "$home\Documents\.ToggleUpdates.bat" -Admin $true
         
