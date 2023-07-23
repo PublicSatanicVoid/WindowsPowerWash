@@ -37,7 +37,7 @@ if (-not $global:is_msert) {
 }
 ""
 "IMPORTANT NOTICE: It is recommended to create a system restore point before running $global:tool_name. The author of $global:tool_name takes no responsibility for its effects on the user's system; see"
-"    https://github.com/UniverseCraft/WindowsPowerWash/blob/main/LICENSE"
+"    https://github.com/PublicSatanicVoid/WindowsPowerWash/blob/main/LICENSE"
 "for more details."
 ""
 
@@ -187,7 +187,7 @@ $global:feature_verbs = @{
     "Debloat.RemovePhantom"                        = "Removing phantom applications";
     "Debloat.RemoveEdge"                           = "Removing Microsoft Edge";
     "Debloat.RemoveEdge_ExtraTraces"               = "Removing extra traces of Microsoft Edge";
-    "Debloat.RemoveStore"			   = "Removing Windows Store";
+    "Debloat.RemoveStore"                          = "Removing Windows Store";
     "WindowsUpdate.DisableAutoUpdate"              = "Disabling automatic Windows updates";
     "WindowsUpdate.DisableAllUpdate"               = "Disabling Windows Update completely";
     "WindowsUpdate.AddUpdateToggleScriptToDesktop" = "Adding script to desktop to toggle Windows Update on/off";
@@ -444,8 +444,8 @@ function Confirm ($Prompt, $Auto = $false, $ConfigKey = $null) {
 
 function UnpinApp($appname) {
     # https://learn.microsoft.com/en-us/answers/questions/214599/unpin-icons-from-taskbar-in-windows-10-20h2
-	$AppItems = ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() `
-    | Where-Object { $_.Name -eq $appname })
+    $AppItems = ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() `
+        | Where-Object { $_.Name -eq $appname })
     if (-not $AppItems) {
         # That app does not exist or is not pinned to the taskbar
         return
@@ -898,19 +898,19 @@ if ("/ElevatedAction" -in $args) {
         
         # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/attack-surface-reduction-rules-reference?view=o365-worldwide#asr-rule-to-guid-matrix
         $asr_guids = @(
-            "26190899-1602-49e8-8b27-eb1d0a1ce869",  # Block Office communication application from creating child processes
-            "3b576869-a4ec-4529-8536-b80a7769e899",  # Block Office applications from creating executable content
-            "56a863a9-875e-4185-98a7-b882c64b5ce5",  # Block abuse of exploited vulnerable signed drivers
-            "5beb7efe-fd9a-4556-801d-275e5ffc04cc",  # Block execution of potentially obfuscated scripts
-            "75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84",  # Block Office applications from injecting code into other processes
-            "7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c",  # Block Adobe Reader from creating child processes
-            "92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b",  # Block Win32 API calls from Office macros
-            "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2",  # Block credential stealing from the Windows local security authority subsystem (lsass.exe)
-            "b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4",  # Block untrusted and unsigned processes that run from USB
-            "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550",  # Block executable content from email client and webmail
-            "c1db55ab-c21a-4637-bb3f-a12568109d35",  # Use advanced protection against ransomware
-            "d3e037e1-3eb8-44c8-a917-57927947596d",  # Block JavaScript or VBScript from launching downloaded executable content
-            "e6db77e5-3df2-4cf1-b95a-636979351e5b",  # Block persistence through WMI event subscription
+            "26190899-1602-49e8-8b27-eb1d0a1ce869", # Block Office communication application from creating child processes
+            "3b576869-a4ec-4529-8536-b80a7769e899", # Block Office applications from creating executable content
+            "56a863a9-875e-4185-98a7-b882c64b5ce5", # Block abuse of exploited vulnerable signed drivers
+            "5beb7efe-fd9a-4556-801d-275e5ffc04cc", # Block execution of potentially obfuscated scripts
+            "75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84", # Block Office applications from injecting code into other processes
+            "7674ba52-37eb-4a4f-a9a1-f0f9a1619a2c", # Block Adobe Reader from creating child processes
+            "92e97fa1-2edf-4476-bdd6-9dd0b4dddc7b", # Block Win32 API calls from Office macros
+            "9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2", # Block credential stealing from the Windows local security authority subsystem (lsass.exe)
+            "b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4", # Block untrusted and unsigned processes that run from USB
+            "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550", # Block executable content from email client and webmail
+            "c1db55ab-c21a-4637-bb3f-a12568109d35", # Use advanced protection against ransomware
+            "d3e037e1-3eb8-44c8-a917-57927947596d", # Block JavaScript or VBScript from launching downloaded executable content
+            "e6db77e5-3df2-4cf1-b95a-636979351e5b", # Block persistence through WMI event subscription
             "d4f940ab-401b-4efc-aadc-ad5f3c50688a"   # Block all Office applications from creating child processes
         )
         $asr_guids | ForEach-Object {
@@ -918,7 +918,7 @@ if ("/ElevatedAction" -in $args) {
         }
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
-	    RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
 
@@ -948,7 +948,7 @@ if ("/ElevatedAction" -in $args) {
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_ShowSharedAccessUI" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_StdDomainUserSetLocation" -Value 1 -VType "DWORD"
-	    #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
+        #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "UserAuthentication" -Value 1 -VType "DWORD"
         
@@ -1287,7 +1287,8 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         # Many registry keys to remove are protected by SYSTEM
         Write-Host "- Removing traces of Edge from registry..." -NoNewline
         RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /RemoveEdge $aggressive_flag /RegistryStage"
-        if (Test-Path "$env:SystemDrive\.PowerWashAmcacheStatus.tmp") {  # Removal from Amcache is totally overkill, but it's fun and technically implied by "removing traces from registry"
+        if (Test-Path "$env:SystemDrive\.PowerWashAmcacheStatus.tmp") {
+            # Removal from Amcache is totally overkill, but it's fun and technically implied by "removing traces from registry"
             $amcache_status = Get-Content "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
             Remove-Item "$env:SystemDrive\.PowerWashAmcacheStatus.tmp"
             if ($amcache_status -eq "Failure") {
@@ -1317,7 +1318,7 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
         $update_locations = @("HKLM:\SOFTWARE\Microsoft\EdgeUpdate", "HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate")
         $update_locations | ForEach-Object {
             RegistryPut "$_" -Key "DoNotUpdateToEdgeWithChromium" -Value 1 -VType "DWORD"
-	        RegistryPut "$_" -Key "UpdaterExperimentationAndConfigurationServiceControl" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "UpdaterExperimentationAndConfigurationServiceControl" -Value 0 -VType "DWORD"
 
             RegistryPut "$_" -Key "UpdatesSuppressedStartHour" -Value 0x0 -VType "DWORD"
             RegistryPut "$_" -Key "UpdatesSuppressedStartMin" -Value 0x0 -VType "DWORD"
@@ -1327,15 +1328,15 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
             RegistryPut "$_" -Key "UpdateDefault" -Value 0 -VType "DWORD"
 	    
             RegistryPut "$_" -Key "Install{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1 -VType "DWORD"
-	        RegistryPut "$_" -Key "Install{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
-	        RegistryPut "$_" -Key "Install{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
-	        RegistryPut "$_" -Key "Install{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Install{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Install{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Install{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Install{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}" -Value 0 -VType "DWORD"
 	    
             RegistryPut "$_" -Key "Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1 -VType "DWORD"
-	        RegistryPut "$_" -Key "Update{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
-	        RegistryPut "$_" -Key "Update{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
-	        RegistryPut "$_" -Key "Update{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Update{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Update{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
+            RegistryPut "$_" -Key "Update{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Update{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}" -Value 0 -VType "DWORD"
         }
     }
@@ -1472,7 +1473,7 @@ if ($has_win_pro) {
         RegistryPut $RK_Policy_Update_AU -Key "NoAutoUpdate" -Value 1 -VType "DWORD"
         RegistryPut $RK_Policy_Update_AU -Key "AUOptions" -Value 2 -VType "DWORD"
         RegistryPut $RK_Policy_Update_AU -Key "AllowMUUpdateService" -Value 1 -VType "DWORD"
-	RegistryPut $RK_Policy_Update_AU -Key "EnableFeaturedSoftware" -Value 0 -VType "DWORD"
+        RegistryPut $RK_Policy_Update_AU -Key "EnableFeaturedSoftware" -Value 0 -VType "DWORD"
         RegistryPut $RK_Store_Update -Key "AutoDownload" -Value 5 -VType "DWORD"
         RegistryPut $RK_Policy_Store -Key "AutoDownload" -Value 4 -VType "DWORD"
         RegistryPut $RK_Policy_Store -Key "DisableOSUpgrade" -Value 1 -VType "DWORD"
@@ -1503,7 +1504,7 @@ if (Confirm "Disable all Windows updates? (You will need to manually re-enable t
 # This is the next best thing for Home users to being able to disable automatic updates. They can toggle updates on when they want to check or install updates, and toggle updates back off when they're done.
 if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -or (-not (Test-Path "$home\Desktop\Toggle Updates.lnk"))) {
     if (Confirm "Add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "WindowsUpdate.AddUpdateToggleScriptToDesktop") {
-        $global:WebClient.DownloadFile("https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/extra/ToggleUpdates.bat", "$home\Documents\.ToggleUpdates.bat")
+        $global:WebClient.DownloadFile("https://raw.githubusercontent.com/PublicSatanicVoid/WindowsPowerWash/main/extra/ToggleUpdates.bat", "$home\Documents\.ToggleUpdates.bat")
         
         CreateShortcut -Dest "$home\Desktop\Toggle Updates.lnk" -Source "$home\Documents\.ToggleUpdates.bat" -Admin $true
         
