@@ -1,4 +1,4 @@
-$gh_repo_id = "UniverseCraft/WindowsPowerWash"
+$gh_repo_id = "PublicSatanicVoid/WindowsPowerWash"
 
 "Downloading sources from GitHub repo: $gh_repo_id"
 curl -o .PowerWash.ps1 "https://raw.githubusercontent.com/$gh_repo_id/main/PowerWash.ps1"
