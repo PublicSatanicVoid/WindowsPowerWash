@@ -1,11 +1,11 @@
-<sup>[← Back to home](https://universecraft.github.io/WindowsPowerWash/)</sup>
+<sup>[← Back to home](https://publicsatanicvoid.github.io/WindowsPowerWash/)</sup>
 
 ## PowerWash: Interactive Usage Guide
 This short guide walks you through how to use PowerWash in the "interactive usage" mode, which prompts you whether to enable each feature.
 
 ### Setup
-- You only need to download [`PowerWash.ps1`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWash.ps1) to use PowerWash interactively.
-  - If you want to remove bloatware programs or install custom programs with PowerWash, you also need to download [`PowerWashSettings.yml`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/PowerWashSettings.yml)
+- You only need to download [`PowerWash.ps1`](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/PowerWash.ps1) to use PowerWash interactively.
+  - If you want to remove bloatware programs or install custom programs with PowerWash, you also need to download [`PowerWashSettings.yml`](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/PowerWashSettings.yml)
 - Make sure your [`ExecutionPolicy`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.3) allows scripts to run
 
 ### Usage: Standard
@@ -22,4 +22,4 @@ This short guide walks you through how to use PowerWash in the "interactive usag
 - Run `.\PowerWash.ps1` and interactively select the changes you want to make. (To be completely thorough you would change only one, and repeat this workflow for each change)
 - Restart your computer and put it back into as close a state as it was before
 - Run `.\PowerWash.ps1 /stats` to get a new reading of performance stats. A comparison table between baseline and current will be shown, with absolute and percent change.
-- Retain settings that improve performance, whether by the displayed metrics or others such as LatencyMon (see [`FEATURES.md`](https://universecraft.github.io/WindowsPowerWash/docs/features)) or your impression of system responsiveness.
+- Retain settings that improve performance, whether by the displayed metrics or others such as LatencyMon (see [`FEATURES.md`](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/features)) or your impression of system responsiveness.
