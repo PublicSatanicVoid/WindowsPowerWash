@@ -2,7 +2,7 @@
 
 ## Windows Lies
 
-It is pretty much an open secret at this point that Microsoft blatantly lies about their products in an attempt to get users to purchase software they don't really need or to dissuade users from trying too hard to get rid of software they don't really want.
+It is pretty much an open secret at this point that Microsoft blatantly lies about their products in an attempt to get users to purchase software they don't really need or to dissuade users from trying too hard to get rid of invasive software they don't really want.
 
 Still, it bears cataloguing just how brazen they've become. Here is a list of lies that *you can disprove by yourself with PowerWash*.
 
