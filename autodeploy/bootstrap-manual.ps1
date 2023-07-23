@@ -1,8 +1,8 @@
-# "PowerShell.exe" -Command "curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/UniverseCraft/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false"
+# "PowerShell.exe" -Command "curl -o bootstrap-manual.ps1 https://raw.githubusercontent.com/PublicSatanicVoid/WindowsPowerWash/main/autodeploy/bootstrap-manual.ps1; Set-ExecutionPolicy Unrestricted -Force -Confirm:$false; .\bootstrap-manual.ps1 -Confirm:$false"
 
 "PowerWash initializing..."
 
-$gh_repo_id = "UniverseCraft/WindowsPowerWash"
+$gh_repo_id = "PublicSatanicVoid/WindowsPowerWash"
 
 "Downloading from GitHub repo: $gh_repo_id"
 curl -o PowerWash.ps1 "https://raw.githubusercontent.com/$gh_repo_id/main/PowerWash.ps1"
