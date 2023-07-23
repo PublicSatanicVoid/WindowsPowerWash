@@ -1,4 +1,4 @@
-<sup>[← Back to home](https://universecraft.github.io/WindowsPowerWash/)</sup>
+<sup>[← Back to home](https://publicsatanicvoid.github.io/WindowsPowerWash/)</sup>
 
 ## PowerWash Limitations
 
