@@ -1,4 +1,4 @@
-<sup>[← Back to home](https://universecraft.github.io/WindowsPowerWash/)</sup>
+<sup>[← Back to home](https://publicsatanicvoid.github.io/WindowsPowerWash/)</sup>
 
 ## Removing Edge (technical overview)
 
@@ -6,7 +6,7 @@ There are many reasons someone might want to remove Microsoft Edge. Maybe you're
 
 There is a _remarkable_ amount of low-quality, blatantly incorrect advice out there about how to remove Edge - as well as plenty of sites asserting that it can't be removed at all.
 
-Anyone who tells you to simply delete the `NoRemove` registry value from Edge's uninstall location, or to run Edge's `setup.exe` with some certain combination of flags, is wrong. Maybe this used to work, but it is still being passed around as valid advice despite Microsoft making both of those methods insufficient.
+Anyone who tells you to simply delete the `NoRemove` registry value from Edge's uninstall location, or to run Edge's `setup.exe` with some certain combination of flags, is wrong. Maybe this used to work, but it is still being passed around as valid advice despite Microsoft blocking both of those methods from working.
 
 ### The NoRemove issue
 
@@ -34,11 +34,11 @@ To remove Edge fully, you have to uninstall its application package. But Microso
 
 Edge (and the Edge DevTools client) is installed as an "Appx" package, which just means that it is packaged in a certain format and is registered in a certain database, separately from non-Appx programs like most that you would install.
 
-There is a handy set of PowerShell cmdlets: `Get-AppxPackage -Name "*Microsoft*Edge*"` will select all the Appx packages for Microsoft Edge, and piping this to `Remove-AppxPackage` _should_ then remove those packages.
+There is a handy set of PowerShell cmdlets for working with Appx packages: `Get-AppxPackage -Name "*Microsoft*Edge*"` will select all the Appx packages for Microsoft Edge, and piping this to `Remove-AppxPackage` _should_ then remove those packages.
 
 But if you try to do that, you get a rather nasty error message saying that the application is "part of Windows" and "can't be removed". They don't use this term in the error message, because that would be useful information and Microsoft as a matter of policy does not provide useful information, but the reason those packages can't be removed is because they are "Inbox" applications (meaning they are "part of the box" and are -- **artificially** -- "built in" to Windows and can't be removed).
 
-Thankfully, there's nothing fundamentally different about an inbox application - there's just a boolean field in a database somewhere specifying whether a given package is inbox or not. Clear that boolean, and the package can be removed.
+Thankfully, there's nothing fundamentally different about an inbox application - there's just a boolean field in a local SQLite database somewhere specifying whether a given package is inbox or not. Clear that boolean, and the package can be removed.
 
 There are some other relatively unimportant steps to delete some lingering traces of Edge, but these are the major hurdles to overcome.
 
@@ -55,6 +55,6 @@ Now that we know definitively that Edge can be completely removed from any compu
 > Because Windows supports applications that rely on the web platform, our default web browser is an essential component of our operating system and can’t be uninstalled.
 -[Microsoft Support -- accessed 5/18/2023](https://support.microsoft.com/en-us/microsoft-edge/why-can-t-i-uninstall-microsoft-edge-ee150b3b-7d7a-9984-6d83-eb36683d526d)
 
-You will notice that your system still runs totally fine - literally nothing should break as a result of removing Edge - and so it clearly is *not* an essential component of Windows. But even if it *were* an essential component of Windows, that still wouldn't explain why it *couldn't* be uninstalled - just why it *shouldn't*. Microsoft's never exactly been strong on transparency, but this is just hilariously sloppy bullshit.
+You will notice that your system still runs totally fine - literally nothing should break as a result of removing Edge (except from links in the Settings page, which are artificially forced to open with Edge) - and so it clearly is *not* an essential component of Windows. But even if it *were* an essential component of Windows, that still wouldn't explain why it *couldn't* be uninstalled - just why it *shouldn't*. Microsoft's never exactly been strong on transparency, but this is just hilariously sloppy bullshit.
 
 Hopefully you've found this explanation of the Edge removal process enlightening! The full process took me weeks to come up with and weeks more to stabilize against edge cases and glitches. The Windows user community always needs more reverse engineers to unravel Microsoft's advertisement-driven antics, so if you feel drawn to this kind of experimentation and (quite honestly) fun, feel free to submit your findings via a pull request or GitHub issue! Even if it doesn't get incorporated into PowerWash (and it very well could!) it's always nice to discuss the ugly innards of Microsoft Windows over a steaming-hot bowl of spaghetti.
