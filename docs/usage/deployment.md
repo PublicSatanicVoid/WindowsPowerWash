@@ -1,4 +1,4 @@
-<sup>[← Back to home](https://universecraft.github.io/WindowsPowerWash/)</sup>
+<sup>[← Back to home](https://publicsatanicvoid.github.io/WindowsPowerWash/)</sup>
 
 ## PowerWash: Deployment via Windows Installation Media
 
@@ -11,12 +11,12 @@ PowerWash can be easily deployed to a fresh PC as part of the Windows installati
 This is also preferable to downloading modded Windows ISOs - they are much harder to validate from a security perspective and much less reliable as the initial installation files are being modified in unexpected/unsupported ways. By just inserting the PowerWash bootstrapper and leaving the install files themselves untouched, you're much less likely to brick your install and you can rest easy knowing that nothing has been tampered with.
 
 ### Setup
-- Familiarize yourself with using PowerWash in "configuration mode" [here](https://universecraft.github.io/WindowsPowerWash/docs/usage/config).
+- Familiarize yourself with using PowerWash in "configuration mode" [here](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/usage/config).
 - [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this repository (`UniverseCraft/WindowsPowerWash`) into your own public GitHub repository.
 - Modify your copy of `PowerWashSettings.yml` with the settings you want executed when PowerWash automatically runs during setup.
 - *(Optional but highly recommended)* Test this out on a local machine or VM.
 - Burn a Windows ISO to a USB drive. You can use [Rufus](https://github.com/pbatard/rufus/releases/) or Microsoft's [Media Creation Tool](https://www.microsoft.com/en-us/software-download/windows10) for this.
-- Download and run [`autodeploy/add_to_installer.bat`](https://github.com/UniverseCraft/WindowsPowerWash/tree/main/autodeploy/add_to_installer.bat). You will be prompted to enter the drive letter of the USB drive and also the ID of your forked repository. **This is in the format `Username/Repo`, eg `UniverseCraft/PersonalDeploymentSettings`**, where `PersonalDeploymentSettings` has been forked from `UniverseCraft/WindowsPowerWash`.
+- Download and run [`autodeploy/add_to_installer.bat`](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/autodeploy/add_to_installer.bat). You will be prompted to enter the drive letter of the USB drive and also the ID of your forked repository. **This is in the format `Username/Repo`, eg `UniverseCraft/PersonalDeploymentSettings`**, where `PersonalDeploymentSettings` has been forked from `UniverseCraft/WindowsPowerWash`.
 - Your USB drive for installing Windows will now download and run your configured copy of PowerWash at the end of Windows setup.
 
 ### Usage
