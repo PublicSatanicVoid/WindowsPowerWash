@@ -71,13 +71,15 @@ Debloat:
   RemovePreinstalledList:
     []
     # Cannot remove Edge this way. See "RemoveEdge" config value below instead.
+  RemovePreinstalledPatterns: []
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true
 
   # NOTE: Make sure not to remove Browser.InternetExplorer capability and Edge browser below
   # if running on a fresh install, or you will have no web browser!
-  RemoveWindowsCapabilitiesList: []
+  RemoveWindowsCapabilitiesList:
+    []
     #- OneCoreUAP.OneSync
     #- Microsoft.Windows.WordPad
     #- Browser.InternetExplorer # Recommended to keep. Removing will break eg URL shortcuts.
@@ -94,7 +96,7 @@ Debloat:
   # Attempts to remove additional traces of Edge. May or may not be necessary to keep it from
   # reinstalling or showing up in e.g. package caches.
   RemoveEdge_ExtraTraces: false
-  
+
   # Removes Windows Store.
   RemoveStore: false
 

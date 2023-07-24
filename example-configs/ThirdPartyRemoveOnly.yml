@@ -71,23 +71,29 @@ Debloat:
   RemovePreinstalledList:
     - 4DF9E0F8.Netflix
     - AppleInc.iTunes
+    - BytedancePte.Ltd.TikTok
     - CreativeTechnologyLtd.SoundBlasterConnect
     - HULULLC.HULUPLUS
     - king.com.CandyCrushFriends
     - king.com.FarmHeroesSaga
     - RivetNetworks.KillerControlCenter
-    - BytedancePte.Ltd.TikTok
-    - king.com.CandyCrushFriends
-    - king.com.FarmHeroesSaga
     - SpotifyAB.SpotifyMusic
     # Cannot remove Edge this way. See "RemoveEdge" config value below instead.
+
+  # Mildly faster to batch these.
+  RemovePreinstalledPatterns:
+    - "EclipseManager|ActiproSoftwareLLC|AdobeSystemsIncorporated.AdobePhotoshopExpress|Wunderlist|Flipboard"
+    - "Duolingo-LearnLanguagesforFree|Sway|Speed Test"
+    - "PandoraMediaInc|Twitter|Facebook|Spotify|Dolby"
+    - "CandyCrush|BubbleWitch3Saga|Minecraft|Royal Revolt"
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true
 
   # NOTE: Make sure not to remove Browser.InternetExplorer capability and Edge browser below
   # if running on a fresh install, or you will have no web browser!
-  RemoveWindowsCapabilitiesList: []
+  RemoveWindowsCapabilitiesList:
+    []
     #- OneCoreUAP.OneSync
     #- Microsoft.Windows.WordPad
     #- Browser.InternetExplorer # Recommended to keep. Removing will break eg URL shortcuts.
@@ -104,7 +110,7 @@ Debloat:
   # Attempts to remove additional traces of Edge. May or may not be necessary to keep it from
   # reinstalling or showing up in e.g. package caches.
   RemoveEdge_ExtraTraces: false
-  
+
   # Removes Windows Store.
   RemoveStore: false
 

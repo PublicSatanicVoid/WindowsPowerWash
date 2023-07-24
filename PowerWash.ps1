@@ -10,7 +10,7 @@
 #
 
 $global:ScriptName = $MyInvocation.MyCommand.Name
-$global:WebClient = $wc = New-Object net.webclient  # For downloading dependencies
+$global:WebClient = New-Object net.webclient  # For downloading dependencies
 
 $development_computers = @("DESKTOP-DEPFV0F", "DESKTOP-OIDHB0U")
 $hostname = hostname
@@ -1380,8 +1380,10 @@ if ($has_win_enterprise -and (Confirm "Disable preinstalled apps?" -Auto $true -
 }
 
 if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKey "Debloat.RemovePreinstalled") {
+    $Packages = Get-AppxPackage
+    $ProvisionedPackages = Get-AppxProvisionedPackage -Online
     # Adapted from  https://www.kapilarya.com/how-to-uninstall-built-in-apps-in-windows-10
-    Get-AppxPackage | ForEach-Object {
+    $Packages | ForEach-Object {
         $Package = $_
         if ($Package.Name -in $global:config_map.Debloat.RemovePreinstalledList) {
             "- Attempting removal of $($Package.Name) installed package..."
@@ -1389,12 +1391,17 @@ if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKe
             Remove-AppxPackage -package $Package.PackageFullName 2>$null | Out-Null
         }
     }
-    Get-AppxProvisionedPackage -Online | ForEach-Object {
+    $ProvisionedPackages | ForEach-Object {
         $Package = $_
         if ($Package.DisplayName -in $global:config_map.Debloat.RemovePreinstalledList) {
             "- Attempting removal of $($Package.displayName) provisioned package..."
             Remove-AppxProvisionedPackage -online -packagename $Package.PackageName 2>$null | Out-Null
         }
+    }
+    foreach ($pattern in $global:config_map.Debloat.RemovePreinstalledPatterns) {
+        "- Removing any packages matching '$pattern'..."
+        $Packages | Where-Object { $_.Name -match "$pattern" } | Remove-AppxPackage 2>$null
+        $ProvisionedPackages | Where-Object { $_.DisplayName -match "$pattern" } | Remove-AppxProvisionedPackage -Online 2>$null | Out-Null
     }
     "- Complete"
 }

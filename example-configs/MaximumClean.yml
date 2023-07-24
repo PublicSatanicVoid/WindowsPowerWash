@@ -80,22 +80,52 @@ Debloat:
     - Microsoft.Advertising.Xaml
     - Microsoft.BingNews
     - Microsoft.BingWeather
+    - Microsoft.GetHelp
+    - Microsoft.GetStarted
     - Microsoft.Messaging
     - Microsoft.MicrosoftSolitaireCollection
     - Microsoft.MicrosoftOfficeHub
+    - Microsoft.NetworkSpeedTest
+    - Microsoft.News
+    - Microsoft.Office.Lens
+    - Microsoft.Office.OneNote
+    - Microsoft.Office.Sway
+    - Microsoft.Office.Todo.List
     - Microsoft.OneConnect
     - Microsoft.People
+    #- Microsoft.RemoteDesktop
+    #- Microsoft.StorePurchaseApp
     - Microsoft.SkypeApp
     - Microsoft.Wallet
+    - Microsoft.Whiteboard
+    #- Microsoft.MicrosoftStickyNotes
+    #- Microsoft.Windows.Photos
+    - Microsoft.WindowsAlarms
+    #- Microsoft.WindowsCalculator
+    #- Microsoft.WindowsCamera
     - Microsoft.WindowsCommunicationsApps
     - Microsoft.WindowsFeedbackHub
+    - Microsoft.WindowsMaps
     - Microsoft.WindowsSoundRecorder
+    - Microsoft.Xbox.TCUI
     - Microsoft.XboxApp
+    - Microsoft.XboxGameOverlay
+    - Microsoft.XboxIdentityProvider
+    - Microsoft.XboxSpeechToTextOverlay
     - Microsoft.YourPhone
+    #- Microsoft.ZuneMusic
+    #- Microsoft.ZuneVideo
     - MicrosoftTeams
     - RivetNetworks.KillerControlCenter
     - SpotifyAB.SpotifyMusic
     # Cannot remove Edge this way. See "RemoveEdge" config value below instead.
+
+  # Mildly faster to batch these.
+  RemovePreinstalledPatterns:
+    - "EclipseManager|ActiproSoftwareLLC|AdobeSystemsIncorporated.AdobePhotoshopExpress|Wunderlist|Flipboard"
+    - "Duolingo-LearnLanguagesforFree|Sway|Speed Test"
+    - "PandoraMediaInc|Twitter|Facebook|Spotify|Dolby"
+    - "CandyCrush|BubbleWitch3Saga|Minecraft|Royal Revolt"
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true
@@ -119,7 +149,7 @@ Debloat:
   # Attempts to remove additional traces of Edge. May or may not be necessary to keep it from
   # reinstalling or showing up in e.g. package caches.
   RemoveEdge_ExtraTraces: true
-  
+
   # Removes Windows Store.
   RemoveStore: true
 
