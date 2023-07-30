@@ -516,10 +516,10 @@ function Install-Winget {
     "- Installing Winget..."
     $winget_msix = Split-Path -Leaf $global:DL_Winget
     $winget_lic = Split-Path -Leaf $global:DL_Winget_License
-    DownloadFile -Url $global:DL_Winget -DestFile $global:winget_msix
-    DownloadFile -Url $global:DL_Winget_License -DestFile $global:winget_lic
+    DownloadFile -Url $global:DL_Winget -DestFile $winget_msix
+    DownloadFile -Url $global:DL_Winget_License -DestFile $winget_lic
 
-    Add-AppxProvisionedPackage -Online -PackagePath $global:winget_msix -LicensePath $global:winget_lic
+    Add-AppxProvisionedPackage -Online -PackagePath $winget_msix -LicensePath $winget_lic
 
     $global:has_winget = $true
     $global:winget_cmd = "$home\AppData\Local\Microsoft\WindowsApps\winget.exe"
