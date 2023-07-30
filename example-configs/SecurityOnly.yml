@@ -218,6 +218,10 @@ Convenience:
   # - "Hidden": Hides the search box and icon
   TaskbarSearchboxMode: Icon
 
+  # Sows the UAC prompt for elevation requests, but on the same desktop
+  # (less disruptive).
+  ShowUacOnSameDesktop: false
+
 # Optional utilities and commonly loaded programs to install.
 Install:
   # HOME EDITION ONLY

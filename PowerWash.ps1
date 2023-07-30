@@ -204,6 +204,7 @@ $global:feature_verbs = @{
     "Convenience.ShowRunAsDifferentUser"           = "Showing 'Run as different user' option in start menu";
     "Convenience.ShowHiddenExplorer"               = "Showing hidden files in Explorer";
     "Convenience.CleanupTaskbar"                   = "Cleaning up taskbar";
+    "Convenience.ShowUacOnSameDesktop"             = "Showing UAC on same desktop for elevation requests";
     "Scans.CheckIntegrity"                         = "Running system file integrity checks";
     "Scans.CheckIRQ"                               = "Checking for IRQ conflicts"
 }
@@ -1656,6 +1657,13 @@ elseif ($searchbox_mode -eq "Hidden") {
 if ($searchbox_mode -ne "NoChange") {
     taskkill /f /im explorer.exe | Out-Null
     Start-Process explorer.exe
+    "- Complete"
+}
+
+# Show UAC Prompt on Same Desktop
+if (Confirm "Show UAC prompt on same desktop?" -Auto $true -ConfigKey "Convenience.ShowUacPromptOnSameDesktop") {
+    RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorUser" -Value 3 -VType "DWORD"
+    RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 3 -VType "DWORD"
     "- Complete"
 }
 
