@@ -10,7 +10,6 @@
 #
 
 $global:ScriptName = $MyInvocation.MyCommand.Name
-$global:WebClient = New-Object net.webclient  # For downloading dependencies
 
 $development_computers = @("DESKTOP-DEPFV0F", "DESKTOP-OIDHB0U")
 $hostname = hostname
@@ -287,8 +286,6 @@ $DL_Winget = "https://github.com/microsoft/winget-cli/releases/download/v1.4.110
 $DL_Winget_License = "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
 
 
-
-
 ### PERFORMANCE STATISTICS ###
 if ("/stats" -in $args) {
     "Collecting current performance stats, please be patient..."
@@ -496,19 +493,25 @@ function PSFormatRegPath ($Path, $SID) {
     return $result
 }
 
+
+function DownloadFile($Url, $DestFile) {
+    $ProgressPreference = 'SilentlyContinue'
+    Invoke-WebRequest "$Url" -UseBasicParsing -OutFile "$DestFile"
+}
+
 function Install-Winget {
     # https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
     Add-AppxPackage -Path $DL_VCLibs
 
-    $global:WebClient.DownloadFile($DL_UIXaml, ".\microsoft.ui.xaml.zip")
+    DownloadFile -Source $DL_UIXaml -DestFile ".\microsoft.ui.xaml.zip"
     Expand-Archive ".\microsoft.ui.xaml.zip"
     Add-AppxPackage ".\microsoft.ui.xaml\$DL_UIXaml_PathToAppx"
 
     "- Installing Winget..."
     $winget_msix = Split-Path -Leaf $DL_Winget
     $winget_lic = Split-Path -Leaf $DL_Winget_License
-    $global:WebClient.DownloadFile($DL_Winget, $winget_msix)
-    $global:WebClient.DownloadFile($DL_Winget_License, $winget_lic)
+    DownloadFile -Source $DL_Winget -DestFile $winget_msix
+    DownloadFile -Source $DL_Winget_License -DestFile $winget_lic
 
     Add-AppxProvisionedPackage -Online -PackagePath $winget_msix -LicensePath $winget_lic
 
@@ -1523,7 +1526,7 @@ if (Confirm "Disable all Windows updates? (You will need to manually re-enable t
 # This is the next best thing for Home users to being able to disable automatic updates. They can toggle updates on when they want to check or install updates, and toggle updates back off when they're done.
 if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -or (-not (Test-Path "$home\Desktop\Toggle Updates.lnk"))) {
     if (Confirm "Add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "WindowsUpdate.AddUpdateToggleScriptToDesktop") {
-        $global:WebClient.DownloadFile("https://raw.githubusercontent.com/PublicSatanicVoid/WindowsPowerWash/main/extra/ToggleUpdates.bat", "$home\Documents\.ToggleUpdates.bat")
+        DownloadFile -Source "https://raw.githubusercontent.com/PublicSatanicVoid/WindowsPowerWash/main/extra/ToggleUpdates.bat" -DestFile "$home\Documents\.ToggleUpdates.bat"
         
         CreateShortcut -Dest "$home\Desktop\Toggle Updates.lnk" -Source "$home\Documents\.ToggleUpdates.bat" -Admin $true
         
