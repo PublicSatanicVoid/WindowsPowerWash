@@ -132,6 +132,10 @@ if ("/warnconfig" -in $args) {
         foreach ($app in $global:config_map.Debloat.RemovePreinstalledList) {
             "  - $app"
         }
+        "* Will remove preinstalled apps matching the following name patterns:"
+        foreach ($pat in $global:config_map.Debloat.RemovePreinstalledPatterns) {
+            "  - $pat"
+        }
     }
     if ($global:config_map.Debloat.RemoveWindowsCapabilities) {
         "* Will remove the following capabilities:"
@@ -182,6 +186,7 @@ $global:feature_verbs = @{
     "Debloat.DisableConsumerFeatures"              = "Disabling Microsoft consumer features";
     "Debloat.DisablePreinstalled"                  = "Disabling preinstalled apps from Microsoft and OEMs";
     "Debloat.RemovePreinstalled"                   = "Removing configured list of preinstalled apps";
+    "Debloat.RemovePreinstalledPatterns"           = "Removing configured list of preinstalled apps based on pattern-matched names";
     "Debloat.RemoveWindowsCapabilities"            = "Removing configured list of Windows capabilities";
     "Debloat.RemovePhantom"                        = "Removing phantom applications";
     "Debloat.RemoveEdge"                           = "Removing Microsoft Edge";
@@ -496,8 +501,7 @@ function PSFormatRegPath ($Path, $SID) {
 
 
 function DownloadFile($Url, $DestFile) {
-    $ProgressPreference = 'SilentlyContinue'
-    "    Download File: $Url   -->   $DestFile"
+    $ProgressPreference = "SilentlyContinue"
     Invoke-WebRequest -Uri $Url -UseBasicParsing -OutFile $DestFile
 }
 
@@ -505,15 +509,15 @@ function Install-Winget {
     # https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
     Add-AppxPackage -Path $global:DL_VCLibs
 
-    DownloadFile -Source $global:DL_UIXaml -DestFile ".\microsoft.ui.xaml.zip"
+    DownloadFile -Url $global:DL_UIXaml -DestFile ".\microsoft.ui.xaml.zip"
     Expand-Archive ".\microsoft.ui.xaml.zip"
     Add-AppxPackage ".\microsoft.ui.xaml\$global:DL_UIXaml_PathToAppx"
 
     "- Installing Winget..."
     $winget_msix = Split-Path -Leaf $global:DL_Winget
     $winget_lic = Split-Path -Leaf $global:DL_Winget_License
-    DownloadFile -Source $global:DL_Winget -DestFile $global:winget_msix
-    DownloadFile -Source $global:DL_Winget_License -DestFile $global:winget_lic
+    DownloadFile -Url $global:DL_Winget -DestFile $global:winget_msix
+    DownloadFile -Url $global:DL_Winget_License -DestFile $global:winget_lic
 
     Add-AppxProvisionedPackage -Online -PackagePath $global:winget_msix -LicensePath $global:winget_lic
 
@@ -1528,7 +1532,7 @@ if (Confirm "Disable all Windows updates? (You will need to manually re-enable t
 # This is the next best thing for Home users to being able to disable automatic updates. They can toggle updates on when they want to check or install updates, and toggle updates back off when they're done.
 if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -or (-not (Test-Path "$home\Desktop\Toggle Updates.lnk"))) {
     if (Confirm "Add a script to your desktop that lets you toggle Windows updates on or off?" -Auto $false -ConfigKey "WindowsUpdate.AddUpdateToggleScriptToDesktop") {
-        DownloadFile -Source "https://raw.githubusercontent.com/PublicSatanicVoid/WindowsPowerWash/main/extra/ToggleUpdates.bat" -DestFile "$home\Documents\.ToggleUpdates.bat"
+        DownloadFile -Url "https://raw.githubusercontent.com/PublicSatanicVoid/WindowsPowerWash/main/extra/ToggleUpdates.bat" -DestFile "$home\Documents\.ToggleUpdates.bat"
         
         CreateShortcut -Dest "$home\Desktop\Toggle Updates.lnk" -Source "$home\Documents\.ToggleUpdates.bat" -Admin $true
         
