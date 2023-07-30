@@ -497,7 +497,8 @@ function PSFormatRegPath ($Path, $SID) {
 
 function DownloadFile($Url, $DestFile) {
     $ProgressPreference = 'SilentlyContinue'
-    Invoke-WebRequest "$Url" -UseBasicParsing -OutFile "$DestFile"
+    "    Download File: $Url   -->   $DestFile"
+    Invoke-WebRequest -Uri $Url -UseBasicParsing -OutFile $DestFile
 }
 
 function Install-Winget {
