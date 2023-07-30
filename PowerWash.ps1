@@ -280,11 +280,11 @@ $RK_TIPC = "HKLM:\SOFTWARE\Microsoft\Input\TIPC"
 
 
 
-$DL_VCLibs = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
-$DL_UIXaml = "https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3"
-$DL_UIXaml_PathToAppx = "tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx"
-$DL_Winget = "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
-$DL_Winget_License = "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
+$global:DL_VCLibs = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
+$global:DL_UIXaml = "https://www.nuget.org/api/v2/package/Microsoft.UI.Xaml/2.7.3"
+$global:DL_UIXaml_PathToAppx = "tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.appx"
+$global:DL_Winget = "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle"
+$global:DL_Winget_License = "https://github.com/microsoft/winget-cli/releases/download/v1.4.11071/5d9d44b170c146e1a3085c2c75fcc2c1_License1.xml"
 
 
 ### PERFORMANCE STATISTICS ###
@@ -502,19 +502,19 @@ function DownloadFile($Url, $DestFile) {
 
 function Install-Winget {
     # https://github.com/microsoft/winget-cli/issues/1861#issuecomment-1435349454
-    Add-AppxPackage -Path $DL_VCLibs
+    Add-AppxPackage -Path $global:DL_VCLibs
 
-    DownloadFile -Source $DL_UIXaml -DestFile ".\microsoft.ui.xaml.zip"
+    DownloadFile -Source $global:DL_UIXaml -DestFile ".\microsoft.ui.xaml.zip"
     Expand-Archive ".\microsoft.ui.xaml.zip"
-    Add-AppxPackage ".\microsoft.ui.xaml\$DL_UIXaml_PathToAppx"
+    Add-AppxPackage ".\microsoft.ui.xaml\$global:DL_UIXaml_PathToAppx"
 
     "- Installing Winget..."
-    $winget_msix = Split-Path -Leaf $DL_Winget
-    $winget_lic = Split-Path -Leaf $DL_Winget_License
-    DownloadFile -Source $DL_Winget -DestFile $winget_msix
-    DownloadFile -Source $DL_Winget_License -DestFile $winget_lic
+    $winget_msix = Split-Path -Leaf $global:DL_Winget
+    $winget_lic = Split-Path -Leaf $global:DL_Winget_License
+    DownloadFile -Source $global:DL_Winget -DestFile $global:winget_msix
+    DownloadFile -Source $global:DL_Winget_License -DestFile $global:winget_lic
 
-    Add-AppxProvisionedPackage -Online -PackagePath $winget_msix -LicensePath $winget_lic
+    Add-AppxProvisionedPackage -Online -PackagePath $global:winget_msix -LicensePath $global:winget_lic
 
     $global:has_winget = $true
     $global:winget_cmd = "$home\AppData\Local\Microsoft\WindowsApps\winget.exe"
