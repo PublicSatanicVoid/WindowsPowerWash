@@ -13,7 +13,7 @@ $global:ScriptName = $MyInvocation.MyCommand.Name
 
 $hostname = hostname
 $global:sys_account_debug_log = "$env:SystemDrive\PowerWashSysActionsDbg.log"
-$global:is_debug = $true
+$global:is_debug = $false
 if ($global:is_debug) {
     "POWERWASH DEBUG MODE IS ON"
     ""
