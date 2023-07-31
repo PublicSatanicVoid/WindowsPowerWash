@@ -362,8 +362,8 @@ if ("/stats" -in $args) {
 ### COMPATIBILITY CHECKS ###
 # Check Windows edition; some editions don't support certain features
 $edition = (Get-WindowsEdition -online).Edition
-$has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Edu*") -or ($edition -Like "*Enterprise*")
-$has_win_enterprise = ($edition -Like "*Enterprise*") -or ($edition -Like "*Edu*")
+$has_win_pro = ($edition -Like "*Pro*") -or ($edition -Like "*Enterprise*") -or ($edition -Like "*Education*")
+$has_win_enterprise = ($edition -Like "*Enterprise*") -or ($edition -Like "*Education*")
 
 "Windows Edition: $edition (pro=$has_win_pro) (enterprise=$has_win_enterprise)"
 ""
@@ -1510,8 +1510,9 @@ if ($has_win_pro) {
     }
 }
 else {
-    PowerWashText "Windows Home edition does not support disabling only automatic updates, skipping this feature"
-    PowerWashText "If you want to disable automatic updates on Home, you can try setting your internet connection to Metered. Otherwise, you can disable updates entirely below."
+    PowerWashText "Not applicable: Disable automatic Windows updates"
+    PowerWashText "* Windows Home edition does not support disabling only automatic updates, skipping this feature"
+    PowerWashText "* If you want to disable automatic updates on Home, you can try setting your internet connection to Metered. Otherwise, you can disable updates entirely below."
 }
 
 # Disable all updates
@@ -1682,54 +1683,76 @@ PowerWashText ""
 
 # Install Group Policy editor, which isn't installed by default on Home editions
 # Allows easy tweaking of a wide range of settings without needing to edit registry
-if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true -ConfigKey "Install.InstallGpEdit")) {
-    "- Installing Group Policy editor..."
-    cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
-    cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
-	
-    "- Complete"
-}
-
-if ((-not $has_win_pro) -and (-not $noinstall) -and (Confirm "Install Hyper-V? (Not installed by default on Home editions)" -Auto $false -ConfigKey "Install.InstallHyperV")) {
-    "- Enumerating packages..."
-    $pkgs = Get-ChildItem $env:SystemDrive\Windows\servicing\Packages | Where-Object { $_.Name -like "*Hyper*V*mum" }
-    
-    "- Installing packages..."
-    $i = 1
-    $pkgs | ForEach-Object {
-        $pkg = $_.Name
-        "  - ($i/$($pkgs.Length)) $pkg"
-        DISM.exe /Online /NoRestart /Add-Package:"$env:SystemDrive\Windows\servicing\Packages\$pkg" 2>$null | Out-Null
-        $i++
-    }    
-
-    "- Enabling Hyper-V..."
-    # DISM.exe /Online /NoRestart /Enable-Feature /featurename:Microsoft-Hyper-V -All /LimitAccess /All 2>$null | Out-Null
-    Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
-
-    "- Complete"
-}
-
-if ((-not $global:has_winget) -and (Confirm "Install Winget package manager?" -Auto $false -ConfigKey "Install.InstallWinget")) {
-    "- Installing Winget dependencies..."
-	
-    Install-Winget
-    Start-Sleep -Seconds 1;
-
-    "- Winget installed, waiting up to 10s for path to show up"
-    $retry = 0
-    while ($retry -lt 10 -and -not (Test-Path $global:winget_cmd)) {
-        $retry += 1;
-        Start-Sleep -Seconds 1;
+if (-not $has_win_pro) {
+    if ( (-not $noinstall) -and (Confirm "Install Group Policy editor? (Not installed by default on Home editions)" -Auto $true -ConfigKey "Install.InstallGpEdit")) {
+        "- Installing Group Policy editor..."
+        cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
+        cmd /c 'FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")' | Out-Null
+        
+        "- Complete"
     }
-    if (Test-Path $global:winget_cmd) {
-        "  (Winget path shows up)"
+}
+else {
+    PowerWashText "Not applicable: Install Group Policy editor (Already installed by default on non-Home editions)"
+}
+
+if ((Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online).State -ne "Enabled") {
+    if (-not $has_win_pro) {
+        if ((-not $noinstall) -and (Confirm "Install Hyper-V? (Not installed by default on Home editions)" -Auto $false -ConfigKey "Install.InstallHyperV")) {
+            "- Enumerating packages..."
+            $pkgs = Get-ChildItem $env:SystemDrive\Windows\servicing\Packages | Where-Object { $_.Name -like "*Hyper*V*mum" }
+            
+            "- Installing packages..."
+            $i = 1
+            $pkgs | ForEach-Object {
+                $pkg = $_.Name
+                "  - ($i/$($pkgs.Length)) $pkg"
+                DISM.exe /Online /NoRestart /Add-Package:"$env:SystemDrive\Windows\servicing\Packages\$pkg" 2>$null | Out-Null
+                $i++
+            }    
+
+            "- Enabling Hyper-V..."
+            Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
+
+            "- Complete"
+        }
     }
     else {
-        "  (Timed out - warning, Winget may not be installed correctly)"
+        if (Confirm "Enable Hyper-V?" -Auto $false -ConfigKey "Install.InstallHyperV") {
+            Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
+            "-Complete"
+        }
     }
-	
-    "- Complete"
+}
+else {
+    "Not applicable: Install/Enable Hyper-V (Already enabled on this computer)"
+}
+
+if (-not $global:has_winget) {
+    if ((Confirm "Install Winget package manager?" -Auto $false -ConfigKey "Install.InstallWinget")) {
+        "- Installing Winget dependencies..."
+        
+        Install-Winget
+        Start-Sleep -Seconds 1;
+
+        "- Winget installed, waiting up to 10s for path to show up"
+        $retry = 0
+        while ($retry -lt 10 -and -not (Test-Path $global:winget_cmd)) {
+            $retry += 1;
+            Start-Sleep -Seconds 1;
+        }
+        if (Test-Path $global:winget_cmd) {
+            "  (Winget path shows up)"
+        }
+        else {
+            "  (Timed out - warning, Winget may not be installed correctly)"
+        }
+        
+        "- Complete"
+    }
+}
+else {
+    "Not applicable: Install Winget package manager (Already installed on this computer)"
 }
 
 if ($global:has_winget) {
