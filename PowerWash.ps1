@@ -913,6 +913,12 @@ if ("/ElevatedAction" -in $args) {
     elseif ("/ApplySecurityPolicy" -in $args) {
         #Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
 
+        # Standard users must enter admin username/password to allow elevation
+        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorUser" -Value 1 -VType "DWORD"
+
+        # Admins don't need to enter credentials to allow elevation, but are still prompted to allow or deny.
+        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 4 -VType "DWORD"
+
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
         #RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
@@ -1668,8 +1674,7 @@ if ($searchbox_mode -ne "NoChange") {
 
 # Show UAC Prompt on Same Desktop
 if (Confirm "Show UAC prompt on same desktop?" -Auto $true -ConfigKey "Convenience.ShowUacPromptOnSameDesktop") {
-    RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorUser" -Value 3 -VType "DWORD"
-    RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 3 -VType "DWORD"
+    RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "PromptOnSecureDesktop" -Value 0 -VType "DWORD"
     "- Complete"
 }
 
