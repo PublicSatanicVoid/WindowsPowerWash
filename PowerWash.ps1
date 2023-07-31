@@ -11,10 +11,9 @@
 
 $global:ScriptName = $MyInvocation.MyCommand.Name
 
-$development_computers = @("DESKTOP-DEPFV0F", "DESKTOP-OIDHB0U")
 $hostname = hostname
 $global:sys_account_debug_log = "$env:SystemDrive\PowerWashSysActionsDbg.log"
-$global:is_debug = ($hostname -in $development_computers) -and $true
+$global:is_debug = $true
 if ($global:is_debug) {
     "POWERWASH DEBUG MODE IS ON"
     ""
@@ -919,10 +918,15 @@ if ("/ElevatedAction" -in $args) {
         # Admins don't need to enter credentials to allow elevation, but are still prompted to allow or deny.
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 4 -VType "DWORD"
 
+		# Apply UAC to local accounts logged on via network
+		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
+
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
-        #RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
         
+		# Typically too annoying relative to likely benefits
+		#RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
+        
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
         # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/attack-surface-reduction-rules-reference?view=o365-worldwide#asr-rule-to-guid-matrix
         $asr_guids = @(
             "26190899-1602-49e8-8b27-eb1d0a1ce869", # Block Office communication application from creating child processes
@@ -949,6 +953,7 @@ if ("/ElevatedAction" -in $args) {
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
 
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"  # Prevent local storage of domain credentials
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LmCompatibilityLevel" -Value 5 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RunAsPPL" -Value 1 -VType "DWORD"
