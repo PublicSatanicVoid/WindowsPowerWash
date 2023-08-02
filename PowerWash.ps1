@@ -910,8 +910,24 @@ if ("/ElevatedAction" -in $args) {
         }
     }
     elseif ("/ApplySecurityPolicy" -in $args) {
-        #Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
+		
+		###### HARDWARE LEVEL SECURITY SETTINGS ######
+		# Firmware protection
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SystemGuard" -Key "Enabled" -Value 1 -VType "DWORD"
+		
+		# Secure biometrics (Enhanced sign-on security)
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureBiometrics" -Key "Enabled" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureFingerprint" -Key "Enabled" -Value 1 -VType "DWORD"
+		
+		# Hypervisor enforced code integrity (HVCI)
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Enabled" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Locked" -Value 0 -VType "DWORD"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "EnableVirtualizationBasedSecurity" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "RequirePlatformSecurityFeatures" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "Locked" -Value 0 -VType "DWORD"
 
+
+		###### AUTHENTICATION SECURITY SETTINGS ######
         # Standard users must enter admin username/password to allow elevation
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorUser" -Value 1 -VType "DWORD"
 
@@ -920,12 +936,20 @@ if ("/ElevatedAction" -in $args) {
 
 		# Apply UAC to local accounts logged on via network
 		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
+		
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "MinimumPIN" -Value 6 -VType "DWORD"
+		
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "UserAuthentication" -Value 1 -VType "DWORD"
+        
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureTotalThreshold" -Value 10 -VType "DWORD"
+		
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"  # Prevent local storage of domain credentials
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LmCompatibilityLevel" -Value 5 -VType "DWORD"
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RunAsPPL" -Value 1 -VType "DWORD"
 
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
-        
-		# Typically too annoying relative to likely benefits
-		#RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
-        
+
+		###### ATTACK SURFACE REDUCTION ######
 		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
         # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/attack-surface-reduction-rules-reference?view=o365-worldwide#asr-rule-to-guid-matrix
         $asr_guids = @(
@@ -945,52 +969,61 @@ if ("/ElevatedAction" -in $args) {
             "d4f940ab-401b-4efc-aadc-ad5f3c50688a"   # Block all Office applications from creating child processes
         )
         $asr_guids | ForEach-Object {
-            RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 1 -VType "String"
+            RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 1 -VType "String"
         }
         
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
-        
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
-
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"  # Prevent local storage of domain credentials
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LmCompatibilityLevel" -Value 5 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RunAsPPL" -Value 1 -VType "DWORD"
-        
+		
+		###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Key "NoAutoplayfornonVolume" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Ext" -Key "VersionCheckEnabled" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\CredUI" -Key "EnumerateAdministrators" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoAutorun" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoDriveTypeAutoRun" -Value 255 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
+		
+		# Typically too annoying relative to likely benefits
+		#RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
         
+		
+		###### APPLICATION SECURITY SETTINGS ######
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
+		
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
+		
+        #Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
         
+        
+		###### NETWORK SECURITY SETTINGS ######
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
-        
+		
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
+		
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" -Key "AllowBasic" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client" -Key "AllowBasic" -Value 0 -VType "DWORD"
-        
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Key "NoAutoplayfornonVolume" -Value 1 -VType "DWORD"
-        
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "UseAdvancedStartup" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "MinimumPIN" -Value 6 -VType "DWORD"
-        
+
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_ShowSharedAccessUI" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_StdDomainUserSetLocation" -Value 1 -VType "DWORD"
         #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
-        
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "UserAuthentication" -Value 1 -VType "DWORD"
-        
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureTotalThreshold" -Value 10 -VType "DWORD"
-        
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
+		
+		
+		###### BROWSER SECURITY SETTINGS ######
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Download" -Key "RunInvalidSignatures" -Value 0 -VType "DWORD"
-    
+		
         RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BlockThirdPartyCookies" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
+		
+		
+		###### MISCELLANEOUS ######
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
+
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "UseAdvancedStartup" -Value 1 -VType "DWORD"
+        
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
+		
+		SysDebugLog "Security policy version applied: 8/1/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
