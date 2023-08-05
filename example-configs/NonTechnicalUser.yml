@@ -174,6 +174,9 @@ Defender:
   # Some of these features require Enterprise and/or Microsoft Defender 365, e.g. Microsoft Defender for Business.
   # Policies applied include Attack Surface Reduction, exploit mitigation, and browser security.
   ApplyRecommendedSecurityPolicies: true
+  
+  # Applies additional, stricter security policies. May have a larger impact on performance or convenience.
+  ApplyStrictSecurityPolicies: false
 
   # Tells Defender to only run scans when the computer is idle.
   DefenderScanOnlyWhenIdle: true

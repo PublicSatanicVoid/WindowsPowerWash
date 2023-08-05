@@ -487,6 +487,7 @@ function SysDebugLog {
         if ($global:is_debug) {
             $Msg | Out-File -FilePath $global:sys_account_debug_log -Append -Force
         }
+        "$Msg"
     }
 }
 
@@ -910,8 +911,13 @@ if ("/ElevatedAction" -in $args) {
         }
     }
     elseif ("/ApplySecurityPolicy" -in $args) {
+        $strict = ("/StrictMode" -in $args) 
+        SysDebugLog "Strict mode: $strict"
+
 		
 		###### HARDWARE LEVEL SECURITY SETTINGS ######
+        SysDebugLog "Applying hardware-level security settings..."
+
 		# Firmware protection
 		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SystemGuard" -Key "Enabled" -Value 1 -VType "DWORD"
 		
@@ -928,11 +934,16 @@ if ("/ElevatedAction" -in $args) {
 
 
 		###### AUTHENTICATION SECURITY SETTINGS ######
+        SysDebugLog "Applying authentication security settings..."
+
         # Standard users must enter admin username/password to allow elevation
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorUser" -Value 1 -VType "DWORD"
 
         # Admins don't need to enter credentials to allow elevation, but are still prompted to allow or deny.
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 4 -VType "DWORD"
+
+        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\CredUI" -Key "EnumerateAdministrators" -Value 0 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
 
 		# Apply UAC to local accounts logged on via network
 		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
@@ -949,10 +960,18 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RunAsPPL" -Value 1 -VType "DWORD"
 
 
+        ###### SYSTEM SECURITY SETTINGS ######
+        SysDebugLog "Applying system-level process mitigations..."
+        Set-ProcessMitigation -System -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, AuditSystemCall, DisableExtensionPoints, BlockDynamicCode, CFG, SuppressExports, EnforceModuleDependencySigning, BlockRemoteImageLoads, UserShadowStack
+        if ($strict) {
+            Set-ProcessMitigation -System -Enable StrictHandle, StrictCFG, UserShadowStackStrictMode
+        }
+
 		###### ATTACK SURFACE REDUCTION ######
+        SysDebugLog "Applying Attack Surface Reduction settings..."
 		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
         # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/attack-surface-reduction-rules-reference?view=o365-worldwide#asr-rule-to-guid-matrix
-        $asr_guids = @(
+        $asr_guids_block = @(
             "26190899-1602-49e8-8b27-eb1d0a1ce869", # Block Office communication application from creating child processes
             "3b576869-a4ec-4529-8536-b80a7769e899", # Block Office applications from creating executable content
             "56a863a9-875e-4185-98a7-b882c64b5ce5", # Block abuse of exploited vulnerable signed drivers
@@ -965,36 +984,63 @@ if ("/ElevatedAction" -in $args) {
             "be9ba2d9-53ea-4cdc-84e5-9b1eeee46550", # Block executable content from email client and webmail
             "c1db55ab-c21a-4637-bb3f-a12568109d35", # Use advanced protection against ransomware
             "d3e037e1-3eb8-44c8-a917-57927947596d", # Block JavaScript or VBScript from launching downloaded executable content
-            "e6db77e5-3df2-4cf1-b95a-636979351e5b", # Block persistence through WMI event subscription
-            "d4f940ab-401b-4efc-aadc-ad5f3c50688a"   # Block all Office applications from creating child processes
+            "e6db77e5-3df2-4cf1-b95a-636979351e5b"  # Block persistence through WMI event subscription
+		)
+		$asr_guids_warn = @(
         )
-        $asr_guids | ForEach-Object {
+        if ($strict) {
+            $asr_guids_block += @(
+                "01443614-cd74-433a-b99e-2ecdc07bfc25", # Block executable files from running unless they meet a prevalence, age, or trusted list criterion
+                "d1e49aac-8f56-4280-b9ba-993a6d77406c", # Block process creations originating from PSExec and WMI commands
+                "d4f940ab-401b-4efc-aadc-ad5f3c50688a"  # Block all Office applications from creating child processes
+            )
+        }
+        else {
+            $asr_guids_warn += @(
+                "01443614-cd74-433a-b99e-2ecdc07bfc25", # Block executable files from running unless they meet a prevalence, age, or trusted list criterion
+                "d1e49aac-8f56-4280-b9ba-993a6d77406c", # Block process creations originating from PSExec and WMI commands
+                "d4f940ab-401b-4efc-aadc-ad5f3c50688a"  # Block all Office applications from creating child processes
+            )
+        }
+        $asr_guids_block | ForEach-Object {
             RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 1 -VType "String"
         }
-        
+		$asr_guids_warn | ForEach-Object {
+			RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 6 -VType "String"
+		}
+		
 		
 		###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
+        SysDebugLog "Applying drive and filesystem security settings..."
+
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Key "NoAutoplayfornonVolume" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Ext" -Key "VersionCheckEnabled" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\CredUI" -Key "EnumerateAdministrators" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoAutorun" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoDriveTypeAutoRun" -Value 255 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
 		
-		# Typically too annoying relative to likely benefits
+		# Typically too annoying relative to likely benefits (try in Audit mode instead?)
 		#RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
-        
+        if ($strict) {
+		    RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 2 -VType "DWORD"
+        }
+		
 		
 		###### APPLICATION SECURITY SETTINGS ######
+        SysDebugLog "Applying application security settings..."
+        
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
 		
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
-		
-        #Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
-        
+        if ($strict) {
+            Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
+            
+            # Enable Windows Defender Application Guard in Managed Mode
+            RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
+        }
         
 		###### NETWORK SECURITY SETTINGS ######
+        SysDebugLog "Applying network security settings..."
+
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
@@ -1010,20 +1056,27 @@ if ("/ElevatedAction" -in $args) {
 		
 		
 		###### BROWSER SECURITY SETTINGS ######
+        SysDebugLog "Applying browser security settings..."
+
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Download" -Key "RunInvalidSignatures" -Value 0 -VType "DWORD"
 		
         RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BlockThirdPartyCookies" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -Key "BlockThirdPartyCookies" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
 		
 		
 		###### MISCELLANEOUS ######
+        SysDebugLog "Applying additional security settings..."
+
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
 
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "UseAdvancedStartup" -Value 1 -VType "DWORD"
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
 		
-		SysDebugLog "Security policy version applied: 8/1/2023"
+		
+		SysDebugLog "Security policy version applied: 8/5/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
@@ -1276,6 +1329,8 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
     Disable-ScheduledTask -TaskName "CreateObjectTask" -TaskPath "\Microsoft\Windows\CloudExperienceHost" -EA SilentlyContinue | Out-Null
 	
     try { Set-MpPreference -DisableNetworkProtectionPerfTelemetry $true -EA SilentlyContinue | Out-Null } catch {}
+    
+    Set-ProcessMitigation -System -Disable SEHOPTelemetry
 	
     "- Complete"
 }
@@ -1585,7 +1640,7 @@ if ((-not (Test-Path "$home\Documents\.ToggleUpdates.bat")) -or (-not (Test-Path
     }
 }
 else {
-    PowerWashText "Windows Update toggle script already exists, skipping this feature"
+    PowerWashText "Not applicable: Add Windows Update toggle script to Desktop (Already added)"
 }
 
 
@@ -1597,9 +1652,10 @@ PowerWashText "### WINDOWS DEFENDER CONFIGURATION ###"
 PowerWashText ""
 
 
-if (Confirm "Apply high-security Defender policies? (Attack Surface Reduction, etc.)" -Auto $false -ConfigKey "Defender.ApplyRecommendedSecurityPolicies") {
+if (Confirm "Apply high-security system settings? (Attack Surface Reduction, etc.)" -Auto $false -ConfigKey "Defender.ApplyRecommendedSecurityPolicies") {
+    $apply_strict_policies = Confirm "--> Apply strict security settings?" -Auto $false -ConfigKey "Defender.ApplyStrictSecurityPolicies"
     Write-Host "- Applying policies..." -Nonewline
-    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy"
+    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy $(If ($apply_strict_policies) { '/StrictMode'} Else {''})"
     "- Complete"
 }
 
