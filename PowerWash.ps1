@@ -1014,7 +1014,7 @@ HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System
         
         ###### SYSTEM SECURITY SETTINGS ######
         SysDebugLog "Applying system-level process mitigations..."
-        Set-ProcessMitigation -System -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, AuditSystemCall, DisableExtensionPoints, BlockDynamicCode, CFG, SuppressExports, EnforceModuleDependencySigning, BlockRemoteImageLoads, UserShadowStack
+        Set-ProcessMitigation -System -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, AuditSystemCall, DisableExtensionPoints, CFG, SuppressExports, EnforceModuleDependencySigning, BlockRemoteImageLoads, UserShadowStack
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoDataExecutionPrevention" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoHeapTerminationOnCorruption" -Value 0 -VType "DWORD"
         if ($strict) {
@@ -1099,7 +1099,7 @@ HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "SafeForScripting" -Value 0 -VType "DWORD"
 
         if ($strict) {
-            Enable-WindowsOptionalFeature -Online -FeatureName Windows-Defender-ApplicationGuard
+            Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Windows-Defender-ApplicationGuard
             
             # Enable Windows Defender Application Guard in Managed Mode
             RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
