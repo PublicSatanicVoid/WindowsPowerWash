@@ -179,6 +179,9 @@ Defender:
   # Applies additional, stricter security policies. May have a larger impact on performance or convenience.
   ApplyStrictSecurityPolicies: false
 
+  # Adds a warning screen prior to login to deter unauthorized access.
+  AddWarningScreen: false
+
   # Tells Defender to only run scans when the computer is idle.
   DefenderScanOnlyWhenIdle: true
   DefenderScanOnlyWhenIdle_TimeoutMins: 10

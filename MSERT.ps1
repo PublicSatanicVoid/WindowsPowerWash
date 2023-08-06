@@ -22,8 +22,13 @@ Set-ExecutionPolicy Unrestricted -Force -Confirm:$false
 " tool."
 "======================================================================================"
 ""
-Read-Host "Press Enter to proceed, or Ctrl+C to cancel."
-""
+if ("/Confirm" -notin $args) {
+    Read-Host "Press Enter to proceed, or Ctrl+C to cancel."
+    ""
+}
+else {
+    "Running without prompting because of '/Confirm' flag."
+}
 
 .\.PowerWash.ps1 /msert -Confirm:$false
 Remove-Item ".PowerWash.ps1"

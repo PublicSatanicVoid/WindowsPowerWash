@@ -163,6 +163,9 @@ WindowsUpdate:
   # Disables Windows Update entirely. Both automatic and manual updates are disabled.
   DisableAllUpdate: true
 
+  # Adds a warning screen prior to login to deter unauthorized access.
+  AddWarningScreen: false
+
   # Adds a script shortcut to the desktop to toggle Windows Update completely on/off.
   # This is the best compromise for Windows Home users, as it lets them keep updates off
   # except when they specifically want to update.

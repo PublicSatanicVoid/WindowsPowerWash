@@ -118,7 +118,7 @@ if ("/warnconfig" -in $args) {
         }
     }
     if ($global:config_map.Debloat.RemoveEdge) {
-        "* Will remove Microsoft Edge (EXPERIMENTAL)"
+        "* Will remove Microsoft Edge"
         if ($global:config_map.Deblaot.RemoveEdge_ExtraTraces) {
             "  - Will attempt to remove additional traces of Edge"
         }
@@ -199,6 +199,7 @@ $global:feature_verbs = @{
     "Install.InstallWinget"                        = "Installing Winget package manager";
     "Install.InstallConfigured"                    = "Installing configured list of Winget packages";
     "Defender.ApplyRecommendedSecurityPolicies"    = "Applying recommended security policies";
+    "Defender.ApplyStrictSecurityPolicies"         = "Applying strict security policies";
     "Defender.DefenderScanOnlyWhenIdle"            = "Configuring Defender to scan only when idle";
     "Defender.DefenderScanLowPriority"             = "Configuring Defender to run at low priority";
     "Defender.DisableRealtimeMonitoringCAUTION"    = "Disabling Defender realtime monitoring (requires Tamper Protection disabled)";
@@ -392,6 +393,10 @@ function RegistryPut ($Path, $Key, $Value, $VType) {
         New-Item -Path "$Path" -Force | Out-Null
     }
     New-ItemProperty -Path "$Path" -Name "$Key" -Value "$Value" -PropertyType "$VType" -Force | Out-Null
+}
+
+function RegistryGet($Path, $Key) {
+    return (Get-ItemProperty -Path $Path -Name $Key).$Key
 }
 
 function RunScriptAsSystem($Path, $ArgString) {
@@ -1742,6 +1747,18 @@ if (Confirm "Apply high-security system settings? (Attack Surface Reduction, etc
     Write-Host "- Applying policies..." -Nonewline
     RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy $(If ($apply_strict_policies) { '/StrictMode'} Else {''})"
     "- Complete"
+}
+
+$legal_notice_text = RegistryGet "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "legalnoticetext"
+if ($legal_notice_text -eq "") {
+    if (Confirm "Add a warning screen prior to sign-in to deter unauthorized access?" -Auto $false -ConfigKey "Defender.AddWarningScreen") {
+        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "legalnoticecaption" -Value "Secure System" -VType "String"
+        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "legalnoticetext" -Value "This is a secure system equipped with hardware- and software-level intrusion detection and prevention. It is a violation of 18 U.S.C. 1030 to attempt to access this system without authorization. Attempts to access this system without authorization will be prosecuted to the fullest extent of the law. Notwithstanding applicable law, this system may not be accessed by anyone other than the person(s) to whom it was issued." -VType "String"
+        "- Complete"
+    }
+}
+else {
+    "Not applicable: Add a warning screen prior to sign-in (Warning text already exists. Since this is typically used for legal notices, it should not be overwritten.)"
 }
 
 if (Confirm "Configure Windows Defender to run scans only when computer is idle?" -Auto $true -ConfigKey "Defender.DefenderScanOnlyWhenIdle") {
