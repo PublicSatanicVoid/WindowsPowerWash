@@ -6,3 +6,4 @@ On my to-do list: (feel free to suggest more!) (bolded are priorities)
   - admx.help has lots of good info on registry values that are otherwise undocumented
   - before/after comparisons across more devices
 - Fully validate effects of disabling Defender
+- Undo for features that it makes sense on
