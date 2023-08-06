@@ -542,7 +542,7 @@ function Add-Path($Path) {
 if ("/ElevatedAction" -in $args) {
     if ("$(whoami)" -ne "nt authority\system") {
         ""
-        "ERROR: Can only run /ElevatedAction features as SYSTEM."
+        SysDebugLog "ERROR: Can only run /ElevatedAction features as SYSTEM. (Currently running as $(whoami))"
         ""
         exit
     }
@@ -963,6 +963,15 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableLUA" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableVirtualization" -Value 1 -VType "DWORD"
 
+        if ($strict) {
+            RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "PromptOnSecureDesktop" -Value 1 -VType "DWORD"
+        }
+        
+        # Hide usernames from login screen
+        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DontDisplayLastUserName" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DontDisplayLockedUserId" -Value 3 -VType "DWORD"
+        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DontDisplayUserName" -Value 1 -VType "DWORD"
+
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Kerberos\Parameters" -Key "SupportedEncryptionTypes" -Value 2147483640 -VType "DWORD"
         
 		# Apply UAC to local accounts logged on via network
@@ -990,7 +999,7 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" -Key "NTLMMinServerSec" -Value 537395200 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\pku2u" -Key "AllowOnlineID" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\System\CurrentControlSet\Control\Lsa\FIPSAlgorithmPolicy" -Key "Enabled" -Value 1 -VType "DWORD"
-HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System
+
         RegistryPut "HKLM:\System\CurrentControlSet\Services\LDAP" -Key "LDAPClientIntegrity" -Value 1 -VType "DWORD"
 
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork" -Key "RequireSecurityDevice" -Value 1 -VType "DWORD"
@@ -1165,7 +1174,7 @@ HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
 		
 		
-		SysDebugLog "Security policy version applied: 8/5/2023"
+		SysDebugLog "Security policy version applied: 8/6/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
