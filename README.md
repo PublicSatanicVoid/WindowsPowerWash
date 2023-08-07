@@ -1,5 +1,5 @@
 # PowerWash: Reclaim Windows
-### Improve performance ・ Disable updates ・ Remove bloatware ・ Cleanup UI ・ Configurable
+### Improve performance ・ Harden security ・ Remove bloatware ・ Cleanup UI ・ Configurable
 The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications. Removes MS/OEM bloatware, telemetry, and applies aggressive performance settings, including many that are normally hidden from the user. Works on a new or existing Windows installation.
 
 ### [Click here for features list](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/features)
@@ -15,7 +15,7 @@ Just here for the **MS Edge Removal Tool**? Open an admin PowerShell prompt and 
 
 ## About PowerWash
 
-The default Windows installation has to cater to a very wide variety of users and bring in advertising revenue. This requires tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power efficiency, data collection, etc. Many "technical" users find the default user experience annoying and inconvenient. **PowerWash removes annoying, bloated, and unperformant parts of Windows** and can also install helpful utilities automatically and configure settings for higher performance.
+The default Windows installation has to cater to a very wide variety of users and bring in advertising revenue. This requires tradeoffs that sacrifice some degree of performance and responsiveness in exchange for power efficiency, data collection, etc. Many "technical" users find the default user experience annoying and inconvenient. **PowerWash removes annoying, bloated, and unperformant parts of Windows** and can also install helpful utilities automatically, improve baseline security, and configure settings for higher performance.
 
 I created PowerWash because I believe that underneath the cruft (ads, bloatware, telemetry, forced automatic updates, and [blatant lies](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/windows-lies)) Windows is fundamentally a great operating system, and it shouldn't be so difficult to make it great. Many debloater tools are themselves bloatware, or don't let you configure things easily, or just don't work. PowerWash takes the good stuff from what's already been done and adds even more good stuff. Also, it's actively maintained and 100% open-source. [Read more about the philosophy behind PowerWash »](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/philosophy)
 
