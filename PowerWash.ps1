@@ -1177,7 +1177,7 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
         
         
-        SysDebugLog "Security policy version applied: 8/6/2023"
+        SysDebugLog "Security policy version applied: 8/8/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
