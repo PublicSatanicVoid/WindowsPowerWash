@@ -1026,7 +1026,7 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole" -Key "SecurityLevel" -Value 0 -VType "DWORD"
 
         
-        ###### SYSTEM SECURITY SETTINGS 
+        ###### SYSTEM SECURITY SETTINGS ######
         SysDebugLog "Applying system-level process mitigations..."
         Set-ProcessMitigation -System -Force on -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, DisableExtensionPoints, CFG, SuppressExports, BlockRemoteImageLoads, SEHOP
         if ($strict) {
@@ -1042,6 +1042,7 @@ if ("/ElevatedAction" -in $args) {
         
         RegistryPut "HKLM:\System\CurrentControlSet\Control\Session Manager\Kernel" -Key "ObCaseInsensitive" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\System\CurrentControlSet\Control\Session Manager" -Key "ProtectionMode" -Value 1 -VType "DWORD"
+
 
 		###### ATTACK SURFACE REDUCTION ######
         SysDebugLog "Applying Attack Surface Reduction settings..."
@@ -1119,6 +1120,7 @@ if ("/ElevatedAction" -in $args) {
             RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
         }
         
+		
 		###### NETWORK SECURITY SETTINGS ######
         SysDebugLog "Applying network security settings..."
 
@@ -1163,6 +1165,7 @@ if ("/ElevatedAction" -in $args) {
         if ($strict) {
             RegistryPut "HKLM:\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter" Key "PreventOverride" -Value 1 -VType "DWORD"
         }
+
 
 		###### MISCELLANEOUS ######
         SysDebugLog "Applying additional security settings..."
