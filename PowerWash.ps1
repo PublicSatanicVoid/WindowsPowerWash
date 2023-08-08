@@ -44,14 +44,14 @@ if (-not $global:is_msert) {
 ### USAGE INFORMATION ###
 if ("/?" -in $args) {
     ".\$global:ScriptName [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
-    "	/all			Runs all PowerWash features without prompting"
-    "	/auto			Runs a default subset of PowerWash features, without prompting"
-    "	/config			Runs actions enabled in PowerWashSettings.json, without prompting"
-    "	/stats			Shows current performance stats and exits"
-    "	/warnconfig		Shows potentially destructive configured operations"
-    "	/noinstalls		Skips PowerWash actions that would install software (overrides other flags)"
-    "	/noscans		Skips PowerWash actions that perform lengthy scans (overrides other flags)"
-    "	/autorestart		Restarts computer when done"
+    "    /all            Runs all PowerWash features without prompting"
+    "    /auto            Runs a default subset of PowerWash features, without prompting"
+    "    /config            Runs actions enabled in PowerWashSettings.json, without prompting"
+    "    /stats            Shows current performance stats and exits"
+    "    /warnconfig        Shows potentially destructive configured operations"
+    "    /noinstalls        Skips PowerWash actions that would install software (overrides other flags)"
+    "    /noscans        Skips PowerWash actions that perform lengthy scans (overrides other flags)"
+    "    /autorestart        Restarts computer when done"
     exit
 }
 
@@ -84,7 +84,7 @@ if ($global:do_all -and $global:do_all_auto) {
     exit
 }
 $global:config_map = If (Test-Path ".\PowerWashSettings.yml") {
-	(Get-Content -Raw ".\PowerWashSettings.yml" | ConvertFrom-Yaml)
+    (Get-Content -Raw ".\PowerWashSettings.yml" | ConvertFrom-Yaml)
 }
 Else {
     @{}
@@ -164,7 +164,7 @@ if ("/warnconfig" -in $args) {
     catch {
         "* Will skip configured Winget installs as Winget is not present"
     }
-	
+    
     exit
 }
 
@@ -320,7 +320,7 @@ if ("/stats" -in $args) {
     foreach ($Entry in $Samples) {
         if ((-not ($Entry.Name -match "Processor")) -or ($Entry.Name -match "Processor" -and $Entry.Name -match "_total")) {
             $Label = $Entry.Name.Split("\")[-1]
-			
+            
             if ($Label -in @("high precision temperature")) {
                 $Entry.Average = $Entry.Average / 10 - 273.15  # 10*Kelvin to Celsius
             }
@@ -330,7 +330,7 @@ if ("/stats" -in $args) {
             if (($Entry.Name -match "memory") -and $Label -NotIn @("page faults/sec", "cache faults/sec", "% committed bytes in use")) {
                 continue
             }
-			
+            
             "$Label,$($Entry.Average)" | Out-File -Append -FilePath $HistoryFile
             if ($HasPrev) {
                 $Prev = ($PrevStats | Where-Object { $_.label -eq $Label }).average
@@ -919,27 +919,27 @@ if ("/ElevatedAction" -in $args) {
         $strict = ("/StrictMode" -in $args) 
         SysDebugLog "Strict mode: $strict"
 
-		
-		###### HARDWARE LEVEL SECURITY SETTINGS ######
+        
+        ###### HARDWARE LEVEL SECURITY SETTINGS ######
         SysDebugLog "Applying hardware-level security settings..."
 
-		# Firmware protection
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SystemGuard" -Key "Enabled" -Value 1 -VType "DWORD"
-		
-		# Secure biometrics (Enhanced sign-on security)
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureBiometrics" -Key "Enabled" -Value 1 -VType "DWORD"
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureFingerprint" -Key "Enabled" -Value 1 -VType "DWORD"
-		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Biometrics\FacialFeatures" -Key "EnhancedAntiSpoofing" -Value 1 -VType "DWORD"
+        # Firmware protection
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SystemGuard" -Key "Enabled" -Value 1 -VType "DWORD"
+        
+        # Secure biometrics (Enhanced sign-on security)
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureBiometrics" -Key "Enabled" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureFingerprint" -Key "Enabled" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Biometrics\FacialFeatures" -Key "EnhancedAntiSpoofing" -Value 1 -VType "DWORD"
 
-		# Hypervisor enforced code integrity (HVCI)
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Enabled" -Value 1 -VType "DWORD"
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Locked" -Value 0 -VType "DWORD"
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "EnableVirtualizationBasedSecurity" -Value 1 -VType "DWORD"
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "RequirePlatformSecurityFeatures" -Value 1 -VType "DWORD"
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "Locked" -Value 0 -VType "DWORD"
+        # Hypervisor enforced code integrity (HVCI)
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Enabled" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Locked" -Value 0 -VType "DWORD"
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "EnableVirtualizationBasedSecurity" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "RequirePlatformSecurityFeatures" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "Locked" -Value 0 -VType "DWORD"
 
 
-		###### AUTHENTICATION SECURITY SETTINGS ######
+        ###### AUTHENTICATION SECURITY SETTINGS ######
         SysDebugLog "Applying authentication security settings..."
 
         if ($strict) {
@@ -974,16 +974,16 @@ if ("/ElevatedAction" -in $args) {
 
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Kerberos\Parameters" -Key "SupportedEncryptionTypes" -Value 2147483640 -VType "DWORD"
         
-		# Apply UAC to local accounts logged on via network
-		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
-		
+        # Apply UAC to local accounts logged on via network
+        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
+        
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "MinimumPIN" -Value 6 -VType "DWORD"
-		
+        
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "UserAuthentication" -Value 1 -VType "DWORD"
         
         RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureTotalThreshold" -Value 10 -VType "DWORD"
-		
-		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"  # Prevent local storage of domain credentials
+        
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"  # Prevent local storage of domain credentials
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymousSAM" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "UseMachineId" -Value 1 -VType "DWORD"
@@ -1044,9 +1044,9 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\System\CurrentControlSet\Control\Session Manager" -Key "ProtectionMode" -Value 1 -VType "DWORD"
 
 
-		###### ATTACK SURFACE REDUCTION ######
+        ###### ATTACK SURFACE REDUCTION ######
         SysDebugLog "Applying Attack Surface Reduction settings..."
-		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR" -Key "ExploitGuard_ASR_Rules" -Value 1 -VType "DWORD"
         # https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/attack-surface-reduction-rules-reference?view=o365-worldwide#asr-rule-to-guid-matrix
         $asr_guids_block = @(
             "26190899-1602-49e8-8b27-eb1d0a1ce869", # Block Office communication application from creating child processes
@@ -1062,8 +1062,8 @@ if ("/ElevatedAction" -in $args) {
             "c1db55ab-c21a-4637-bb3f-a12568109d35", # Use advanced protection against ransomware
             "d3e037e1-3eb8-44c8-a917-57927947596d", # Block JavaScript or VBScript from launching downloaded executable content
             "e6db77e5-3df2-4cf1-b95a-636979351e5b"  # Block persistence through WMI event subscription
-		)
-		$asr_guids_warn = @(
+        )
+        $asr_guids_warn = @(
         )
         if ($strict) {
             $asr_guids_block += @(
@@ -1082,12 +1082,12 @@ if ("/ElevatedAction" -in $args) {
         $asr_guids_block | ForEach-Object {
             RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 1 -VType "String"
         }
-		$asr_guids_warn | ForEach-Object {
-			RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 6 -VType "String"
-		}
-		
-		
-		###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
+        $asr_guids_warn | ForEach-Object {
+            RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\Rules" -Key "$_" -Value 6 -VType "String"
+        }
+        
+        
+        ###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
         SysDebugLog "Applying drive and filesystem security settings..."
 
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
@@ -1096,20 +1096,20 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoAutorun" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoDriveTypeAutoRun" -Value 255 -VType "DWORD"
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "PreXPSP2ShellProtocolBehavior" -Value 0 -VType "DWORD"
-		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Windows Search" -Key "AllowIndexingEncryptedStoresOrItems" -Value 0 -VType "DWORD"
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Windows Search" -Key "AllowIndexingEncryptedStoresOrItems" -Value 0 -VType "DWORD"
 
-		# Typically too annoying relative to likely benefits (try in Audit mode instead?)
-		#RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
+        # Typically too annoying relative to likely benefits (try in Audit mode instead?)
+        #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
         if ($strict) {
-		    RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 2 -VType "DWORD"
+            RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 2 -VType "DWORD"
         }
-		
-		
-		###### APPLICATION SECURITY SETTINGS ######
+        
+        
+        ###### APPLICATION SECURITY SETTINGS ######
         SysDebugLog "Applying application security settings..."
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
-		
+        
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "AlwaysInstallElevated" -Value 0 -VType "DWORD"  # Omg how is this even a thing
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "SafeForScripting" -Value 0 -VType "DWORD"
 
@@ -1120,8 +1120,8 @@ if ("/ElevatedAction" -in $args) {
             RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
         }
         
-		
-		###### NETWORK SECURITY SETTINGS ######
+        
+        ###### NETWORK SECURITY SETTINGS ######
         SysDebugLog "Applying network security settings..."
 
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
@@ -1135,9 +1135,9 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "RestrictNullSessAccess" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
-		
+        
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
-		
+        
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" -Key "AllowBasic" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" -Key "AllowUnencryptedTraffic" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" -Key "AllowDigest" -Value 0 -VType "DWORD"
@@ -1149,25 +1149,25 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_ShowSharedAccessUI" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_StdDomainUserSetLocation" -Value 1 -VType "DWORD"
         #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
-		
-		
-		###### BROWSER SECURITY SETTINGS ######
+        
+        
+        ###### BROWSER SECURITY SETTINGS ######
         SysDebugLog "Applying browser security settings..."
 
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Download" -Key "RunInvalidSignatures" -Value 0 -VType "DWORD"
-		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\FeatureControl" -Key "FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\FeatureControl" -Key "FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION" -Value 1 -VType "DWORD"
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BlockThirdPartyCookies" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -Key "BlockThirdPartyCookies" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
-		
+        
         if ($strict) {
             RegistryPut "HKLM:\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter" Key "PreventOverride" -Value 1 -VType "DWORD"
         }
 
 
-		###### MISCELLANEOUS ######
+        ###### MISCELLANEOUS ######
         SysDebugLog "Applying additional security settings..."
 
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
@@ -1175,9 +1175,9 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "UseAdvancedStartup" -Value 1 -VType "DWORD"
         
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
-		
-		
-		SysDebugLog "Security policy version applied: 8/6/2023"
+        
+        
+        SysDebugLog "Security policy version applied: 8/6/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
@@ -1211,14 +1211,14 @@ if (Confirm "Enable hardware-accelerated GPU scheduling?" -Auto $true -ConfigKey
 if ($do_all -or (Confirm "Optimize multimedia settings for pro audio?" -Auto $true -ConfigKey "Performance.MultimediaResponsiveness")) {
     # Scheduling algorithm will reserve 10% (default is 20%) of CPU for low-priority tasks
     RegistryPut $RK_MMCSS -Key "SystemResponsiveness" -Value 10 -VType "DWORD"
-	
+    
     # May reduce idling, improving responsiveness
     RegistryPut $RK_MMCSS_ProAudio -Key "NoLazyMode" -Value 1 -VType "DWORD"
-	
+    
     # Max priority for Pro Audio tasks
     RegistryPut $RK_MMCSS_ProAudio -Key "Priority" -Value 1 -VType "DWORD"
     RegistryPut $RK_MMCSS_ProAudio -Key "Scheduling Category" -Value "High" -VType "String"
-	
+    
     "- Complete"
 }
 
@@ -1226,14 +1226,14 @@ if ($do_all -or (Confirm "Optimize multimedia settings for pro audio?" -Auto $tr
 if (Confirm "Optimize network adapter settings for low latency?" -Auto $true -ConfigKey "Performance.NetworkResponsiveness") {
     RegistryPut $RK_MMCSS -Key "NetworkThrottlingIndex" -Value 0xFFFFFFFF -VType "DWORD"
     RegistryPut $RK_Net_Ndu -Key "Start" -Value 0x4 -VType "DWORD"
-	
+    
     # Below settings may fail depending on network adapter's capabilities. This isn't a problem, so fail silently
     Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -EA SilentlyContinue 2>$null | Out-Null
     Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -EA SilentlyContinue
     Disable-NetAdapterRsc -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null  # Disables packet coalescing
     Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
     Restart-NetAdapter -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
-	
+    
     "- Complete"
 }
 
@@ -1248,7 +1248,7 @@ if (Confirm "Redline power settings for maximum performance? (May reduce latency
     powercfg /setacvalueindex $scheme 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 0  # Disable wake timers
     powercfg /setacvalueindex $scheme SUB_PROCESSOR LATENCYHINTPERF1 99  # Latency sensitive tasks will raise performance level
     powercfg /setacvalueindex $scheme SUB_VIDEO VIDEOIDLE 0  # Don't automatically turn off display
-	
+    
     "- Applying additional performance settings..."
     # Below are documented at https://learn.microsoft.com/en-us/windows-server/administration/performance-tuning/hardware/power/power-performance-tuning
     powercfg /setacvalueindex $scheme SUB_PROCESSOR DISTRIBUTEUTIL 0  # Disable utility distribution, which can reduce performance
@@ -1260,17 +1260,17 @@ if (Confirm "Redline power settings for maximum performance? (May reduce latency
     powercfg /setacvalueindex $scheme SUB_PROCESSOR PERFDECPOL 1
     powercfg /setacvalueindex $scheme SUB_PROCESSOR PERFINCTHRESHOLD 10
     powercfg /setacvalueindex $scheme SUB_PROCESSOR PERFDECTHRESHOLD 8
-	
+    
     powercfg /setacvalueindex $scheme SUB_PROCESSOR PERFBOOSTMODE 2  # Aggressive turbo boosting
-	
+    
     powercfg /setactive $scheme
-	
+    
     # Disable power throttling
     RegistryPut $RK_PowerThrottling -Key "PowerThrottlingOff" -Value 1 -VType "DWORD"
     
     # Make hibernate option user-selectable
     powercfg /hibernate on
-	
+    
     "- Cleaning up stale copies..."
     # Delete old profiles from this script being run multiple times
     foreach ($line in powercfg /list) {
@@ -1283,7 +1283,7 @@ if (Confirm "Redline power settings for maximum performance? (May reduce latency
         }
         if ($line -match "\(Ultimate Performance\)") {
             powercfg /delete $guid 2>$null | Out-Null
-        }			
+        }            
     }
 
     "- Disabling USB power saving..."
@@ -1292,7 +1292,7 @@ if (Confirm "Redline power settings for maximum performance? (May reduce latency
         $p.Enable = $false
         Set-CimInstance -InputObject $p
     }
-	
+    
     "- Complete"
 }
 
@@ -1349,26 +1349,26 @@ if (Confirm "Disable Fast Startup? (may fix responsiveness issues with some devi
 # supporting a larger number of interrupts and lower latencies.
 if (Confirm "Enable Message-Signaled Interrupts for all devices that support them?" -Auto $true -ConfigKey "Performance.EnableDriverMsi") {
     $do_priority = Confirm "--> Do you also want to prioritize interrupts from certain devices like the GPU and PCIe controller?" -Auto $true -ConfigKey "Performance.EnableDriverPrio"
-	
+    
     "- Applying interrupt policies..."
-	
+    
     $N_MSI = 0
     $N_Prio = 0
     $Devices = Get-CimInstance -ClassName Win32_PnPEntity
     foreach ($Device in $Devices) {
         # https://powershell.one/wmi/root/cimv2/win32_pnpentity-GetDeviceProperties
         $Properties = Invoke-CimMethod -MethodName GetDeviceProperties -InputObject $Device | Select-Object -ExpandProperty DeviceProperties
-		
+        
         $DeviceDesc = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_Device_DeviceDesc' }).Data
         $InstanceId = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_Device_InstanceId' }).Data
-		
+        
         # Prioritize interrupts from PCIe controller and graphics card
         if ($do_priority -and ($DeviceDesc -like "*PCIe Controller*" -or $DeviceDesc -like "*NVIDIA GeForce*")) {
             "  - Prioritizing interrupts from $DeviceDesc..."
             RegistryPut "$RK_DevEnum\$InstanceId\Device Parameters\Interrupt Management\Affinity Policy" -Key "DevicePriority" -Value 3 -VType "DWORD"
             $N_Prio++
         }
-		
+        
         # https://github.com/tpn/winsdk-10/blob/master/Include/10.0.10240.0/shared/pciprop.h#L345
         # 1 = LineBased, 2 = Msi, 4 = MsiX
         # Only devices that support MSI should have it enabled. Attempting to enable MSI on a device
@@ -1400,20 +1400,20 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
     # According to Microsoft, only Enterprise supports Security as min telemetry level, other platforms only support Required
     # However, we can just always set it to Security and Windows will apply the lowest allowed setting.
     $min_telemetry = 0
-	
+    
     "- Disabling telemetry registry settings..."
     RegistryPut $RK_Policy_DataCollection -Key "AllowTelemetry" -Value $min_telemetry -VType "DWORD"
     RegistryPut $RK_Privacy -Key "TailoredExperiencesWithDiagnosticDataEnabled" -Value 0 -VType "DWORD"
     RegistryPut $RK_TIPC -Key "Enabled" -Value 0 -VType "DWORD"  # Inking/typing
     RegistryPut $RK_Policy_AppCompat -Key "AITEnable" -Value 0 -VType "DWORD"  # Apps
     RegistryPut $RK_Policy_AppCompat -Key "DisableInventory" -Value 1 -VType "DWORD"  # Application Compatibility Program Inventory
-	
+    
     "- Disabling known telemetry services..."
     sc.exe config DiagTrack start=disabled | Out-Null
     sc.exe config dmwappushservice start=disabled | Out-Null
     sc.exe config PcaSvc start=disabled | Out-Null
     sc.exe config RemoteRegistry start=disabled | Out-Null
-	
+    
     "- Disabling known telemetry tasks..."
     TryDisableTask "Consolidator"
     TryDisableTask "FamilySafetyMonitor"
@@ -1429,11 +1429,11 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
     TryDisableTask "UsbCeip"
     TryDisableTask "KernelCeipTask"
     Disable-ScheduledTask -TaskName "CreateObjectTask" -TaskPath "\Microsoft\Windows\CloudExperienceHost" -EA SilentlyContinue | Out-Null
-	
+    
     try { Set-MpPreference -DisableNetworkProtectionPerfTelemetry $true -EA SilentlyContinue | Out-Null } catch {}
     
     Set-ProcessMitigation -System -Disable SEHOPTelemetry
-	
+    
     "- Complete"
 }
 
@@ -1452,7 +1452,7 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
     "- Stopping Microsoft Edge..."
     taskkill /f /im msedge.exe 2>$null | Out-Null
     taskkill /f /im MicrosoftEdgeUpdate.exe 2>$null | Out-Null
-	
+    
     "- Marking Edge as removable in registry..."
     RegistryPut $RK_Uninst_Edge -Key "NoRemove" -Value 0 -VType "DWORD"
     RegistryPut $RK_Uninst_Edge -Key "NoRepair" -Value 0 -VType "DWORD"
@@ -1486,11 +1486,11 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
 
     if ($aggressive) {
         "- Attempting to remove Edge using setup tool..."
-	
+    
         # https://gist.github.com/ave9858/c3451d9f452389ac7607c99d45edecc6
         Get-ChildItem -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\ClientState" -EA SilentlyContinue | ForEach-Object { Remove-ItemProperty -Path "Registry::$_" -Name "experiment_control_labels" -EA SilentlyContinue }  
         RegistryPut "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdateDev" -Key "AllowUninstall" -Value 1 -VType "DWORD"
-	
+    
         $edge_base = "$env:SystemDrive\Program Files (x86)\Microsoft\Edge\Application\"
         if (Test-Path "$edge_base") {
             foreach ($item in Get-ChildItem -Path "$edge_base") {
@@ -1548,13 +1548,13 @@ if (Confirm "Uninstall Microsoft Edge?" -Auto $false -ConfigKey "Debloat.RemoveE
 
             RegistryPut "$_" -Key "InstallDefault" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "UpdateDefault" -Value 0 -VType "DWORD"
-	    
+        
             RegistryPut "$_" -Key "Install{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1 -VType "DWORD"
             RegistryPut "$_" -Key "Install{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Install{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Install{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Install{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}" -Value 0 -VType "DWORD"
-	    
+        
             RegistryPut "$_" -Key "Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" -Value 1 -VType "DWORD"
             RegistryPut "$_" -Key "Update{2CD8A007-E189-409D-A2C8-9AF4EF3C72AA}" -Value 0 -VType "DWORD"
             RegistryPut "$_" -Key "Update{65C35B14-6C1D-4122-AC46-7148CC9D6497}" -Value 0 -VType "DWORD"
@@ -1726,7 +1726,7 @@ if (Confirm "Disable all Windows updates? (You will need to manually re-enable t
 
     sc.exe stop wuauserv | Out-Null
     sc.exe config wuauserv start=disabled | Out-Null
-	
+    
     "- Complete"
 }
 
@@ -1805,7 +1805,7 @@ if (Confirm "Run Defender tasks at a lower priority?" -Auto $true -ConfigKey "De
 if (Confirm "Disable real-time protection from Windows Defender? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "Defender.DisableRealtimeMonitoringCAUTION") {
     $disable_all_defender = Confirm "--> Disable Windows Defender entirely? (CAUTION) (EXPERIMENTAL)" -Auto $false -ConfigKey "Defender.DisableAllDefenderCAUTIONCAUTION"
     RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /DisableRealtimeMonitoring $(If ($disable_all_defender) {'/DisableAllDefender'} Else {''})"
-	
+    
     "- Complete (requires Tamper Protection disabled to take effect)"
 }
 
@@ -1992,17 +1992,17 @@ PowerWashText ""
 if ((-not $noscan) -and (Confirm "Run system file integrity checks? (May take a few minutes)" -Auto $false -ConfigKey "Scans.CheckIntegrity")) {
     "- Running Deployment Image Servicing and Management Tool..."
     dism.exe /online /cleanup-image /restorehealth
-	
+    
     "- Running System File Checker..."
     sfc.exe /scannow
-	
+    
     "- Complete"
 }
 
 # Checks for IRQ conflicts
 if (Confirm "Do you want to check for IRQ conflicts?" -Auto $true -ConfigKey "Scans.CheckIRQ") {
     Get-CimInstance Win32_PNPAllocatedResource | Out-File -FilePath "IRQDump.txt"
-	(Select-String -Path "IRQDump.txt" -Pattern "IRQNumber") -ireplace '.*IRQNumber = (\d+).*', '$1' | Out-File -FilePath IRQNumbers.txt
+    (Select-String -Path "IRQDump.txt" -Pattern "IRQNumber") -ireplace '.*IRQNumber = (\d+).*', '$1' | Out-File -FilePath IRQNumbers.txt
     $SharedIRQ = (Get-Content IRQNumbers.txt | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object -ExpandProperty Name)
     if ($SharedIRQ.Length -gt 0) {
         "- Alert: IRQ conflicts found at: $SharedIRQ"
