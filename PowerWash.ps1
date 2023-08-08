@@ -1026,15 +1026,15 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole" -Key "SecurityLevel" -Value 0 -VType "DWORD"
 
         
-        ###### SYSTEM SECURITY SETTINGS ######
+        ###### SYSTEM SECURITY SETTINGS 
         SysDebugLog "Applying system-level process mitigations..."
-        Set-ProcessMitigation -System -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, AuditSystemCall, DisableExtensionPoints, CFG, SuppressExports, EnforceModuleDependencySigning, BlockRemoteImageLoads, UserShadowStack
+        Set-ProcessMitigation -System -Force on -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, DisableExtensionPoints, CFG, SuppressExports, BlockRemoteImageLoads, SEHOP
+        if ($strict) {
+            Set-ProcessMitigation -System -Force on -Enable EnforceModuleDependencySigning, StrictHandle, StrictCFG, UserShadowStack, UserShadowStackStrictMode
+            RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key "MitigationOptions_FontBlocking" -Value "1000000000000" -VType "String"
+        }
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoDataExecutionPrevention" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoHeapTerminationOnCorruption" -Value 0 -VType "DWORD"
-        if ($strict) {
-            Set-ProcessMitigation -System -Enable StrictHandle, StrictCFG, UserShadowStackStrictMode
-            RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key "MitigationOptions_FontBocking" -Value "1000000000000" -VType "String"
-        }
 
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" -Key "DODownloadMode" -Value 0 -VType "DWORD"
 
@@ -1752,7 +1752,7 @@ PowerWashText ""
 
 
 if (Confirm "Apply high-security system settings? (Attack Surface Reduction, etc.)" -Auto $false -ConfigKey "Defender.ApplyRecommendedSecurityPolicies") {
-    $apply_strict_policies = Confirm "--> Apply strict security settings?" -Auto $false -ConfigKey "Defender.ApplyStrictSecurityPolicies"
+    $apply_strict_policies = Confirm "--> Apply strict security settings? (Warning-May break certain applications especially with third-party antivirus installed)" -Auto $false -ConfigKey "Defender.ApplyStrictSecurityPolicies"
     Write-Host "- Applying policies..." -Nonewline
     RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy $(If ($apply_strict_policies) { '/StrictMode'} Else {''})"
     "- Complete"
