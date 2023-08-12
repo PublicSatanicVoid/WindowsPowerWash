@@ -942,6 +942,11 @@ if ("/ElevatedAction" -in $args) {
         ###### AUTHENTICATION SECURITY SETTINGS ######
         SysDebugLog "Applying authentication security settings..."
 
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "MinimumPIN" -Value 6 -VType "DWORD"
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureTotalThreshold" -Value 10 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork" -Key "RequireSecurityDevice" -Value 1 -VType "DWORD"
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork\PINComplexity" -Key "MinimumPINLength" -Value 6 -VType "DWORD"
+		
         if ($strict) {
             # Automatically deny elevation requests from standard users
             RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorUser" -Value 0 -VType "DWORD"
@@ -955,6 +960,7 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 4 -VType "DWORD"
 
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\CredUI" -Key "EnumerateAdministrators" -Value 0 -VType "DWORD"
+
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DisableAutomaticRestartSignOn" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "FilterAdministratorToken" -Value 1 -VType "DWORD"
@@ -964,6 +970,7 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableVirtualization" -Value 1 -VType "DWORD"
 
         if ($strict) {
+			# Show the prompt to run an application as administrator on a separate desktop, rather than overlaid on the current desktop
             RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "PromptOnSecureDesktop" -Value 1 -VType "DWORD"
         }
         
@@ -971,17 +978,17 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DontDisplayLastUserName" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DontDisplayLockedUserId" -Value 3 -VType "DWORD"
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DontDisplayUserName" -Value 1 -VType "DWORD"
-
+		
+		if ($strict) {
+			# Require Ctrl+Alt+Del to unlock (prevents username/password interception)
+			RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key "DisableCAD" -Value 0 -VType "DWORD"
+		}
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Kerberos\Parameters" -Key "SupportedEncryptionTypes" -Value 2147483640 -VType "DWORD"
         
         # Apply UAC to local accounts logged on via network
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
         
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "MinimumPIN" -Value 6 -VType "DWORD"
-        
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "UserAuthentication" -Value 1 -VType "DWORD"
-        
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureTotalThreshold" -Value 10 -VType "DWORD"
         
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"  # Prevent local storage of domain credentials
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
@@ -1001,9 +1008,6 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\System\CurrentControlSet\Control\Lsa\FIPSAlgorithmPolicy" -Key "Enabled" -Value 1 -VType "DWORD"
 
         RegistryPut "HKLM:\System\CurrentControlSet\Services\LDAP" -Key "LDAPClientIntegrity" -Value 1 -VType "DWORD"
-
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork" -Key "RequireSecurityDevice" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork\PINComplexity" -Key "MinimumPINLength" -Value 6 -VType "DWORD"
 
         # Remote Desktop Services
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "DisablePasswordSaving" -Value 1 -VType "DWORD"
@@ -1115,9 +1119,8 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "SafeForScripting" -Value 0 -VType "DWORD"
 
         if ($strict) {
-            Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Windows-Defender-ApplicationGuard
-            
             # Enable Windows Defender Application Guard in Managed Mode
+            Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Windows-Defender-ApplicationGuard
             RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI" -Key "AllowAppHVSI_ProviderSet" -Value 3 -VType "DWORD"
         }
         
@@ -1178,7 +1181,7 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
         
         
-        SysDebugLog "Security policy version applied: 8/8/2023"
+        SysDebugLog "Security policy version applied: 8/12/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
