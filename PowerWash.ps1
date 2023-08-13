@@ -934,17 +934,33 @@ if ("/ElevatedAction" -in $args) {
         # Hypervisor enforced code integrity (HVCI)
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Enabled" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" -Key "Locked" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "EnableVirtualizationBasedSecurity" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "RequirePlatformSecurityFeatures" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "Locked" -Value 0 -VType "DWORD"
+        
+		# Device Guard -- enable virtualization-based security
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "EnableVirtualizationBasedSecurity" -Value 1 -VType "DWORD"
+		
+		# Device Guard -- use both Secure Boot and DMA protection
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "RequirePlatformSecurityFeatures" -Value 3 -VType "DWORD"
+        
+		# (I think this was just for debug)
+		#RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Key "Locked" -Value 0 -VType "DWORD"
+
+		# MSS: (NoNameReleaseOnDemand) Allow computer to ignore NetBIOS name release requests except from WINS servers
+		RegistryPut "HKLM:\System\CurrentControlSet\Services\Netbt\Parameters" -Key "NoNameReleaseOnDemand" -Value 1 -VType "DWORD"
 
 
         ###### AUTHENTICATION SECURITY SETTINGS ######
         SysDebugLog "Applying authentication security settings..."
 
+		# Minimum PIN length
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "MinimumPIN" -Value 6 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureTotalThreshold" -Value 10 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork" -Key "RequireSecurityDevice" -Value 1 -VType "DWORD"
+        
+		# TMP-based lockout settings
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureIndividualThreshold" -Value 4 -VType "DWORD"
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureTotalThreshold" -Value 10 -VType "DWORD"
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Tpm" -Key "StandardUserAuthorizationFailureDuration" -Value 900 -VType "DWORD"
+		
+		# Windows Hello for Business
+		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork" -Key "RequireSecurityDevice" -Value 1 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork\PINComplexity" -Key "MinimumPINLength" -Value 6 -VType "DWORD"
 		
         if ($strict) {
@@ -957,16 +973,39 @@ if ("/ElevatedAction" -in $args) {
         }
 
         # Admins don't need to enter credentials to allow elevation, but are still prompted to allow or deny.
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 4 -VType "DWORD"
+		if ($strict) {
+			RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 2 -VType "DWORD"
+		}
+		else {
+			RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "ConsentPromptBehaviorAdmin" -Value 4 -VType "DWORD"
+		}
+		
+		# Require a password when a computer wakes
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51" -Key "ACSettingIndex" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51" -Key "DCSettingIndex" -Value 1 -VType "DWORD"
 
+		# Disable "Enumerate administrator accounts on elevation"
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\CredUI" -Key "EnumerateAdministrators" -Value 0 -VType "DWORD"
 
+		# Prevent elevated privileges from being used over the network on domain systems.
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DisableAutomaticRestartSignOn" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "FilterAdministratorToken" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableInstallerDetection" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableSecureUIAPaths" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableLUA" -Value 1 -VType "DWORD"
+        
+		# Don't automatically sign in last interactive user after a restart
+		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "DisableAutomaticRestartSignOn" -Value 1 -VType "DWORD"
+        
+		# User Account Control: Admin Approval Mode for the Built-in Administrator account
+		RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "FilterAdministratorToken" -Value 1 -VType "DWORD"
+        
+		# User Account Control: Detect application installations and prompt for elevation
+		RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableInstallerDetection" -Value 1 -VType "DWORD"
+        
+		# User Account Control: Only elevate UIAccess applications that are installed in secure locations
+		RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableSecureUIAPaths" -Value 1 -VType "DWORD"
+        
+		# UAC will notify the user when programs try to make changes to the computer
+		RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableLUA" -Value 1 -VType "DWORD"
+		
+		# Virtualize file and registry write failures to per-user locations
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "EnableVirtualization" -Value 1 -VType "DWORD"
 
         if ($strict) {
@@ -983,70 +1022,157 @@ if ("/ElevatedAction" -in $args) {
 			# Require Ctrl+Alt+Del to unlock (prevents username/password interception)
 			RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key "DisableCAD" -Value 0 -VType "DWORD"
 		}
+		
+		# Prevent Kerberos from using DES and RC4 encryption suites
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Kerberos\Parameters" -Key "SupportedEncryptionTypes" -Value 2147483640 -VType "DWORD"
         
         # Apply UAC to local accounts logged on via network
         RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Key "LocalAccountTokenFilterPolicy" -Value 0 -VType "DWORD"
         
+		# Require user authentication for remote connections by using Network Level Authentication
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "UserAuthentication" -Value 1 -VType "DWORD"
         
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"  # Prevent local storage of domain credentials
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
+		# Enable Windows Defender Credential Guard with UEFI lock
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LsaCfgFlags" -Value 1 -VType "DWORD"
+		
+		# Prevent local storage of domain credentials
+        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "DisableDomainCreds" -Value 1 -VType "DWORD"
+        
+		# Network access: Do not allow anonymous enumeration of SAM accounts
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymousSAM" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "UseMachineId" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictRemoteSAM" -Value "O:BAG:BAD:(A;;RC;;;BA)" -VType "String"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "ForceGuest" -Value "Classic - local users authenticate as themselves" -VType "String"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "EveryoneIncludesAnonymous" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LmCompatibilityLevel" -Value 5 -VType "DWORD"
+		
+		# Network access: Do not allow anonymous enumeration of SAM accounts and shares
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictAnonymous" -Value 1 -VType "DWORD"
+        
+		# Computer Identity Authentication for NTLM
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "UseMachineId" -Value 1 -VType "DWORD"
+        
+		# Network access: Restrict clients allowed to make remote calls to SAM
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RestrictRemoteSAM" -Value "O:BAG:BAD:(A;;RC;;;BA)" -VType "String"
+        
+		# Network access: Sharing and security model for local accounts
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "ForceGuest" -Value "Classic - local users authenticate as themselves" -VType "String"
+        
+		# Disable "Network access: Let everyone permissions apply to anonymous users"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "EveryoneIncludesAnonymous" -Value 0 -VType "DWORD"
+        
+		# Enable LSA protection using a UEFI variable
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "RunAsPPL" -Value 1 -VType "DWORD"
+		
+		# Network security: Do not store LAN Manager hash value on next password change
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "NoLMHash" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LmCompatibilityLevel" -Value 5 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" -Key "allownullsessionfallback" -Value 0 -VType "DWORD"
+        
+		# Set "Network Security: LAN Manager Authentication Level" to send NTLMv2 response only, and refuse LM and NTLM
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Key "LmCompatibilityLevel" -Value 5 -VType "DWORD"
+        
+		# NTLM sessions that are allowed to fall back to Null (unauthenticated) sessions may gain unauthorized access.
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" -Key "allownullsessionfallback" -Value 0 -VType "DWORD"
+		
+		# Network security: Minimum session security for NTLM SSP based (including secure RPC)
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" -Key "NTLMMinClientSec" -Value 537395200 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" -Key "NTLMMinServerSec" -Value 537395200 -VType "DWORD"
+		
+		# Network Security: Allow PKU2U authentication requests to this computer to use online identities
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\pku2u" -Key "AllowOnlineID" -Value 0 -VType "DWORD"
+		
+		# System Cryptography: Use FIPS compliant algorithms for encryption, hashing, and signing
         RegistryPut "HKLM:\System\CurrentControlSet\Control\Lsa\FIPSAlgorithmPolicy" -Key "Enabled" -Value 1 -VType "DWORD"
 
+		# Set "Network Security: LDAP client signing requirements" to "Negotiate signing"
         RegistryPut "HKLM:\System\CurrentControlSet\Services\LDAP" -Key "LDAPClientIntegrity" -Value 1 -VType "DWORD"
 
-        # Remote Desktop Services
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "DisablePasswordSaving" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "fPromptForPassword" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "fEncryptRPCTraffic" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "MinEncryptionLevel" -Value 3 -VType "DWORD"
+
+        ### Remote Desktop Services ###
         
+		# Do not allow passwords to be saved
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "DisablePasswordSaving" -Value 1 -VType "DWORD"
+		
+		# Always prompt for password upon connection
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "fPromptForPassword" -Value 1 -VType "DWORD"
+        
+		# Require secure RPC communication
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "fEncryptRPCTraffic" -Value 1 -VType "DWORD"
+        
+		# Do not allow drive redirection
+		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fDisableCdm" -Value 1 -VType "DWORD"
+		
+		# Set "Restrictions for Unauthenticated RPC clients" to "Authenticated"
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Rpc" -Key "RestrictRemoteClients" -Value 1 -VType "DWORD"
+		
+		# Set client connection encryption level to High Level
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key "MinEncryptionLevel" -Value 3 -VType "DWORD"
+        
+		# Disable Solicited Remote Assistance
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
+        
+		# Domain member: Digitally encrypt or sign secure channel data (always)
         RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "RequireSignOrSeal" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "SealSecureChannel" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "SignSecureChannel" -Value 1 -VType "DWORD"
+        
+		# Domain member: Digitally encrypt secure channel data (when possible)
+		RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "SealSecureChannel" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "SignSecureChannel" -Value 1 -VType "DWORD"
+		
+		# ...Don't disable domain members changing password...???
         RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "DisablePasswordChange" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "RequireStrongKey" -Value 1 -VType "DWORD"
-        if ($strict) {
+        
+		# Require Strong Session Key (when connecting to a domain controller)
+		RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "RequireStrongKey" -Value 1 -VType "DWORD"
+        
+		if ($strict) {
+			# Maximum password age
             RegistryPut "HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters" -Key "MaximumPasswordAge" -Value 30 -VType "DWORD"
-            RegistryPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key "cachedlogonscount" -Value 1 -VType "DWORD"
+            
+			# Number of domain credentials that can be cached
+			RegistryPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key "cachedlogonscount" -Value 1 -VType "DWORD"
         }
         else {
+			# Number of domain credentials that can be cached
             RegistryPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key "cachedlogonscount" -Value 10 -VType "DWORD"
         }
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole" -Key "SecurityLevel" -Value 0 -VType "DWORD"
-
-        
+		
+		if ($strict) {
+			# Disable built-in Guest and Administrator accounts (easy targets for entry into system)
+			Disable-LocalUser -Name "Guest" -EA SilentlyContinue
+			Disable-LocalUser -Name "Administrator" -EA SilentlyContinue
+        }
+		
+		
         ###### SYSTEM SECURITY SETTINGS ######
         SysDebugLog "Applying system-level process mitigations..."
+		
+		# Process mitigations that are less likely to break normal functionality
         Set-ProcessMitigation -System -Force on -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, DisableExtensionPoints, CFG, SuppressExports, BlockRemoteImageLoads, SEHOP
         if ($strict) {
+			# Process mitigations that could break normal functionality (esp. with third party AV)
             Set-ProcessMitigation -System -Force on -Enable EnforceModuleDependencySigning, StrictHandle, StrictCFG, UserShadowStack, UserShadowStackStrictMode
-            RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key "MitigationOptions_FontBocking" -Value "1000000000000" -VType "String"  # sic
+            
+			# Enable untrusted font blocking
+			RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key "MitigationOptions_FontBocking" -Value "1000000000000" -VType "String"  # sic
             RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key "MitigationOptions_FontBlocking" -Value "1000000000000" -VType "String"
         }
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoDataExecutionPrevention" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoHeapTerminationOnCorruption" -Value 0 -VType "DWORD"
-
+		
+		if ($strict) {
+			# Disable "Turn off data execution prevention for Explorer"
+			RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoDataExecutionPrevention" -Value 0 -VType "DWORD"
+        
+			# Disable "Turn off Heap termination on corruption"
+			RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Explorer" -Key "NoHeapTerminationOnCorruption" -Value 0 -VType "DWORD"
+		}
+		
+		# Turn off downloading of print drivers over HTTP
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows NT\Printers" -Key "DisableWebPnPDownload" -Value 1 -VType "DWORD"
+		
+		# Disable Delivery Optimization
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" -Key "DODownloadMode" -Value 0 -VType "DWORD"
 
+		# Set machine inactivity limit to 15 mins
         RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Key "InactivityTimeoutSecs" -Value 900 -VType "DWORD"
         
+		# Require case insensitivity for non-Windows subsystems when dealing with arguments or commands
         RegistryPut "HKLM:\System\CurrentControlSet\Control\Session Manager\Kernel" -Key "ObCaseInsensitive" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\System\CurrentControlSet\Control\Session Manager" -Key "ProtectionMode" -Value 1 -VType "DWORD"
+        
+		# System objects: Strengthen default permissions of internal system objects
+		RegistryPut "HKLM:\System\CurrentControlSet\Control\Session Manager" -Key "ProtectionMode" -Value 1 -VType "DWORD"
 
 
         ###### ATTACK SURFACE REDUCTION ######
@@ -1095,28 +1221,46 @@ if ("/ElevatedAction" -in $args) {
         ###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
         SysDebugLog "Applying drive and filesystem security settings..."
 
+		# Scan removable drives
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key "DisableRemovableDriveScanning" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Key "NoAutoplayfornonVolume" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Ext" -Key "VersionCheckEnabled" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoAutorun" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoDriveTypeAutoRun" -Value 255 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "PreXPSP2ShellProtocolBehavior" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Windows Search" -Key "AllowIndexingEncryptedStoresOrItems" -Value 0 -VType "DWORD"
+        
+		# Turn off autoplay for non-volume devices
+		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Key "NoAutoplayfornonVolume" -Value 1 -VType "DWORD"
+        
+		# Prevent autorun commands
+		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoAutorun" -Value 1 -VType "DWORD"
+        
+		# Disable autorun for all drive types
+		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "NoDriveTypeAutoRun" -Value 255 -VType "DWORD"
+        
+		# (Legacy) Run Windows Server 2019 File Explorer shell protocol in protected mode
+		RegistryPut "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Key "PreXPSP2ShellProtocolBehavior" -Value 0 -VType "DWORD"
+        
+		# Disable indexing of encrypted files
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Windows Search" -Key "AllowIndexingEncryptedStoresOrItems" -Value 0 -VType "DWORD"
 
         # Typically too annoying relative to likely benefits (try in Audit mode instead?)
         #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1 -VType "DWORD"
         if ($strict) {
+			# Notify when apps make changes to files in protected folders
             RegistryPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 2 -VType "DWORD"
         }
+		
+		# Allow users to configure advanced startup options in BitLocker setup
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "UseAdvancedStartup" -Value 1 -VType "DWORD"
         
         
         ###### APPLICATION SECURITY SETTINGS ######
         SysDebugLog "Applying application security settings..."
         
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"  # Block Potentially Unwanted Applications
+		# Block Potentially Unwanted Applications
+        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key "PUAProtection" -Value 1 -VType "DWORD"
         
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "AlwaysInstallElevated" -Value 0 -VType "DWORD"  # Omg how is this even a thing
-        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "SafeForScripting" -Value 0 -VType "DWORD"
+		# Don't automatically elevate application installers
+        RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "AlwaysInstallElevated" -Value 0 -VType "DWORD"
+        
+		# Prompts users when Web scripts try to install software
+		RegistryPut "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Key "SafeForScripting" -Value 0 -VType "DWORD"
 
         if ($strict) {
             # Enable Windows Defender Application Guard in Managed Mode
@@ -1128,20 +1272,41 @@ if ("/ElevatedAction" -in $args) {
         ###### NETWORK SECURITY SETTINGS ######
         SysDebugLog "Applying network security settings..."
 
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "EnableSecuritySignature" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "EnablePlainTextPassword" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "AutoDisconnect" -Value 15 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "EnableSecuritySignature" -Value 1 -VType "DWORD"
+        # Microsoft network client: Digitally sign communications (always)
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "EnableSecuritySignature" -Value 1 -VType "DWORD"
+        
+		# Disable "Microsoft network client: Send unencrypted password to third-party SMB servers"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Key "EnablePlainTextPassword" -Value 0 -VType "DWORD"
+        
+		# Idle timeout before suspending an SMB session
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "AutoDisconnect" -Value 15 -VType "DWORD"
+        
+		# Microsoft network server: Digitally sign communications (always)
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "RequireSecuritySignature" -Value 1 -VType "DWORD"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "EnableSecuritySignature" -Value 1 -VType "DWORD"
+		
+		# Microsoft network server: Disconnect clients when logon hours expire
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "EnableForcedLogoff" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "SmbServerNameHardeningLevel" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "RestrictNullSessAccess" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
+        
+		# Disable "Microsoft network server: Server SPN target name validation level" (it can be disruptive)
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "SmbServerNameHardeningLevel" -Value 0 -VType "DWORD"
+        
+		# Network access: Restrict anonymous access to Named Pipes and Shares
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Key "RestrictNullSessAccess" -Value 1 -VType "DWORD"
+        
+		# MSS: (DisableIPSourceRouting) IP source routing protection level (protects against packet spoofing)
+		# Set to "Highest protection, source routing is completely disabled"
+		RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
         RegistryPut "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" -Key "DisableIPSourceRouting" -Value 2 -VType "DWORD"
         
+		# Disable "MSS: (EnableICMPRedirect) Allow ICMP redirects to override OSPF generated routes"
+		RegistryPut "HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters" -Key "EnableICMPRedirect" -Value 0 -VType "DWORD"
+		
+		# Network exploit protection from Windows Defender
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key "EnableNetworkProtection" -Value 1 -VType "DWORD"
         
+		# Windows Remote Management (WinRM) authentication hardening
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" -Key "AllowBasic" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" -Key "AllowUnencryptedTraffic" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" -Key "AllowDigest" -Value 0 -VType "DWORD"
@@ -1150,23 +1315,39 @@ if ("/ElevatedAction" -in $args) {
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client" -Key "AllowUnencryptedTraffic" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client" -Key "AllowDigest" -Value 0 -VType "DWORD"
 
+		# Disable Internet Connection Sharing
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_ShowSharedAccessUI" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_StdDomainUserSetLocation" -Value 1 -VType "DWORD"
-        #RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
+        
+		# Require domain users to elevate when setting a network's location
+		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_StdDomainUserSetLocation" -Value 1 -VType "DWORD"
+        
+		# Prohibit installation and configuration of Network Bridge on your DNS domain network
+		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key "NC_AllowNetBridge_NLA" -Value 0 -VType "DWORD"
         
         
         ###### BROWSER SECURITY SETTINGS ######
         SysDebugLog "Applying browser security settings..."
 
+		# Block files with an invalid signature from running or installing
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Download" -Key "RunInvalidSignatures" -Value 0 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\FeatureControl" -Key "FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION" -Value 1 -VType "DWORD"
         
+		# Disable navigation to file:// URLs from non-file:// URLs
+		RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\FeatureControl" -Key "FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION" -Value 1 -VType "DWORD"
+        
+		# Block third-party cookies
         RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BlockThirdPartyCookies" -Value 1 -VType "DWORD"
-        RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -Key "BlockThirdPartyCookies" -Value 1 -VType "DWORD"
+		
+		# Disable background processes when browser is not running
+        RegistryPut "HKLM:\SOFTWARE\Policies\Google\Chrome" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
         RegistryPut "HKLM:\SOFTWARE\Policies\BraveSoftware\Brave" -Key "BackgroundModeEnabled" -Value 0 -VType "DWORD"
+		
+		# Block outdated ActiveX controls for Internet Explorer
+		RegistryPut "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Ext" -Key "VersionCheckEnabled" -Value 1 -VType "DWORD"
+        
         
         if ($strict) {
+			# Prevent bypassing Windows Defender SmartScreen prompts for sites
             RegistryPut "HKLM:\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter" Key "PreventOverride" -Value 1 -VType "DWORD"
         }
 
@@ -1174,14 +1355,12 @@ if ("/ElevatedAction" -in $args) {
         ###### MISCELLANEOUS ######
         SysDebugLog "Applying additional security settings..."
 
+		# Skip signatures that exploit vulnerabilities the system is already patched against
         RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key "DisableSignatureRetirement" -Value 0 -VType "DWORD"
 
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Key "UseAdvancedStartup" -Value 1 -VType "DWORD"
-        
-        RegistryPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key "fAllowToGetHelp" -Value 0 -VType "DWORD"
         
         
-        SysDebugLog "Security policy version applied: 8/12/2023"
+        SysDebugLog "Security policy version applied: 8/13/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
@@ -1233,7 +1412,8 @@ if (Confirm "Optimize network adapter settings for low latency?" -Auto $true -Co
     
     # Below settings may fail depending on network adapter's capabilities. This isn't a problem, so fail silently
     Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue "Enabled" -EA SilentlyContinue 2>$null | Out-Null
-    Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -EA SilentlyContinue
+    Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Packet Coalescing" -DisplayValue "Disabled" -EA SilentlyContinue
+	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -EA SilentlyContinue
     Disable-NetAdapterRsc -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null  # Disables packet coalescing
     Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
     Restart-NetAdapter -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
