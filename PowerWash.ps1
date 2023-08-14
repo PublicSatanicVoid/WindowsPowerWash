@@ -352,7 +352,7 @@ function RegPut ($Path, $Key, $Value, $VType = "DWORD") {
     New-ItemProperty -Path "$Path" -Name "$Key" -Value "$Value" -PropertyType "$VType" -Force | Out-Null
 }
 
-function RegistryGet($Path, $Key) {
+function RegGet($Path, $Key) {
     return (Get-ItemProperty -Path $Path -Name $Key).$Key
 }
 
