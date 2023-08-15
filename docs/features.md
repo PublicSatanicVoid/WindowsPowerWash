@@ -20,6 +20,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 
 *Note that some editions of Windows do not have the necessary components to support certain PowerWash features. PowerWash does not impose any artificial limitations and the author continues to look for ways around Microsoft's. All features listed below are optional and configurable using the provided [`PowerWashSettings.yml`](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/PowerWashSettings.yml). (See [the documentation](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/usage/config)).*
 
+✅ = Fully supported, ℹ = Partially supported, ✅ℹ = Fully supported but may require additional software, ⚠️ = Fully supported but caution encouraged, ❌ = Not supported
 
 ### System Configuration - Performance
 
@@ -100,5 +101,4 @@ These are some of the most commonly wanted modifications to a standard Windows i
 - Obviously, all of this is "use at your own risk"
 
 ## Special Thank-Yous
-- While many freely available sites have contributed valuable knowledge in the development of this script, I especially want to thank the maintainers of [admx.help](https://admx.help) for providing an easy-to-use and comprehensive inventory of Group Policy and associated registry settings. Also, as bad a reputation as Microsoft has for user-friendliness, their technical documentation at [learn.microsoft.com](https://learn.microsoft.com) is generally very high quality.
-- All beta testers
+Now in README for greater visibility
