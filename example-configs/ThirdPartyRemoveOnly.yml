@@ -138,6 +138,9 @@ Defender:
   
   # Applies additional, stricter security policies. May have a larger impact on performance or convenience.
   ApplyStrictSecurityPolicies: false
+  
+  # Applies additional, even stricter security policies. May have a larger impact on performance or convenience.
+  ApplyExtraStrictSecurityPolicies: false
 
   # Adds a warning screen prior to login to deter unauthorized access.
   AddWarningScreen: false

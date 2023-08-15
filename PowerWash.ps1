@@ -372,8 +372,8 @@ function RunScriptAsSystem($Path, $ArgString) {
     $Task | Unregister-ScheduledTask -Confirm:$false
     Write-Host " Complete]"
 
-    #Remove-Item -Path "$env:SystemDrive\.PowerWashHome.tmp"
-    #Remove-Item -Path "$env:SystemDrive\.PowerWashSID.tmp"
+    Remove-Item -Path "$env:SystemDrive\.PowerWashHome.tmp"
+    Remove-Item -Path "$env:SystemDrive\.PowerWashSID.tmp"
 }
 
 function TryDisableTask ($TaskName) {
@@ -497,7 +497,7 @@ function Add-Path($Path) {
 # We have to bootstrap to this by scheduling a task to call this script with this flag
 
 if ("/ElevatedAction" -in $args) {
-    if ("$(whoami)" -ne "nt authority\system") {
+    if ("/ForceAllowForDebug" -notin $args -and "$(whoami)" -ne "nt authority\system") {
         ""
         SysDebugLog "ERROR: Can only run /ElevatedAction features as SYSTEM. (Currently running as $(whoami))"
         ""
@@ -880,7 +880,8 @@ if ("/ElevatedAction" -in $args) {
 		# https://stigviewer.com
 		# https://learn.microsoft.com
 		
-        $strict = ("/StrictMode" -in $args) 
+        $strict = ("/StrictMode" -in $args)
+		$draconian = ("/DraconianMode" -in $args)
         SysDebugLog "Strict mode: $strict"
 
         
@@ -906,8 +907,116 @@ if ("/ElevatedAction" -in $args) {
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard -Key RequirePlatformSecurityFeatures -Value 3
 
 
+        ###### SYSTEM SECURITY SETTINGS ######
+        SysDebugLog "Applying system-level process mitigations..."
+		
+		# No-Execute should be set to OptOut or (stricter, may break things) AlwaysOn
+		if ($draconian) {
+			cmd /c "bcdedit /set {current} nx OptOut"
+		}
+		else {
+			cmd /c "bcdedit /set {current} nx AlwaysOn"
+		}
+		
+		# Process mitigations that are less likely to break normal functionality
+        Set-ProcessMitigation -System -Force on -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, DisableExtensionPoints, CFG, SuppressExports, BlockRemoteImageLoads, SEHOP
+        RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager\kernel" -Key DisableExceptionChainValidation -Value 0
+		if ($strict) {
+			# Process mitigations that could break normal functionality (esp. with third party AV)
+            Set-ProcessMitigation -System -Force on -Enable EnforceModuleDependencySigning, StrictHandle, StrictCFG, UserShadowStack, UserShadowStackStrictMode
+           
+			# Enable untrusted font blocking
+			RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key MitigationOptions_FontBocking -Value "1000000000000" -VType String  # sic
+            RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key MitigationOptions_FontBlocking -Value "1000000000000" -VType String
+        }
+		if ($draconian) {
+			# Very likely to break some normal functionality; this will have to be evaluated on a case-by-case basis
+			# to determine if the marginal increase in security is worth it.
+			Set-ProcessMitigation -System -Force on -Enable TerminateOnError, DisableNonSystemFonts, DisableWin32kSystemCalls
+		}
+		
+		if ($strict) {
+			# Disable "Turn off data execution prevention for Explorer"
+			RegPut HKLM:\Software\Policies\Microsoft\Windows\Explorer -Key NoDataExecutionPrevention -Value 0
+        
+			# Disable "Turn off Heap termination on corruption"
+			RegPut HKLM:\Software\Policies\Microsoft\Windows\Explorer -Key NoHeapTerminationOnCorruption -Value 0
+		}
+		
+		if ($draconian) {
+			# Disable "MSS: (AutoReboot) Allow Windows to automatically restart after a system crash (recommended except for highly secure environments)"
+			RegPut HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl -Key AutoReboot -Value 0
+		}
+		
+		# MSS: (SafeDllSearchMode) Enable Safe DLL search mode (recommended)
+		RegPut "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Key SafeDllSearchMode -Value 1
+		
+		# Turn off downloading of print drivers over HTTP
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Printers" -Key DisableWebPnPDownload -Value 1
+		
+		# Disable Delivery Optimization
+        RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization -Key DODownloadMode -Value 0
+
+		# Set machine inactivity limit to 15 mins
+        RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key InactivityTimeoutSecs -Value 900
+        
+		# Require case insensitivity for non-Windows subsystems when dealing with arguments or commands
+        RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager\Kernel" -Key ObCaseInsensitive -Value 1
+        
+		# System objects: Strengthen default permissions of internal system objects
+		RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager" -Key ProtectionMode -Value 1
+        
+		# MSS: (NoNameReleaseOnDemand) Allow computer to ignore NetBIOS name release requests except from WINS servers
+		RegPut HKLM:\System\CurrentControlSet\Services\Netbt\Parameters -Key NoNameReleaseOnDemand -Value 1
+
+		# Set "MSS: (WarningLevel) Percentage threshold for the security event log at which the system will generate a warning" to 90%
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security -Key WarningLevel -Value 90
+
+
+        ###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
+        SysDebugLog "Applying drive and filesystem security settings..."
+
+		# Scan removable drives
+        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key DisableRemovableDriveScanning -Value 0
+        
+		# Turn off autoplay for non-volume devices
+		RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer -Key NoAutoplayfornonVolume -Value 1
+        
+		# Prevent autorun commands
+		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoAutorun -Value 1
+        
+		# Disable autorun for all drive types
+		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoDriveTypeAutoRun -Value 255
+        
+		# (Legacy) Run Windows Server 2019 File Explorer shell protocol in protected mode
+		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key PreXPSP2ShellProtocolBehavior -Value 0
+        
+		# Disable indexing of encrypted files
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows\Windows Search" -Key AllowIndexingEncryptedStoresOrItems -Value 0
+
+		if ($strict) {
+			# MSS: (NtfsDisable8dot3NameCreation) Enable the computer to stop generating 8.3 style filenames
+			RegPut HKLM:\System\CurrentControlSet\Control\FileSystem -Key NtfsDisable8dot3NameCreation -Value 1
+		}
+
+        # Typically too annoying relative to likely benefits (try in Audit mode instead?)
+        if ($draconian) {
+			RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key EnableControlledFolderAccess -Value 1
+		}
+		elseif ($strict) {
+			# Notify when apps make changes to files in protected folders
+            RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key EnableControlledFolderAccess -Value 2
+        }
+		
+		# Allow users to configure advanced startup options in BitLocker setup
+        RegPut HKLM:\SOFTWARE\Policies\Microsoft\FVE -Key UseAdvancedStartup -Value 1
+        
+
         ###### AUTHENTICATION SECURITY SETTINGS ######
         SysDebugLog "Applying authentication security settings..."
+
+		# Disable "MSS: (AutoAdminLogon) Enable Automatic Logon (not recommended)"
+		RegPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key AutoAdminLogon -Value 0
 
 		# Minimum PIN length
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\FVE -Key MinimumPIN -Value 6
@@ -1039,6 +1148,8 @@ if ("/ElevatedAction" -in $args) {
 		# Set "Network Security: LDAP client signing requirements" to "Negotiate signing"
         RegPut HKLM:\System\CurrentControlSet\Services\LDAP -Key LDAPClientIntegrity -Value 1
 
+		# MSS: (ScreenSaverGracePeriod) The time in seconds before the screen saver grace period expires (0 recommended)
+		RegPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key ScreenSaverGracePeriod -Value 0
 
         ### Remote Desktop Services ###
         
@@ -1095,50 +1206,6 @@ if ("/ElevatedAction" -in $args) {
 			Disable-LocalUser -Name Administrator -EA SilentlyContinue
         }
 		
-		
-        ###### SYSTEM SECURITY SETTINGS ######
-        SysDebugLog "Applying system-level process mitigations..."
-		
-		# No-Execute should be set to OptOut or (stricter, may break things) AlwaysOn
-		cmd /c "bcdedit /set {current} nx OptOut"
-		
-		# Process mitigations that are less likely to break normal functionality
-        Set-ProcessMitigation -System -Force on -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, DisableExtensionPoints, CFG, SuppressExports, BlockRemoteImageLoads, SEHOP
-        if ($strict) {
-			# Process mitigations that could break normal functionality (esp. with third party AV)
-            Set-ProcessMitigation -System -Force on -Enable EnforceModuleDependencySigning, StrictHandle, StrictCFG, UserShadowStack, UserShadowStackStrictMode
-            
-			# Enable untrusted font blocking
-			RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key MitigationOptions_FontBocking -Value "1000000000000" -VType String  # sic
-            RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key MitigationOptions_FontBlocking -Value "1000000000000" -VType String
-        }
-		
-		if ($strict) {
-			# Disable "Turn off data execution prevention for Explorer"
-			RegPut HKLM:\Software\Policies\Microsoft\Windows\Explorer -Key NoDataExecutionPrevention -Value 0
-        
-			# Disable "Turn off Heap termination on corruption"
-			RegPut HKLM:\Software\Policies\Microsoft\Windows\Explorer -Key NoHeapTerminationOnCorruption -Value 0
-		}
-		
-		# Turn off downloading of print drivers over HTTP
-		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Printers" -Key DisableWebPnPDownload -Value 1
-		
-		# Disable Delivery Optimization
-        RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization -Key DODownloadMode -Value 0
-
-		# Set machine inactivity limit to 15 mins
-        RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key InactivityTimeoutSecs -Value 900
-        
-		# Require case insensitivity for non-Windows subsystems when dealing with arguments or commands
-        RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager\Kernel" -Key ObCaseInsensitive -Value 1
-        
-		# System objects: Strengthen default permissions of internal system objects
-		RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager" -Key ProtectionMode -Value 1
-        
-		# MSS: (NoNameReleaseOnDemand) Allow computer to ignore NetBIOS name release requests except from WINS servers
-		RegPut HKLM:\System\CurrentControlSet\Services\Netbt\Parameters -Key NoNameReleaseOnDemand -Value 1
-
 
         ###### ATTACK SURFACE REDUCTION ######
         SysDebugLog "Applying Attack Surface Reduction settings..."
@@ -1161,12 +1228,22 @@ if ("/ElevatedAction" -in $args) {
         )
         $asr_guids_warn = @(
         )
-        if ($strict) {
+        if ($draconian) {
             $asr_guids_block += @(
                 "01443614-cd74-433a-b99e-2ecdc07bfc25", # Block executable files from running unless they meet a prevalence, age, or trusted list criterion
                 "d1e49aac-8f56-4280-b9ba-993a6d77406c", # Block process creations originating from PSExec and WMI commands
                 "d4f940ab-401b-4efc-aadc-ad5f3c50688a"  # Block all Office applications from creating child processes
             )
+		}
+		elseif ($strict) {
+            $asr_guids_block += @(
+                "d4f940ab-401b-4efc-aadc-ad5f3c50688a"  # Block all Office applications from creating child processes
+            )
+			$asr_guids_warn += @(
+                "01443614-cd74-433a-b99e-2ecdc07bfc25", # Block executable files from running unless they meet a prevalence, age, or trusted list criterion
+                "d1e49aac-8f56-4280-b9ba-993a6d77406c"  # Block process creations originating from PSExec and WMI commands
+			
+			)
         }
         else {
             $asr_guids_warn += @(
@@ -1183,57 +1260,6 @@ if ("/ElevatedAction" -in $args) {
         }
         
         
-        ###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
-        SysDebugLog "Applying drive and filesystem security settings..."
-
-		# Scan removable drives
-        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key DisableRemovableDriveScanning -Value 0
-        
-		# Turn off autoplay for non-volume devices
-		RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer -Key NoAutoplayfornonVolume -Value 1
-        
-		# Prevent autorun commands
-		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoAutorun -Value 1
-        
-		# Disable autorun for all drive types
-		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoDriveTypeAutoRun -Value 255
-        
-		# (Legacy) Run Windows Server 2019 File Explorer shell protocol in protected mode
-		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key PreXPSP2ShellProtocolBehavior -Value 0
-        
-		# Disable indexing of encrypted files
-		RegPut "HKLM:\Software\Policies\Microsoft\Windows\Windows Search" -Key AllowIndexingEncryptedStoresOrItems -Value 0
-
-        # Typically too annoying relative to likely benefits (try in Audit mode instead?)
-        #RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key "EnableControlledFolderAccess" -Value 1
-        if ($strict) {
-			# Notify when apps make changes to files in protected folders
-            RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key EnableControlledFolderAccess -Value 2
-        }
-		
-		# Allow users to configure advanced startup options in BitLocker setup
-        RegPut HKLM:\SOFTWARE\Policies\Microsoft\FVE -Key UseAdvancedStartup -Value 1
-        
-        
-        ###### APPLICATION SECURITY SETTINGS ######
-        SysDebugLog "Applying application security settings..."
-        
-		# Block Potentially Unwanted Applications
-        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key PUAProtection -Value 1
-        
-		# Don't automatically elevate application installers
-        RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key AlwaysInstallElevated -Value 0
-        
-		# Prompts users when Web scripts try to install software
-		RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key SafeForScripting -Value 0
-
-        if ($strict) {
-            # Enable Windows Defender Application Guard in Managed Mode
-            Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Windows-Defender-ApplicationGuard
-            RegPut HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI -Key AllowAppHVSI_ProviderSet -Value 3
-        }
-        
-        
         ###### NETWORK SECURITY SETTINGS ######
         SysDebugLog "Applying network security settings..."
 
@@ -1244,6 +1270,22 @@ if ("/ElevatedAction" -in $args) {
 		# Disable "Microsoft network client: Send unencrypted password to third-party SMB servers"
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters -Key EnablePlainTextPassword -Value 0
         
+		# Set "MSS: (SynAttackProtect) Syn attack protection level (protects against DoS)" to "Connections time out sooner if a SYN attack is detected"
+		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key SynAttackProtect -Value 1
+		
+		# Set "MSS: (TcpMaxConnectResponseRetransmissions) SYN-ACK retransmissions when a connection request is not acknowledged" to "3 & 6 seconds, half-open connections dropped after 21 seconds"
+		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key TcpMaxConnectResponseRetransmissions -Value 2
+		
+		# Set "MSS: (TcpMaxDataRetransmissions) How many times unacknowledged data is retransmitted (3 recommended, 5 is default)" to 3
+		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key TcpMaxDataRetransmissions -Value 3
+		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip6\Parameters -Key TcpMaxDataRetransmissions -Value 3
+		
+		if ($draconian) {
+			# Disable "MSS: Enable Administrative Shares (recommended except for highly secure environments)"
+			RegPut HKLM:\System\CurrentControlSet\Services\LanmanServer\Parameters -Key AutoShareServer -Value 0
+			RegPut HKLM:\System\CurrentControlSet\Services\LanmanServer\Parameters -Key AutoShareWks -Value 0
+		}
+		
 		# Idle timeout before suspending an SMB session
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key AutoDisconnect -Value 15
         
@@ -1265,8 +1307,25 @@ if ("/ElevatedAction" -in $args) {
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters -Key DisableIPSourceRouting -Value 2
         RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters -Key DisableIPSourceRouting -Value 2
         
+		# MSS: (DisableSavePassword) Prevent the dial-up passsword from being saved (recommended)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\RasMan\Parameters -Key DisableSavePassword -Value 1
+		
+		# Disable "MSS: (EnableDeadGWDetect) Allow automatic detection of dead network gateways (could lead to DoS)"
+		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key EnableDeadGWDetect -Value 0
+		
 		# Disable "MSS: (EnableICMPRedirect) Allow ICMP redirects to override OSPF generated routes"
 		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key EnableICMPRedirect -Value 0
+		
+		# Disable "MSS: (PerformRouterDiscovery) Allow IRDP to detect and configure Default Gateway addresses (could lead to DoS)"
+		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key PerformRouterDiscovery -Value 0
+		
+		if ($draconian) {
+			# MSS: (Hidden) Hide Computer From the Browse List (not recommended except for highly secure environments)
+			RegPut HKLM:\System\CurrentControlSet\Services\Lanmanserver\Parameters -Key Hidden -Value 1
+		}
+		
+		# Set "MSS: (NoDefaultExempt) Configure IPSec exemptions for various types of network traffic." to "Only ISAKMP is exempt (recommended for Windows Server 2003)"
+		RegPut HKLM:\System\CurrentControlSet\Services\IPSEC -Key NoDefaultExempt -Value 3
 		
 		# Network exploit protection from Windows Defender
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key EnableNetworkProtection -Value 1
@@ -1288,6 +1347,25 @@ if ("/ElevatedAction" -in $args) {
         
 		# Prohibit installation and configuration of Network Bridge on your DNS domain network
 		RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key NC_AllowNetBridge_NLA -Value 0
+        
+		
+        ###### APPLICATION SECURITY SETTINGS ######
+        SysDebugLog "Applying application security settings..."
+        
+		# Block Potentially Unwanted Applications
+        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key PUAProtection -Value 1
+        
+		# Don't automatically elevate application installers
+        RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key AlwaysInstallElevated -Value 0
+        
+		# Prompts users when Web scripts try to install software
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key SafeForScripting -Value 0
+
+        if ($strict) {
+            # Enable Windows Defender Application Guard in Managed Mode
+            Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Windows-Defender-ApplicationGuard
+            RegPut HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI -Key AllowAppHVSI_ProviderSet -Value 3
+        }
         
         
         ###### BROWSER SECURITY SETTINGS ######
@@ -1906,8 +1984,12 @@ PowerWashText ""
 
 if (Confirm "Apply high-security system settings? (Attack Surface Reduction, etc.)" -Auto $false -ConfigKey "Defender.ApplyRecommendedSecurityPolicies") {
     $apply_strict_policies = Confirm "--> Apply strict security settings? (Warning-May break certain applications especially with third-party antivirus installed)" -Auto $false -ConfigKey "Defender.ApplyStrictSecurityPolicies"
-    Write-Host "- Applying policies..." -Nonewline
-    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy $(If ($apply_strict_policies) { '/StrictMode'} Else {''})"
+    $apply_draconian_policies = $false
+	if ($apply_strict_policies) {
+		$apply_draconian_policies = Confirm "--> Apply extra strict security settings? (Warning-Very likely to break certain applications! Evaluate this in a test environment and ensure the breakage is acceptable!)" -Auto $false -ConfigKey "Defender.ApplyExtraStrictSecurityPolicies"
+	}
+	Write-Host "- Applying policies..." -Nonewline
+    RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy $(If ($apply_strict_policies) { '/StrictMode'} Else {''}) $(If ($apply_draconian_policies) { '/DraconianMode'} Else {''})"
     "- Complete"
 }
 
