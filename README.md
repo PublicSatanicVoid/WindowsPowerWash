@@ -24,17 +24,17 @@ I created PowerWash because I believe that underneath the cruft (ads, bloatware,
 ## Using PowerWash
 There are three ways PowerWash is designed to be used:
 
-### Interactive mode (default)
+### Interactive mode *(default)*
 In this mode, you are prompted step-by-step to decide which PowerWash features to run.
 This is helpful for first-time PowerWash users.
 [Guide to interactive mode »](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/usage/interactive)
 
-### Configuration mode
+### Configuration mode *(most flexible)*
 In this mode, you edit `PowerWashSettings.yml` to toggle the features that you want PowerWash to run.
 This is helpful for automating the process and lets you configure what programs to install/uninstall.
 [Guide to configuration mode »](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/usage/config)
 
-### Deployment mode
+### Deployment mode *(most automated)*
 In this mode, PowerWash automatically runs when installing Windows from a USB drive.
 This is helpful for automating the process when you frequently install/reinstall Windows or want to start multiple devices from the same pre-configured point.
 [Guide to deployment mode »](https://universecraft.github.io/WindowsPowerWash/docs/usage/deployment)
