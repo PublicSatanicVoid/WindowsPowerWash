@@ -912,10 +912,10 @@ if ("/ElevatedAction" -in $args) {
 		
 		# No-Execute should be set to OptOut or (stricter, may break things) AlwaysOn
 		if ($draconian) {
-			cmd /c "bcdedit /set {current} nx OptOut"
+			cmd /c "bcdedit /set {current} nx AlwaysOn"
 		}
 		else {
-			cmd /c "bcdedit /set {current} nx AlwaysOn"
+			cmd /c "bcdedit /set {current} nx OptOut"
 		}
 		
 		# Process mitigations that are less likely to break normal functionality
