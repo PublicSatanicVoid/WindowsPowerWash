@@ -57,7 +57,12 @@ It would seem that Microsoft's "party line" changes so often that they can't eve
 
 ### "LTSC editions shouldn't be used by consumers"
 
-The overwhelming messaging from Microsoft is that LTSC should be used only for "business-critical" systems, not consumer devices. They haven't explicitly said not to use it on consumer devices, but they've heavily implied as much [here](https://learn.microsoft.com/en-us/windows/whats-new/ltsc/overview) and [here](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181), for example.
+The overwhelming messaging from Microsoft is that LTSC should be used only for "business-critical" systems, not consumer devices:
+
+> The Long-term Servicing channel is not intended for deployment on most or all the devices in an organization; it should be used only for special-purpose devices. As a general guideline, a device with Microsoft Office installed is a general-purpose device, typically used by an information worker, and therefore it is better suited for the General Availability channel.
+-[Microsoft Learn -- accessed 8/15/2023](https://learn.microsoft.com/en-us/windows/deployment/update/waas-overview)
+
+(See also [here](https://learn.microsoft.com/en-us/windows/whats-new/ltsc/overview) and [here](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181).)
 
 A particularly humorous "oopsies" on Microsoft's part is the repeated claim that 
 

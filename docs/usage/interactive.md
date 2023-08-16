@@ -6,6 +6,7 @@ This short guide walks you through how to use PowerWash in the "interactive usag
 ### Setup
 - You only need to download [`PowerWash.ps1`](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/PowerWash.ps1) to use PowerWash interactively.
   - If you want to remove bloatware programs or install custom programs with PowerWash, you also need to download [`PowerWashSettings.yml`](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/PowerWashSettings.yml)
+  - Alternatively, you can clone the whole repo by installing Git and running `git clone https://github.com/PublicSatanicVoid/WindowsPowerWash`
 - Make sure your [`ExecutionPolicy`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.3) allows scripts to run
 
 ### Usage: Standard

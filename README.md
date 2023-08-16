@@ -24,17 +24,17 @@ I created PowerWash because I believe that underneath the cruft (ads, bloatware,
 ## Using PowerWash
 There are three ways PowerWash is designed to be used:
 
-### Interactive mode (default)
+### Interactive mode *(default)*
 In this mode, you are prompted step-by-step to decide which PowerWash features to run.
 This is helpful for first-time PowerWash users.
 [Guide to interactive mode »](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/usage/interactive)
 
-### Configuration mode
+### Configuration mode *(most flexible)*
 In this mode, you edit `PowerWashSettings.yml` to toggle the features that you want PowerWash to run.
 This is helpful for automating the process and lets you configure what programs to install/uninstall.
 [Guide to configuration mode »](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/usage/config)
 
-### Deployment mode
+### Deployment mode *(most automated)*
 In this mode, PowerWash automatically runs when installing Windows from a USB drive.
 This is helpful for automating the process when you frequently install/reinstall Windows or want to start multiple devices from the same pre-configured point.
 [Guide to deployment mode »](https://universecraft.github.io/WindowsPowerWash/docs/usage/deployment)
@@ -62,6 +62,14 @@ PowerWash should be used as part of a comprehensive approach to optimizing and s
 
 ## Disclaimer
 See [LICENSE](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/LICENSE) for license details; [LIMITATIONS.md](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/limitations) for limitations and additional caveats. This software makes many changes to your system, some of which are discouraged or completely unsupported by Microsoft. This software may (depending on user configuration) modify registry settings, uninstall certain Windows applications, or otherwise perform actions commonly considered destructive. While the author's testing on virtual and physical machines has consistently shown stability and performance gains, no amount of testing is perfect, documentation is sometimes wrong, and I can't guarantee your system will be stable if you use any component of this software. You **use this at your own risk** and are strongly encouraged to make sure you understand the features you plan to use prior to using them. This software may break your system. Always make backups. In any situation where any text in this repository contradicts the LICENSE linked earlier, the LICENSE takes priority.
+
+### Known Issues
+- Desktop background may go black intermittently after applying recommended security settings in strict or extra strict mode.
+  - *Workaround:* Set the desktop background again. Somehow this seems to fix it... solution as strange as problem.
+- Microsoft Edge reappears in the start menu / search after removing it
+  - Don't worry, it wasn't actually reinstalled. This is a defunct shortcut-y thing that Windows Update put there.
+  - *Workaround 1:* Run the removal tool again to remove the shortcut again.
+  - *Workaround 2:* Run the removal tool again and disable *ALL* updates. It won't come back again until you re-enable updates.
 
 ## Special Thank-Yous and Credits
 - While many freely available sites have contributed valuable knowledge in the development of this script, I especially want to thank the maintainers of [admx.help](https://admx.help) for providing an easy-to-use and comprehensive inventory of Group Policy and associated registry settings, as well as [DoD Cyber Exchange's list of STIGs](https://public.cyber.mil/stigs/), [Windows Security Encyclopedia](https://www.windows-security.org/), and [Unified Compliance's STIG Viewer](https://stigviewer.com/) for their inventories of Windows security settings and recommendations; these have all been used in the development of PowerWash's "Apply recommended security settings" feature. Also, as bad a reputation as Microsoft has for user-friendliness, their technical documentation at [learn.microsoft.com](https://learn.microsoft.com) is generally very high quality.
