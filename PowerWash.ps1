@@ -879,6 +879,15 @@ if ("/ElevatedAction" -in $args) {
 		# https://www.windows-security.org
 		# https://stigviewer.com
 		# https://learn.microsoft.com
+		# https://security.microsoft.com
+		# https://github.com/nsacyber/Windows-Secure-Host-Baseline/blob/master/Windows/Compliance/Windows10.audit
+		
+		# Source abbreviations:
+		# MDE -- Microsoft Defender for Endpoint -- attributions still in progress
+		# MSS -- Microsoft MSS registry settings
+		# MSSB -- MS Security Baseline Windows 10 v21H1
+		# SHB -- Secure Host Baseline (from NSA)
+		# STIG -- Security Technical Implementation Guideline (from DISA)
 		
         $strict = ("/StrictMode" -in $args)
 		$draconian = ("/DraconianMode" -in $args)
@@ -894,17 +903,29 @@ if ("/ElevatedAction" -in $args) {
         # Secure biometrics (Enhanced sign-on security)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureBiometrics -Key Enabled -Value 1
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\SecureFingerprint -Key Enabled -Value 1
-        RegPut HKLM:\SOFTWARE\Policies\Microsoft\Biometrics\FacialFeatures -Key EnhancedAntiSpoofing -Value 1
+        RegPut HKLM:\SOFTWARE\Policies\Microsoft\Biometrics\FacialFeatures -Key EnhancedAntiSpoofing -Value 1  # (~SHB)
 
         # Hypervisor enforced code integrity (HVCI)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity -Key Enabled -Value 1
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity -Key Locked -Value 0
         
-		# Device Guard -- enable virtualization-based security
+		# Device Guard -- enable virtualization-based security (~MSSB)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard -Key EnableVirtualizationBasedSecurity -Value 1
 		
-		# Device Guard -- use both Secure Boot and DMA protection
+		# Device Guard -- use both Secure Boot and DMA protection (~MSSB)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard -Key RequirePlatformSecurityFeatures -Value 3
+		
+		# Device Guard -- Virtualization-based Protection of Code Integrity (~MSSB)
+        RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard -Key HypervisorEnforcedCodeIntegrity -Value 1
+		
+		# Device Guard -- Require UEFI Memory Attributes Table (~MSSB)
+        RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard -Key HVCIMatRequired -Value 1
+		
+		# Device Guard -- Credential Guard (~MSSB)
+        RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard -Key LsaCfgFlags -Value 1
+		
+		# Device Guard -- Secure Launch (~MSSB)
+        RegPut HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard -Key ConfigureSystemGuardLaunch -Value 1
 
 
         ###### SYSTEM SECURITY SETTINGS ######
@@ -920,12 +941,15 @@ if ("/ElevatedAction" -in $args) {
 		
 		# Process mitigations that are less likely to break normal functionality
         Set-ProcessMitigation -System -Force on -Enable DEP, EmulateAtlThunks, BottomUp, HighEntropy, DisableExtensionPoints, CFG, SuppressExports, BlockRemoteImageLoads, SEHOP
-        RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager\kernel" -Key DisableExceptionChainValidation -Value 0
+        
+		# Structured Exception Handling Overwrite PRotection (SEHOP) (~MSSB, SHB)
+		RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager\kernel" -Key DisableExceptionChainValidation -Value 0
+		
 		if ($strict) {
 			# Process mitigations that could break normal functionality (esp. with third party AV)
             Set-ProcessMitigation -System -Force on -Enable EnforceModuleDependencySigning, StrictHandle, StrictCFG, UserShadowStack, UserShadowStackStrictMode
            
-			# Enable untrusted font blocking
+			# Enable untrusted font blocking (~SHB)
 			RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key MitigationOptions_FontBocking -Value "1000000000000" -VType String  # sic
             RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\MitigationOptions" -Key MitigationOptions_FontBlocking -Value "1000000000000" -VType String
         }
@@ -936,10 +960,10 @@ if ("/ElevatedAction" -in $args) {
 		}
 		
 		if ($strict) {
-			# Disable "Turn off data execution prevention for Explorer"
+			# Disable "Turn off data execution prevention for Explorer" (~SHB, STIG)
 			RegPut HKLM:\Software\Policies\Microsoft\Windows\Explorer -Key NoDataExecutionPrevention -Value 0
         
-			# Disable "Turn off Heap termination on corruption"
+			# Disable "Turn off Heap termination on corruption" (~SHB, STIG)
 			RegPut HKLM:\Software\Policies\Microsoft\Windows\Explorer -Key NoHeapTerminationOnCorruption -Value 0
 		}
 		
@@ -948,50 +972,110 @@ if ("/ElevatedAction" -in $args) {
 			RegPut HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl -Key AutoReboot -Value 0
 		}
 		
+		# Disable new DMA devices when this computer is locked (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\FVE -Key DisableExternalDMAUnderLock -Value 1
+		
 		# MSS: (SafeDllSearchMode) Enable Safe DLL search mode (recommended)
 		RegPut "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Key SafeDllSearchMode -Value 1
 		
-		# Turn off downloading of print drivers over HTTP
+		# Turn off downloading of print drivers over HTTP (~MSSB, SHB, STIG)
 		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Printers" -Key DisableWebPnPDownload -Value 1
 		
-		# Disable Delivery Optimization
+		# Turn off printing over HTTP (~SHB, STIG)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Printers" -Key DisableHTTPPrinting -Value 1
+		
+		# Limit print driver installation to administrators (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Printers\PointAndPrint" -Key RestrictDriverInstallationToAdministrators -Value 1
+		
+		# Disable Delivery Optimization (~SHB)
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization -Key DODownloadMode -Value 0
 
-		# Set machine inactivity limit to 15 mins
+		# Set machine inactivity limit to 15 mins (~SHB)
         RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key InactivityTimeoutSecs -Value 900
         
-		# Require case insensitivity for non-Windows subsystems when dealing with arguments or commands
+		# Require case insensitivity for non-Windows subsystems when dealing with arguments or commands (~SHB)
         RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager\Kernel" -Key ObCaseInsensitive -Value 1
         
-		# System objects: Strengthen default permissions of internal system objects
+		# System objects: Strengthen default permissions of internal system objects (~SHB, STIG)
 		RegPut "HKLM:\System\CurrentControlSet\Control\Session Manager" -Key ProtectionMode -Value 1
         
-		# MSS: (NoNameReleaseOnDemand) Allow computer to ignore NetBIOS name release requests except from WINS servers
+		# MSS: (NoNameReleaseOnDemand) Allow computer to ignore NetBIOS name release requests except from WINS servers (~MSS, SHB, STIG)
 		RegPut HKLM:\System\CurrentControlSet\Services\Netbt\Parameters -Key NoNameReleaseOnDemand -Value 1
 
 		# Set "MSS: (WarningLevel) Percentage threshold for the security event log at which the system will generate a warning" to 90%
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Eventlog\Security -Key WarningLevel -Value 90
+		
+		# Specify the maximum log file size (KB) (~MSSB, STIG)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application -Key MaxSize -Value 32768
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security -Key MaxSize -Value 196608
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\System -Key MaxSize -Value 32768
+		
+		# Blacklist certain drivers (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\DeviceInstall\Restrictions -Key DenyDeviceClasses -Value 1
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\DeviceInstall\Restrictions -Key DenyDeviceClassesRetroactive -Value 1
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\DeviceInstall\Restrictions\DenyDeviceClasses -Key 1 -Value "{d48179be-ec20-11d1-b6b8-00c04fa372a7}" -VType String
 
+		# Boot-Start Driver Initialization Policy (~MSSB, SHB)
+		if ($draconian) {
+			# Good and unknown
+			RegPut HKLM:\System\CurrentControlSet\Policies\EarlyLaunch -Key DriverLoadPolicy -Value 1
+		}
+		else {
+			# Good, unknown and bad but critical
+			RegPut HKLM:\System\CurrentControlSet\Policies\EarlyLaunch -Key DriverLoadPolicy -Value 3
+		}
+		
+		# Set "Enumeration policy for external devices incompatible with Kernel DMA Protection" to "Block all" (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows\Kernel DMA Protection" -Key DeviceEnumerationPolicy -Value 0
+		
+		# Set cloud protection level (~MSSB)
+		if ($draconian) {
+			# Enabled: High+ blocking level
+			RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\MpEngine" -Key MpCloudBlockLevel -Value 4
+		}
+		else {
+			# Enabled: High blocking level
+			RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\MpEngine" -Key MpCloudBlockLevel -Value 2
+		}
+		
+		# Scan all downloaded files and attachments (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Real-Time Protection" -Key DisableIOAVProtection -Value 0
+		
+		# Disable "Turn off real-time protection" (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Real-Time Protection" -Key DisableRealtimeMonitoring -Value 0
+		
+		# Turn on behavior monitoring (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Real-Time Protection" -Key DisableBehaviorMonitoring -Value 0
 
+		# Turn off Program Inventory (~SHB, STIG)
+		RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat -Key DisableInventory -Value 1
+		
+		# Attempt device authentication using certificates (~SHB)
+		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Kerberos\Parameters -Key DevicePKInitEnabled -Value 1
+    
+		# Disable Windows Telemetry to the extent possible (~SHB)
+		RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection -Key AllowTelemetry -Value 0
+	
+	
         ###### DRIVE AND FILESYSTEM SECURITY SETTINGS ######
         SysDebugLog "Applying drive and filesystem security settings..."
 
 		# Scan removable drives
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key DisableRemovableDriveScanning -Value 0
         
-		# Turn off autoplay for non-volume devices
+		# Turn off autoplay for non-volume devices (~MSSB, SHB, STIG)
 		RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer -Key NoAutoplayfornonVolume -Value 1
         
-		# Prevent autorun commands
+		# Prevent autorun commands (~MSSB, SHB, STIG)
 		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoAutorun -Value 1
         
-		# Disable autorun for all drive types
+		# Disable autorun for all drive types (~MSSB, SHB, STIG)
 		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoDriveTypeAutoRun -Value 255
         
-		# (Legacy) Run Windows Server 2019 File Explorer shell protocol in protected mode
+		# (Legacy) Run Windows Server 2019 File Explorer shell protocol in protected mode (~SHB)
 		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key PreXPSP2ShellProtocolBehavior -Value 0
         
-		# Disable indexing of encrypted files
+		# Disable indexing of encrypted files (~MSSB, SHB, STIG)
 		RegPut "HKLM:\Software\Policies\Microsoft\Windows\Windows Search" -Key AllowIndexingEncryptedStoresOrItems -Value 0
 
 		if ($strict) {
@@ -1008,30 +1092,55 @@ if ("/ElevatedAction" -in $args) {
             RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access" -Key EnableControlledFolderAccess -Value 2
         }
 		
+		# Turn off Internet download for Web publishing and online ordering wizards (~MSSB, SHB, STIG)
+		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoWebServices -Value 1
+		
 		# Allow users to configure advanced startup options in BitLocker setup
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\FVE -Key UseAdvancedStartup -Value 1
-        
+		
+		if ($false -and $draconian) {
+			# Deny write access to removable drives not protected by BitLocker (~MSSB)
+			RegPut HKLM:\Software\Policies\Microsoft\FVE -Key RDVDenyCrossOrg -Value 1
+			RegPut HKLM:\System\CurrentControlSet\Policies\Microsoft\FVE -Key RDVDenyWriteAccess -Value 1
+		}
+		
+		# Include command line data in process creation events (~SHB)
+		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit -Key ProcessCreationIncludeCmdLine_Enabled -Value 1
+		
 
         ###### AUTHENTICATION SECURITY SETTINGS ######
         SysDebugLog "Applying authentication security settings..."
 
-		# Disable "MSS: (AutoAdminLogon) Enable Automatic Logon (not recommended)"
+		# Disable "MSS: (AutoAdminLogon) Enable Automatic Logon (not recommended)" (~MSS, SHB)
 		RegPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key AutoAdminLogon -Value 0
+
+		# Prevent automatic logon to the system through the Recovery Console (~SHB)
+		RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole" -Key SecurityLevel -Value 0
 
 		# Minimum PIN length
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\FVE -Key MinimumPIN -Value 6
         
-		# TMP-based lockout settings
+		# TMP-based lockout settings (~SHB, STIG)
 		RegPut HKLM:\Software\Policies\Microsoft\Tpm -Key StandardUserAuthorizationFailureIndividualThreshold -Value 4
 		RegPut HKLM:\Software\Policies\Microsoft\Tpm -Key StandardUserAuthorizationFailureTotalThreshold -Value 10
         RegPut HKLM:\Software\Policies\Microsoft\Tpm -Key StandardUserAuthorizationFailureDuration -Value 900
 		
-		# Windows Hello for Business
+		# Prevent enabling lock screen camera, slide show (~MSSB, SHB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\Personalization -Key NoLockScreenCamera -Value 1
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\Personalization -Key NoLockScreenSlideShow -Value 1
+		
+		# Enable local admin password management (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft Services\AdmPwd" -Key AdmPwdEnabled -Value 1
+		
+		# Disable WDigest Authentication (stores plaintext passwords in memory) (~MSSB)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest -Key UseLogonCredential -Value 0
+		
+		# Windows Hello for Business (~SHB)
 		RegPut HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Key RequireSecurityDevice -Value 1
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork\PINComplexity -Key MinimumPINLength -Value 6
 		
         if ($strict) {
-            # Automatically deny elevation requests from standard users
+            # Automatically deny elevation requests from standard users (~SHB)
             RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key ConsentPromptBehaviorUser -Value 0
         }
         else {
@@ -1039,40 +1148,53 @@ if ("/ElevatedAction" -in $args) {
             RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key ConsentPromptBehaviorUser -Value 1
         }
 
+		# Behavior of the elevation prompt for administrators in Admin Approval Mode (~STIG)
         # Admins don't need to enter credentials to allow elevation, but are still prompted to allow or deny.
 		if ($strict) {
+			# Also use secure desktop (~SHB)
 			RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key ConsentPromptBehaviorAdmin -Value 2
 		}
 		else {
 			RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key ConsentPromptBehaviorAdmin -Value 4
 		}
 		
-		# Require a password when a computer wakes
+		# Require a password when a computer wakes (~MSSB, SHB, STIG)
 		RegPut HKLM:\Software\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51 -Key ACSettingIndex -Value 1
 		RegPut HKLM:\Software\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51 -Key DCSettingIndex -Value 1
 
-		# Disable "Enumerate administrator accounts on elevation"
+		# Disable "Allow standby states (S1-S3) when sleeping" (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Power\PowerSettings\abfc2519-3608-4c2a-94ea-171b0ed546ab -Key ACSettingIndex -Value 0
+		RegPut HKLM:\Software\Policies\Microsoft\Power\PowerSettings\abfc2519-3608-4c2a-94ea-171b0ed546ab -Key DCSettingIndex -Value 0
+		
+		# Disable "Enumerate administrator accounts on elevation" (~SHB, STIG)
         RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\CredUI -Key EnumerateAdministrators -Value 0
+		
+		# Disable "Enumerate local users on domain-joined computers" (~MSSB, SHB)
+        RegPut HKLM:\Software\Policies\Microsoft\Windows\System -Key EnumerateLocalUsers -Value 0
+		
+		# Disable "Turn on convenience PIN sign-in" (applies only to domain users) (~MSSB, SHB)
+        RegPut HKLM:\Software\Policies\Microsoft\Windows\System -Key AllowDomainPINLogon -Value 0
 
-		# Prevent elevated privileges from being used over the network on domain systems.
+		# Prevent elevated privileges from being used over the network on domain systems. (~SHB)
         RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key LocalAccountTokenFilterPolicy -Value 0
         
-		# Don't automatically sign in last interactive user after a restart
+		# Don't automatically sign in last interactive user after a restart (~MSSB, SHB)
 		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key DisableAutomaticRestartSignOn -Value 1
         
-		# User Account Control: Admin Approval Mode for the Built-in Administrator account
+		# User Account Control: Admin Approval Mode for the Built-in Administrator account (~SHB, STIG)
 		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key FilterAdministratorToken -Value 1
         
-		# User Account Control: Detect application installations and prompt for elevation
+		# User Account Control: Detect application installations and prompt for elevation (~SHB, STIG)
 		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key EnableInstallerDetection -Value 1
         
-		# User Account Control: Only elevate UIAccess applications that are installed in secure locations
+		# User Account Control: Only elevate UIAccess applications that are installed in secure locations (~SHB, STIG)
 		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key EnableSecureUIAPaths -Value 1
         
+		# Run all administrators in Admin Approval Mode (~SHB, STIG)
 		# UAC will notify the user when programs try to make changes to the computer
 		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key EnableLUA -Value 1
 		
-		# Virtualize file and registry write failures to per-user locations
+		# Virtualize file and registry write failures to per-user locations (~SHB, STIG)
         RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key EnableVirtualization -Value 1
 
         if ($strict) {
@@ -1090,62 +1212,62 @@ if ("/ElevatedAction" -in $args) {
 			RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key DisableCAD -Value 0
 		}
 		
-		# Prevent Kerberos from using DES and RC4 encryption suites
+		# Prevent Kerberos from using DES and RC4 encryption suites (~SHB, STIG)
         RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Kerberos\Parameters -Key SupportedEncryptionTypes -Value 2147483640
-        
-        # Apply UAC to local accounts logged on via network
-        RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key LocalAccountTokenFilterPolicy -Value 0
         
 		# Require user authentication for remote connections by using Network Level Authentication
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key UserAuthentication -Value 1
         
+		# Restrict local accounts with blank passwords from accessing the network (~SHB)
+		RegPut HKLM:\System\CurrentControlSet\Lsa -Key LimitBlankPasswordUse -Value 1
+		
 		# Enable Windows Defender Credential Guard with UEFI lock
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key LsaCfgFlags -Value 1
 		
-		# Prevent local storage of domain credentials
+		# Prevent local storage of domain credentials (~SHB)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key DisableDomainCreds -Value 1
         
-		# Network access: Do not allow anonymous enumeration of SAM accounts
+		# Network access: Do not allow anonymous enumeration of SAM accounts (~SHB, STIG)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key RestrictAnonymousSAM -Value 1
 		
-		# Network access: Do not allow anonymous enumeration of SAM accounts and shares
+		# Network access: Do not allow anonymous enumeration of SAM accounts and shares (~SHB, STIG)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key RestrictAnonymous -Value 1
         
-		# Computer Identity Authentication for NTLM
+		# Computer Identity Authentication for NTLM (~SHB)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key UseMachineId -Value 1
         
-		# Network access: Restrict clients allowed to make remote calls to SAM
+		# Network access: Restrict clients allowed to make remote calls to SAM (~SHB)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key RestrictRemoteSAM -Value "O:BAG:BAD:(A;;RC;;;BA)" -VType String
         
-		# Network access: Sharing and security model for local accounts
-		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key ForceGuest -Value "Classic - local users authenticate as themselves" -VType String
+		# Set "Network access: Sharing and security model for local accounts" to "Classic - local users authenticate as themselves" (~SHB)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key ForceGuest -Value 0
         
-		# Disable "Network access: Let everyone permissions apply to anonymous users"
+		# Disable "Network access: Let everyone permissions apply to anonymous users" (~SHB, STIG)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key EveryoneIncludesAnonymous -Value 0
         
 		# Enable LSA protection using a UEFI variable
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key RunAsPPL -Value 1
 		
-		# Network security: Do not store LAN Manager hash value on next password change
+		# Network security: Do not store LAN Manager hash value on next password change (~SHB, STIG)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key NoLMHash -Value 1
         
-		# Set "Network Security: LAN Manager Authentication Level" to send NTLMv2 response only, and refuse LM and NTLM
+		# Set "Network Security: LAN Manager Authentication Level" to send NTLMv2 response only, and refuse LM and NTLM (~SHB, STIG)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key LmCompatibilityLevel -Value 5
         
-		# NTLM sessions that are allowed to fall back to Null (unauthenticated) sessions may gain unauthorized access.
+		# NTLM sessions that are allowed to fall back to Null (unauthenticated) sessions may gain unauthorized access. (~SHB, STIG)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0 -Key allownullsessionfallback -Value 0
 		
-		# Network security: Minimum session security for NTLM SSP based (including secure RPC)
+		# Network security: Minimum session security for NTLM SSP based (including secure RPC) (~SHB)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0 -Key NTLMMinClientSec -Value 537395200
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0 -Key NTLMMinServerSec -Value 537395200
 		
-		# Network Security: Allow PKU2U authentication requests to this computer to use online identities
+		# Network Security: Allow PKU2U authentication requests to this computer to use online identities (~SHB, STIG)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\pku2u -Key AllowOnlineID -Value 0
 		
-		# System Cryptography: Use FIPS compliant algorithms for encryption, hashing, and signing
+		# System Cryptography: Use FIPS compliant algorithms for encryption, hashing, and signing (~SHB, STIG)
         RegPut HKLM:\System\CurrentControlSet\Control\Lsa\FIPSAlgorithmPolicy -Key Enabled -Value 1
 
-		# Set "Network Security: LDAP client signing requirements" to "Negotiate signing"
+		# Set "Network Security: LDAP client signing requirements" to "Negotiate signing" (~SHB, STIG)
         RegPut HKLM:\System\CurrentControlSet\Services\LDAP -Key LDAPClientIntegrity -Value 1
 
 		# MSS: (ScreenSaverGracePeriod) The time in seconds before the screen saver grace period expires (0 recommended)
@@ -1153,46 +1275,47 @@ if ("/ElevatedAction" -in $args) {
 
         ### Remote Desktop Services ###
         
-		# Do not allow passwords to be saved
+		# Do not allow passwords to be saved (~MSSB, SHB, STIG)
 		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key DisablePasswordSaving -Value 1
 		
-		# Always prompt for password upon connection
+		# Always prompt for password upon connection (~MSSB, SHB, STIG)
         RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key fPromptForPassword -Value 1
         
-		# Require secure RPC communication
+		# Require secure RPC communication (~MSSB, SHB)
 		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key fEncryptRPCTraffic -Value 1
         
-		# Do not allow drive redirection
+		# Do not allow drive redirection (~MSSB, SHB, STIG)
 		RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fDisableCdm -Value 1
 		
-		# Set "Restrictions for Unauthenticated RPC clients" to "Authenticated"
+		# Set "Restrictions for Unauthenticated RPC clients" to "Authenticated" (~MSSB, SHB, STIG)
 		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Rpc" -Key RestrictRemoteClients -Value 1
 		
-		# Set client connection encryption level to High Level
+		# Set client connection encryption level to High Level (~MSSB, SHB, STIG)
 		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key MinEncryptionLevel -Value 3
         
-		# Disable Solicited Remote Assistance
-        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fAllowToGetHelp -Value 0
+		# Disable Solicited Remote Assistance (~MSSB, STIG)
+        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fAllowToGetHelp -Value 0  # (~SHB too)
+        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fAllowFullControl -Value 0
+        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fUseMailto -Value 0
         
-		# Domain member: Digitally encrypt or sign secure channel data (always)
+		# Domain member: Digitally encrypt or sign secure channel data (always) (~SHB, STIG)
         RegPut HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters -Key RequireSignOrSeal -Value 1
         
-		# Domain member: Digitally encrypt secure channel data (when possible)
+		# Domain member: Digitally encrypt secure channel data (when possible) (~SHB, STIG)
 		RegPut HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters -Key SealSecureChannel -Value 1
 		RegPut HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters -Key SignSecureChannel -Value 1
 		
-		# ...Don't disable domain members changing password...???
+		# Allow account passwords to be reset (~SHB)
         RegPut HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters -Key DisablePasswordChange -Value 0
         
-		# Require Strong Session Key (when connecting to a domain controller)
+		# Require Strong Session Key (when connecting to a domain controller) (~SHB, STIG)
 		RegPut HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters -Key RequireStrongKey -Value 1
-        
 		
 		if ($strict) {
-			# Maximum password age
+			# Maximum password age (~SHB)
             RegPut HKLM:\System\CurrentControlSet\Services\Netlogon\Parameters -Key MaximumPasswordAge -Value 30
             
-			# Number of domain credentials that can be cached
+			# Number of domain credentials that can be cached (~SHB)
 			RegPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key cachedlogonscount -Value 1
         }
         else {
@@ -1200,11 +1323,23 @@ if ("/ElevatedAction" -in $args) {
             RegPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key cachedlogonscount -Value 10
         }
 		
+		# Do not require Domain Controller authentication to unlock the workstation (~SHB)
+		RegPut "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Key ForceUnlockLogon -Value 0
+		
 		if ($strict) {
-			# Disable built-in Guest and Administrator accounts (easy targets for entry into system)
+			# Disable built-in Guest and Administrator accounts (easy targets for entry into system) (~STIG)
 			Disable-LocalUser -Name Guest -EA SilentlyContinue
 			Disable-LocalUser -Name Administrator -EA SilentlyContinue
         }
+		
+		# Set "Let Windows apps activate with voice while the system is locked" to "Force Deny" (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\AppPrivacy -Key LetAppsActivateWithVoiceAboveLock -Value 2
+		
+		# Allow Microsoft accounts to be optional (~MSSB, SHB)
+		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key MSAOptional -Value 1
+		
+		# Allow enhanced PINs for startup (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\FVE -Key UseEnhancedPin -Value 1
 		
 
         ###### ATTACK SURFACE REDUCTION ######
@@ -1263,46 +1398,62 @@ if ("/ElevatedAction" -in $args) {
         ###### NETWORK SECURITY SETTINGS ######
         SysDebugLog "Applying network security settings..."
 
-        # Microsoft network client: Digitally sign communications (always)
+		# Do not display network selection UI on logon screen (~SHB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\System -Key DontDisplayNetworkSelectionUI -Value 1
+
+        # Microsoft network client: Digitally sign communications (always) (~SHB, STIG)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters -Key RequireSecuritySignature -Value 1
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters -Key EnableSecuritySignature -Value 1
         
-		# Disable "Microsoft network client: Send unencrypted password to third-party SMB servers"
+		# Disable "Microsoft network client: Send unencrypted password to third-party SMB servers" (~SHB, STIG)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters -Key EnablePlainTextPassword -Value 0
         
-		# Set "MSS: (SynAttackProtect) Syn attack protection level (protects against DoS)" to "Connections time out sooner if a SYN attack is detected"
+		# Set "MSS: (SynAttackProtect) Syn attack protection level (protects against DoS)" to "Connections time out sooner if a SYN attack is detected" (~MSS)
 		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key SynAttackProtect -Value 1
 		
-		# Set "MSS: (TcpMaxConnectResponseRetransmissions) SYN-ACK retransmissions when a connection request is not acknowledged" to "3 & 6 seconds, half-open connections dropped after 21 seconds"
+		# Set "MSS: (TcpMaxConnectResponseRetransmissions) SYN-ACK retransmissions when a connection request is not acknowledged" to "3 & 6 seconds, half-open connections dropped after 21 seconds" (~MSS)
 		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key TcpMaxConnectResponseRetransmissions -Value 2
 		
-		# Set "MSS: (TcpMaxDataRetransmissions) How many times unacknowledged data is retransmitted (3 recommended, 5 is default)" to 3
+		# Set "MSS: (TcpMaxDataRetransmissions) How many times unacknowledged data is retransmitted (3 recommended, 5 is default)" to 3 (~MSS)
 		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key TcpMaxDataRetransmissions -Value 3
 		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip6\Parameters -Key TcpMaxDataRetransmissions -Value 3
 		
 		if ($draconian) {
-			# Disable "MSS: Enable Administrative Shares (recommended except for highly secure environments)"
+			# Disable "MSS: Enable Administrative Shares (recommended except for highly secure environments)" (~MSS)
 			RegPut HKLM:\System\CurrentControlSet\Services\LanmanServer\Parameters -Key AutoShareServer -Value 0
 			RegPut HKLM:\System\CurrentControlSet\Services\LanmanServer\Parameters -Key AutoShareWks -Value 0
 		}
 		
-		# Idle timeout before suspending an SMB session
+		# Idle timeout before suspending an SMB session (~SHB)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key AutoDisconnect -Value 15
         
-		# Microsoft network server: Digitally sign communications (always)
+		# Disable SMB v1 client driver (~MSSB)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\MrxSmb10 -Key Start -Value 4
+		
+		# Disable server-side processing pf SMBv1 protocol (~MSSB)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key SMB1 -Value 0
+		
+		# Disable insecure guest logons to an SMB server (~MSSB, SHB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\LanmanWorkstation -Key AllowInsecureGuestAuth -Value 0
+		
+		# Hardened UNC paths (~MSSB, SHB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths -Key "\\*\NETLOGON" -Value "RequireMutualAuthentication=1,RequireIntegrity=1" -VType String
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths -Key "\\*\SYSVOL" -Value "RequireMutualAuthentication=1,RequireIntegrity=1" -VType String
+		
+		# Microsoft network server: Digitally sign communications (always) (~SHB)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key RequireSecuritySignature -Value 1
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key EnableSecuritySignature -Value 1
 		
-		# Microsoft network server: Disconnect clients when logon hours expire
+		# Microsoft network server: Disconnect clients when logon hours expire (~SHB)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key EnableForcedLogoff -Value 1
         
-		# Disable "Microsoft network server: Server SPN target name validation level" (it can be disruptive)
+		# Disable "Microsoft network server: Server SPN target name validation level" (it can be disruptive) (~SHB)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key SmbServerNameHardeningLevel -Value 0
         
-		# Network access: Restrict anonymous access to Named Pipes and Shares
+		# Network access: Restrict anonymous access to Named Pipes and Shares (~SHB, STIG)
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key RestrictNullSessAccess -Value 1
         
-		# MSS: (DisableIPSourceRouting) IP source routing protection level (protects against packet spoofing)
+		# MSS: (DisableIPSourceRouting) IP source routing protection level (protects against packet spoofing) (~MSS, SHB, STIG)
 		# Set to "Highest protection, source routing is completely disabled"
 		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters -Key DisableIPSourceRouting -Value 2
         RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters -Key DisableIPSourceRouting -Value 2
@@ -1313,7 +1464,7 @@ if ("/ElevatedAction" -in $args) {
 		# Disable "MSS: (EnableDeadGWDetect) Allow automatic detection of dead network gateways (could lead to DoS)"
 		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key EnableDeadGWDetect -Value 0
 		
-		# Disable "MSS: (EnableICMPRedirect) Allow ICMP redirects to override OSPF generated routes"
+		# Disable "MSS: (EnableICMPRedirect) Allow ICMP redirects to override OSPF generated routes" (~MSS, SHB, STIG)
 		RegPut HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters -Key EnableICMPRedirect -Value 0
 		
 		# Disable "MSS: (PerformRouterDiscovery) Allow IRDP to detect and configure Default Gateway addresses (could lead to DoS)"
@@ -1327,17 +1478,23 @@ if ("/ElevatedAction" -in $args) {
 		# Set "MSS: (NoDefaultExempt) Configure IPSec exemptions for various types of network traffic." to "Only ISAKMP is exempt (recommended for Windows Server 2003)"
 		RegPut HKLM:\System\CurrentControlSet\Services\IPSEC -Key NoDefaultExempt -Value 3
 		
-		# Network exploit protection from Windows Defender
-        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key EnableNetworkProtection -Value 1
-        
-		# Windows Remote Management (WinRM) authentication hardening
+		# Prevent users and apps from accessing dangerous websites (~MSSB)
+		if ($strict) {
+			# Block dangerous websites
+			RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key EnableNetworkProtection -Value 2
+		}
+		else {
+			# Audit Mode
+			RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key EnableNetworkProtection -Value 1
+        }
+		
+		# Windows Remote Management (WinRM) authentication hardening (~MSSB, SHB)
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service -Key AllowBasic -Value 0
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service -Key AllowUnencryptedTraffic -Value 0
-        RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service -Key AllowDigest -Value 0
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service -Key DisableRunAs -Value 1
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client -Key AllowBasic -Value 0
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client -Key AllowUnencryptedTraffic -Value 0
-        RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client -Key AllowDigest -Value 0
+        RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client -Key AllowDigest -Value 0  # SHB says no, MSSB says yes
 
 		# Disable Internet Connection Sharing
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key NC_ShowSharedAccessUI -Value 0
@@ -1347,53 +1504,142 @@ if ("/ElevatedAction" -in $args) {
         
 		# Prohibit installation and configuration of Network Bridge on your DNS domain network
 		RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections" -Key NC_AllowNetBridge_NLA -Value 0
-        
+		
+		# Set NetBT NodeType to P-node (use only point-to-point name queries to a name server) (~MSSB)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Services\NetBT\Parameters -Key NodeType -Value 2
+		
+		# Turn off multicast name resolution (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\DNSClient" -Key EnableMulticast -Value 0
+		
+		# Set "Encryption Oracle Remediation" to "Force Updated Clients" (~MSSB)
+		RegPut HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\CredSSP\Parameters -Key AllowEncryptionOracle -Value 0
+		
+		# Remote host allows delegation of non-exportable credentials (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\CredentialsDelegation -Key AllowProtectedCreds -Value 1
+		
+		if ($strict) {
+			# Limit simultaneous connections to the Internet or a Windows domain (~SHB)
+			RegPut HKLM:\Software\Policies\Microsoft\Windows\WcmSvc\GroupPolicy -Key fMinimizeConnections -Value 1
+			
+			# Block connections to non-domain networks when connected to a domain authenticated network (~SHB)
+			RegPut HKLM:\Software\Policies\Microsoft\Windows\WcmSvc\GroupPolicy -Key fBlockNonDomain -Value 1
+		}
+
+		# Disable Wi-Fi Sense (~SHB)
+		RegPut HKLM:\SOFTWARE\Microsoft\WvmSvc\wifinetworkmanager\config -Key AutoConnectAllowedOEM -Value 0
+		
 		
         ###### APPLICATION SECURITY SETTINGS ######
         SysDebugLog "Applying application security settings..."
         
 		# Block Potentially Unwanted Applications
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Key PUAProtection -Value 1
+		
+		# Configure the 'Block at First Sight' feature (Enable) (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Spynet" -Key DisableBlockAtFirstSeen -Value 0
+		
+		# ***TODO:*** Make this configurable ***separately*** before enabling it
+		if ($false) {
+			# Join Microsoft MAPS with Advanced membership (~MSSB)
+			RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Spynet" -Key SpynetReporting -Value 2
+			
+			# Set "Send file samples when further analysis is required" to "Send safe samples"
+			RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Spynet" -Key SubmitSamplesConsent -Value 1
+		}
         
-		# Don't automatically elevate application installers
+		# Disable "Allow user control over installers" (~MSSB, SHB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key EnableUserControl -Value 0
+		
+		# Disable "Always install with elevated privileges" (~MSSB, SHB)
         RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key AlwaysInstallElevated -Value 0
-        
-		# Prompts users when Web scripts try to install software
+		
+		# Prompts users when Web scripts try to install software (~SHB)
 		RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key SafeForScripting -Value 0
 
         if ($strict) {
-            # Enable Windows Defender Application Guard in Managed Mode
+            # Enable Windows Defender Application Guard in Managed Mode (~MDE)
             Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Windows-Defender-ApplicationGuard
             RegPut HKLM:\SOFTWARE\Policies\Microsoft\AppHVSI -Key AllowAppHVSI_ProviderSet -Value 3
         }
-        
+		
+		# Configure Windows Defender SmartScreen -- Enable and set to Warn but allow bypass (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\System -Key EnableSmartScreen -Value 1  # (~SHB too)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\System -Key ShellSmartScreenLevel -Value Warn -VType String
+		
         
         ###### BROWSER SECURITY SETTINGS ######
         SysDebugLog "Applying browser security settings..."
 
-		# Block files with an invalid signature from running or installing
-        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Download" -Key RunInvalidSignatures -Value 0
-        
-		# Disable navigation to file:// URLs from non-file:// URLs
-		RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\FeatureControl" -Key FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION -Value 1
-        
-		# Block third-party cookies
+		# Chrome/Brave -- Block third-party cookies
         RegPut HKLM:\SOFTWARE\Policies\Google\Chrome -Key BlockThirdPartyCookies -Value 1
         RegPut HKLM:\SOFTWARE\Policies\BraveSoftware\Brave -Key BlockThirdPartyCookies -Value 1
 		
-		# Disable background processes when browser is not running
+		# Chrome/Brave -- Disable background processes when browser is not running
         RegPut HKLM:\SOFTWARE\Policies\Google\Chrome -Key BackgroundModeEnabled -Value 0
         RegPut HKLM:\SOFTWARE\Policies\BraveSoftware\Brave -Key BackgroundModeEnabled -Value 0
 		
-		# Block outdated ActiveX controls for Internet Explorer
+		# IE -- Block files with an invalid signature from running or installing
+        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Download" -Key RunInvalidSignatures -Value 0
+        
+		# IE -- Disable navigation to file:// URLs from non-file:// URLs
+		RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\FeatureControl" -Key FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION -Value 1
+        
+		# IE -- Block outdated ActiveX controls for Internet Explorer
 		RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Ext -Key VersionCheckEnabled -Value 1
+		
+		# IE -- Prevent per-user installation of ActiveX controls (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Internet Explorer\Security\ActiveX" -Key BlockNonAdminActiveXInstall -Value 1
         
-        
+		if ($strict) {
+			# IE -- Security Zones: Do not allow users to add/delete sites (~MSSB)
+			RegPut "HKLM:\Software\Policies\Microsoft\Windows\CurrentVersion\Internet Settings" -Key Security_zones_map_edit -Value 1
+			
+			# IE -- Security Zones: Do not allow users to change policies (~MSSB)
+			RegPut "HKLM:\Software\Policies\Microsoft\Windows\CurrentVersion\Internet Settings" -Key Security_options_edit -Value 1
+			
+			# IE --Security Zones: Use only machine settings (~MSSB)
+			RegPut "HKLM:\Software\Policies\Microsoft\Windows\CurrentVersion\Internet Settings" -Key Security_HKLM_only -Value 1
+		}
+		
+		# IE -- Specify use of ActiveX Installer Service for installation of ActiveX controls (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\AxInstaller -Key OnlyUseAXISForActiveXInstall -Value 1
+		
+		# IE -- Turn off Crash Detection (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Internet Explorer\Restrictions" -Key NoCrashDetection -Value 1
+		
+		# IE -- Disable "Turn off the Security Settings Check feature" (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Internet Explorer\Security" -Key DisableSecuritySettingsCheck -Value 0
+		
+		# ... skipped MSSB IExplore settings 1129-1156, 1175-1846 for now ...
+		
+		# IE -- Turn on Enhanced Protected Mode (~MSSB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main" -Key Isolation -Value PMEM -Value String  # wtf why cant you just use dwords like a normal person
+		
+		# IE -- Prevent downloading of enclosures (~MSSB, SHB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Internet Explorer\Feeds" -Key DisableEnclosureDownload -Value 1
+		
+		# IE -- Disable basic (plaintext) authentication for RSS feeds over HTTP (~SHB)
+		RegPut "HKLM:\Software\Policies\Microsoft\Internet Explorer\Feeds" -Key AllowBasicAuthInClear -Value 0
+		
         if ($strict) {
-			# Prevent bypassing Windows Defender SmartScreen prompts for sites
+			# Edge -- Prevent bypassing Windows Defender SmartScreen prompts for sites (~MSSB, SHB)
             RegPut HKLM:\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter -Key PreventOverride -Value 1
-        }
+			
+			# Edge -- Prevent bypassing Windows Defender SmartScreen prompts for files (~MSSB, SHB)
+            RegPut HKLM:\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter -Key PreventOverrideAppRepUnknown -Value 1
+        
+			# Edge -- Prevent certificate error overrides (~MSSB)
+			RegPut "HKLM:\Software\Policies\Microsoft\MicrosoftEdge\Internet Settings" -Key PreventCertErrorOverrides -Value 1
+		}
+		
+		if ($draconian) {
+			# Edge -- Disable Password Manager (~MSSB, SHB)
+			RegPut HKLM:\Software\Policies\Microsoft\MicrosoftEdge\Main -Key "FormSuggest Passwords" -Value "no" -VType String  # srsly just be a dword omg
+		}
 
+		# Edge -- Enable Windows Defender Smart Screen  (~SHB)
+		RegPut HKLM:\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter -Key EnabledV9 -Value 1
+		
 
         ###### MISCELLANEOUS ######
         SysDebugLog "Applying additional security settings..."
@@ -1401,9 +1647,28 @@ if ("/ElevatedAction" -in $args) {
 		# Skip signatures that exploit vulnerabilities the system is already patched against
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Microsoft Antimalware\NIS\Consumers\IPS" -Key DisableSignatureRetirement -Value 0
 
+		# Turn off Microsoft consumer experiences (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\CloudContent -Key DisableWindowsConsumerFeatures -Value 1
+		
+		if ($strict) {
+			# Disable "Windows Game Recording and Broadcasting" (~MSSB)
+			RegPut HKLM:\Software\Policies\Microsoft\Windows\GameDVR -Key AllowGameDVR -Value 0
+        }
+		
+		# Set "Allow Windows Ink Workspace" to "On, but disallow access above lock" (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\WindowsInkWorkspace -Key AllowWindowsInkWorkspace -Value 1
+		
+		# Turn on PowerShell Script Block Logging (but don't log invocation start/stop events) (~MSSB)
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging -Key EnableScriptBlockInvocationLogging -Value 0
+		RegPut HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging -Key EnableScriptBlockLogging -Value 1  # (~SHB too)
+		
+		if ($draconian) {
+			# Disable OneDrive
+			RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive -Key DisableFileSyncNGSC -Value 1
+		}
+		
         
-        
-        SysDebugLog "Security policy version applied: 8/13/2023"
+        SysDebugLog "Security policy version applied: 8/15/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
