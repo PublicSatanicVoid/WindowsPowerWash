@@ -63,11 +63,11 @@ PowerWash should be used as part of a comprehensive approach to optimizing and s
 ## Disclaimer
 See [LICENSE](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/LICENSE) for license details; [LIMITATIONS.md](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/limitations) for limitations and additional caveats. This software makes many changes to your system, some of which are discouraged or completely unsupported by Microsoft. This software may (depending on user configuration) modify registry settings, uninstall certain Windows applications, or otherwise perform actions commonly considered destructive. While the author's testing on virtual and physical machines has consistently shown stability and performance gains, no amount of testing is perfect, documentation is sometimes wrong, and I can't guarantee your system will be stable if you use any component of this software. You **use this at your own risk** and are strongly encouraged to make sure you understand the features you plan to use prior to using them. This software may break your system. Always make backups. In any situation where any text in this repository contradicts the LICENSE linked earlier, the LICENSE takes priority.
 
-**Known Issues:**
+### Known Issues
 - Desktop background may go black intermittently after applying recommended security settings in strict or extra strict mode.
   - *Workaround:* Set the desktop background again. Somehow this seems to fix it... solution as strange as problem.
 - Microsoft Edge reappears in the start menu / search after removing it
-  - Don't worry, it wasn't actually reinstalled. This is a defunct shortcut-y thing that Microsoft put there.
+  - Don't worry, it wasn't actually reinstalled. This is a defunct shortcut-y thing that Windows Update put there.
   - *Workaround 1:* Run the removal tool again to remove the shortcut again.
   - *Workaround 2:* Run the removal tool again and disable *ALL* updates. It won't come back again until you re-enable updates.
 
