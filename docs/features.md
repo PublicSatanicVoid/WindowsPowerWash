@@ -13,7 +13,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 - Remove useless or unwanted **[preinstalled applications](https://www.howtogeek.com/163303/how-computer-manufacturers-are-paid-to-make-your-laptop-worse/)** -- including **Microsoft Edge**, if desired
 - Throttle "**[MsMpEng.exe](https://learn.microsoft.com/en-us/powershell/module/defender/set-mppreference?view=windowsserver2019-ps#-scanavgcpuloadfactor)**" / "Antimalware Service Executable"
 - Configure and activate **[maximum performance](https://social.technet.microsoft.com/wiki/contents/articles/52059.windows-10-the-ultimate-performance-power-policy.aspx)** power settings
-- Harden your device with **advanced security configuration** incorporating key settings from the NSA Secure Host Baseline, Microsoft Defender for Endpoint Security Recommendations, and a wide range of Windows Process Mitigations.
+- Harden your device with **advanced security configuration** incorporating key settings from the [NSA Secure Host Baseline](https://github.com/nsacyber/Windows-Secure-Host-Baseline), [Microsoft Security Baseline](https://learn.microsoft.com/en-us/windows/security/operating-system-security/device-management/windows-security-configuration-framework/windows-security-baselines), [Microsoft Defender for Endpoint](https://www.microsoft.com/en-us/security/business/endpoint-security/microsoft-defender-endpoint), and a wide range of exploit protections.
 - Toggle **[soft real-time scheduling](https://learn.microsoft.com/en-us/windows/iot/iot-enterprise/soft-real-time/soft-real-time)** for IoT Enterprise SKUs (standalone scripts [here](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/extra))
 
 ## Full Listing
