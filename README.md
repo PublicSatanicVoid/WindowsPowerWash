@@ -1,6 +1,6 @@
 # PowerWash: Reclaim Windows
 ### Improve performance ・ Harden security ・ Remove bloatware ・ Cleanup UI ・ Configurable
-The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications. Removes MS/OEM bloatware, telemetry, and applies aggressive performance settings, including many that are normally hidden from the user. Works on a new or existing Windows installation.
+The fresh, snappy out-of-box experience you've always wanted in Windows - ready in minutes. Optimized for high-performance, low-latency applications. Removes MS/OEM bloatware and telemetry, enhances privacy/security, and applies aggressive performance settings, including many that are normally hidden from the user. Works on a new or existing Windows installation.
 
 ### [Click here for features list](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/features)
 * Includes the MOST COMPLETE known Microsoft Edge removal process as of 5/20/23
@@ -75,3 +75,6 @@ See [LICENSE](https://github.com/PublicSatanicVoid/WindowsPowerWash/tree/main/LI
 - While many freely available sites have contributed valuable knowledge in the development of this script, I especially want to thank the maintainers of [admx.help](https://admx.help) for providing an easy-to-use and comprehensive inventory of Group Policy and associated registry settings, as well as [DoD Cyber Exchange's list of STIGs](https://public.cyber.mil/stigs/), [Windows Security Encyclopedia](https://www.windows-security.org/), and [Unified Compliance's STIG Viewer](https://stigviewer.com/) for their inventories of Windows security settings and recommendations; these have all been used in the development of PowerWash's "Apply recommended security settings" feature. Also, as bad a reputation as Microsoft has for user-friendliness, their technical documentation at [learn.microsoft.com](https://learn.microsoft.com) is generally very high quality.
 - Previous de-bloating work, in particular this list of bloatware packages by [Sycnex](https://github.com/Sycnex/Windows10Debloater/blob/master/Windows10Debloater.ps1#L53), incorporated into `PowerWashSettings.yml`
 - All beta testers
+
+
+### [Click here for features list](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/features)
