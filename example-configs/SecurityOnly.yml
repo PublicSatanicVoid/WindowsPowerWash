@@ -1,9 +1,9 @@
 # PowerWash settings
-# https://github.com/UniverseCraft/WindowsPowerWash/blob/main/README.md
+# https://github.com/PublicSatanicVoid/WindowsPowerWash/blob/main/README.md
 
 # Settings for Windows unattended install.
 # Resources:
-# - https://github.com/UniverseCraft/WindowsPowerWash/blob/main/docs/USAGE_DEPLOYMENT.md
+# - https://github.com/PublicSatanicVoid/WindowsPowerWash/blob/main/docs/USAGE_DEPLOYMENT.md
 # - https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/automate-windows-setup
 Unattend:
   # ONLY APPLIES TO UNATTENDED INSTALL MODE
@@ -13,6 +13,20 @@ Unattend:
 
 # Windows settings to maximize performance
 Performance:
+  # Enables Windows' "Ultimate" performance plan, with additional tweaks for low latency
+  # and rapid ramp-up in response to increased system load. Disables power throttling.
+  PowerSettingsMaxPerformance: false
+
+  # Disables settings on network adapters that add latency, such as packet coalescing.
+  NetworkResponsiveness: false
+
+  # Enables Message-Signaled Interrupts for all devices that support them. These improve
+  # communication bandwidth to/from supported devices.
+  EnableDriverMsi: false
+
+  # Prioritizes GPU and PCIe controller interrupts to give them more consistent QoS
+  EnableDriverPrio: false
+  
   # Disables the High-precision event timer. Whether or not this helps is entirely
   # dependent on your system architecture and configuration. The only way to know
   # is to test it out. My testing has indicated performance improvements from
@@ -26,28 +40,13 @@ Performance:
   # more consistent performance.
   MultimediaResponsiveness: false
 
-  # Disables settings on network adapters that add latency, such as packet coalescing.
-  NetworkResponsiveness: false
-
   # Sets visual effects settings to maximum performance, e.g. disables many Windows animations.
   # Does not disable font smoothing.
   AdjustVisualEffects: false
-
-  # Enables Windows' "Ultimate" performance plan, with additional tweaks for low latency
-  # and rapid ramp-up in response to increased system load. Disables power throttling.
-  PowerSettingsMaxPerformance: false
-
   # Fast Startup can prevent some drivers from initializing properly. Disabling it may
   # cause your device to boot more slowly, but it's generally worth it. Too many issues
   # with Fast Startup have been reported.
   DisableFastStartup: false
-
-  # Enables Message-Signaled Interrupts for all devices that support them. These improve
-  # communication bandwidth to/from supported devices.
-  EnableDriverMsi: false
-
-  # Prioritizes GPU and PCIe controller interrupts to give them more consistent QoS
-  EnableDriverPrio: false
 
 # Stops Windows and its components from phoning home. Desirable from both a performance and
 # privacy standpoint.
@@ -161,10 +160,7 @@ WindowsUpdate:
   DisableAutoUpdate: true
 
   # Disables Windows Update entirely. Both automatic and manual updates are disabled.
-  DisableAllUpdate: true
-
-  # Adds a warning screen prior to login to deter unauthorized access.
-  AddWarningScreen: false
+  DisableAllUpdate: false
 
   # Adds a script shortcut to the desktop to toggle Windows Update completely on/off.
   # This is the best compromise for Windows Home users, as it lets them keep updates off
@@ -183,6 +179,9 @@ Defender:
   
   # Applies additional, even stricter security policies. May have a larger impact on performance or convenience.
   ApplyExtraStrictSecurityPolicies: false
+
+  # Adds a warning screen prior to login to deter unauthorized access.
+  AddWarningScreen: true
 
   # Tells Defender to only run scans when the computer is idle.
   DefenderScanOnlyWhenIdle: false
@@ -242,6 +241,7 @@ Install:
   # HOME EDITION ONLY
   # Installs Hyper-V. On non-Home editions, this is available by default.
   # Can take a bit of time to install all the required packages.
+  # For non-Home editions, enables Hyper-V as it is already installed.
   InstallHyperV: false
 
   # Installs Winget package manager. Convenient way to install a wide range of software

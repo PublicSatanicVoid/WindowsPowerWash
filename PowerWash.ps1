@@ -4,7 +4,7 @@
 # Aims to improve system responsiveness, performance, and latency
 # by tuning settings to uncompromisingly favor performance and
 # low latencies. Also removes some usually unwanted default Windows
-# behaviors.
+# behaviors and hardens device security.
 #
 # USE AT YOUR OWN RISK. BACKUP SYSTEM BEFORE USING.
 #
@@ -43,15 +43,18 @@ if (-not $global:is_msert) {
 
 ### USAGE INFORMATION ###
 if ("/?" -in $args) {
-    ".\$global:ScriptName [/all | /auto | /config | /stats | /warnconfig] [/noinstalls] [/noscans] [/autorestart]"
+    ".\$global:ScriptName MODE [/noinstalls] [/noscans] [/autorestart]"
+	"  Supported modes:"
     "    /all            Runs all PowerWash features without prompting"
-    "    /auto            Runs a default subset of PowerWash features, without prompting"
-    "    /config            Runs actions enabled in PowerWashSettings.json, without prompting"
-    "    /stats            Shows current performance stats and exits"
-    "    /warnconfig        Shows potentially destructive configured operations"
-    "    /noinstalls        Skips PowerWash actions that would install software (overrides other flags)"
+    "    /auto           Runs a default subset of PowerWash features, without prompting"
+    "    /config         Runs actions enabled in PowerWashSettings.yml, without prompting"
+	"    /config <path>  Runs actions enabled in provided config file, without prompting"
+    "    /stats          Shows current performance stats and exits"
+    "    /warnconfig     Shows potentially destructive configured operations"
+	"  Additional options:"
+    "    /noinstalls     Skips PowerWash actions that would install software (overrides other flags)"
     "    /noscans        Skips PowerWash actions that perform lengthy scans (overrides other flags)"
-    "    /autorestart        Restarts computer when done"
+    "    /autorestart    Restarts computer when done"
     exit
 }
 
@@ -78,16 +81,36 @@ if (-not $global:is_msert) {
 $global:do_all = "/all" -in $args
 $global:do_all_auto = "/auto" -in $args
 $global:do_config = "/config" -in $args
+$config_path = ".\PowerWashSettings.yml"
+$next_is_config_path = $false
+foreach ($arg in $args) {
+	if ($arg -eq "/config") {
+		$next_is_config_path = $true
+	}
+	elseif ($next_is_config_path) {
+		$config_path = $arg
+		$next_is_config_path = $false
+	}
+}
 if ($global:do_all -and $global:do_all_auto) {
+	"==============================================================================="
     "Error: Can only specify one of /all or /auto"
     "Do '.\$global:ScriptName /?' for help"
+	"==============================================================================="
     exit
 }
-$global:config_map = If (Test-Path ".\PowerWashSettings.yml") {
-    (Get-Content -Raw ".\PowerWashSettings.yml" | ConvertFrom-Yaml)
+$global:config_map = If (Test-Path "$config_path") {
+    (Get-Content -Raw "$config_path" | ConvertFrom-Yaml)
 }
 Else {
     @{}
+}
+if (-not (Test-Path "$config_path") -and -not $global:is_msert) {
+	"==============================================================================="
+	"Error: Specified config file '$config_path' does not exist"
+	"Do '\$global:ScriptName /?' for help"
+	"==============================================================================="
+	exit
 }
 $will_restart = $autorestart -or ($global:do_config -and $global:config_map.AutoRestart)
 $noinstall = "/noinstalls" -in $args
@@ -171,15 +194,15 @@ if ("/warnconfig" -in $args) {
 
 ### FEATURE VERB MAP ###
 $global:feature_verbs = @{
+    "Performance.PowerSettingsMaxPerformance"      = "Applying high-performance power settings";
+    "Performance.NetworkResponsiveness"            = "Applying high-performance network adapter settings";
+    "Performance.EnableDriverMsi"                  = "Enabling message-signaled interrupts on supported devices";
+    "Performance.EnableDriverPrio"                 = "Prioritizing GPU and PCIe controller interrupts";
     "Performance.DisableHpet"                      = "Disabling High-precision event timer";
     "Performance.HwGpuScheduling"                  = "Enabling hardware-accelerated GPU scheduling";
     "Performance.MultimediaResponsiveness"         = "Applying high-performance multimedia settings";
-    "Performance.NetworkResponsiveness"            = "Applying high-performance network adapter settings";
-    "Performance.PowerSettingsMaxPerformance"      = "Applying high-performance power settings";
     "Performance.AdjustVisualEffects"              = "Applying high-performance visual effects settings";
     "Performance.DisableFastStartup"               = "Disabling fast startup";
-    "Performance.EnableDriverMsi"                  = "Enabling message-signaled interrupts on supported devices";
-    "Performance.EnableDriverPrio"                 = "Prioritizing GPU and PCIe controller interrupts";
     "DisableTelemetry"                             = "Disabling Microsoft telemetry";
     "Debloat.DisableCortana"                       = "Disabling Cortana";
     "Debloat.DisableConsumerFeatures"              = "Disabling Microsoft consumer features";
@@ -200,6 +223,7 @@ $global:feature_verbs = @{
     "Install.InstallConfigured"                    = "Installing configured list of Winget packages";
     "Defender.ApplyRecommendedSecurityPolicies"    = "Applying recommended security policies";
     "Defender.ApplyStrictSecurityPolicies"         = "Applying strict security policies";
+    "Defender.ApplyExtraStrictSecurityPolicies"    = "Applying extra strict security policies";
     "Defender.DefenderScanOnlyWhenIdle"            = "Configuring Defender to scan only when idle";
     "Defender.DefenderScanLowPriority"             = "Configuring Defender to run at low priority";
     "Defender.DisableRealtimeMonitoringCAUTION"    = "Disabling Defender realtime monitoring (requires Tamper Protection disabled)";
@@ -209,7 +233,7 @@ $global:feature_verbs = @{
     "Convenience.ShowRunAsDifferentUser"           = "Showing 'Run as different user' option in start menu";
     "Convenience.ShowHiddenExplorer"               = "Showing hidden files in Explorer";
     "Convenience.CleanupTaskbar"                   = "Cleaning up taskbar";
-    "Convenience.ShowUacOnSameDesktop"             = "Showing UAC on same desktop for elevation requests";
+    "Convenience.ShowUacPromptOnSameDesktop"       = "Showing UAC on same desktop for elevation requests";
     "Scans.CheckIntegrity"                         = "Running system file integrity checks";
     "Scans.CheckIRQ"                               = "Checking for IRQ conflicts"
 }
@@ -1686,49 +1710,6 @@ PowerWashText "### PERFORMANCE FEATURES ###"
 PowerWashText ""
 
 
-# Disable HPET (high precision event timer)
-# Some systems will benefit from this, some will suffer. Only way is to benchmark and see
-if (Confirm "Disable the high-precision event timer? (May not improve performance on all systems)" -Auto $false -ConfigKey "Performance.DisableHpet") {
-    Get-PnpDevice -FriendlyName "High precision event timer" | Disable-Pnpdevice -Confirm:$false
-    "- Complete"
-}
-
-if (Confirm "Enable hardware-accelerated GPU scheduling?" -Auto $true -ConfigKey "Performance.HwGpuScheduling") {
-    RegPut HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers -Key HwSchMode -Value 2
-    "- Complete"
-}
-
-# Multimedia related settings to prioritize audio
-if ($do_all -or (Confirm "Optimize multimedia settings for pro audio?" -Auto $true -ConfigKey "Performance.MultimediaResponsiveness")) {
-    # Scheduling algorithm will reserve 10% (default is 20%) of CPU for low-priority tasks
-    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key SystemResponsiveness -Value 10
-    
-    # May reduce idling, improving responsiveness
-    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key NoLazyMode -Value 1
-    
-    # Max priority for Pro Audio tasks
-    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key Priority -Value 1
-    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "Scheduling Category" -Value "High" -VType String
-    
-    "- Complete"
-}
-
-# Prioritize low latency on network adapters
-if (Confirm "Optimize network adapter settings for low latency?" -Auto $true -ConfigKey "Performance.NetworkResponsiveness") {
-    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key NetworkThrottlingIndex -Value 0xFFFFFFFF
-    RegPut HKLM:\SYSTEM\ControlSet001\Services\Ndu -Key Start -Value 0x4
-    
-    # Below settings may fail depending on network adapter's capabilities. This isn't a problem, so fail silently
-    Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue Enabled -EA SilentlyContinue 2>$null | Out-Null
-    Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Packet Coalescing" -DisplayValue Disabled -EA SilentlyContinue
-	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -EA SilentlyContinue
-    Disable-NetAdapterRsc -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null  # Disables packet coalescing
-    Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
-    Restart-NetAdapter -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
-    
-    "- Complete"
-}
-
 # Power management settings for high performance - "Ultimate" power scheme bundled with newer Windows versions
 if (Confirm "Redline power settings for maximum performance? (May reduce latency, but will use more power)" -Auto $true -ConfigKey "Performance.PowerSettingsMaxPerformance") {
     "- Enabling 'Ultimate' performance plan..."
@@ -1788,6 +1769,94 @@ if (Confirm "Redline power settings for maximum performance? (May reduce latency
     "- Complete"
 }
 
+# Prioritize low latency on network adapters
+if (Confirm "Optimize network adapter settings for low latency?" -Auto $true -ConfigKey "Performance.NetworkResponsiveness") {
+    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key NetworkThrottlingIndex -Value 0xFFFFFFFF
+    RegPut HKLM:\SYSTEM\ControlSet001\Services\Ndu -Key Start -Value 0x4
+    
+    # Below settings may fail depending on network adapter's capabilities. This isn't a problem, so fail silently
+    Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Throughput Booster" -DisplayValue Enabled -EA SilentlyContinue 2>$null | Out-Null
+    Set-NetAdapterAdvancedProperty -Name "*" -IncludeHidden -DisplayName "Packet Coalescing" -DisplayValue Disabled -EA SilentlyContinue
+	Enable-NetAdapterChecksumOffload -Name "*" -IncludeHidden -EA SilentlyContinue
+    Disable-NetAdapterRsc -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null  # Disables packet coalescing
+    Disable-NetAdapterPowerManagement -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
+    Restart-NetAdapter -Name '*' -IncludeHidden -EA SilentlyContinue 2>$null | Out-Null
+    
+    "- Complete"
+}
+
+# Enable MSI mode for devices that support it
+# Message-signaled interrupts are an alternative to line-based interrupts,
+# supporting a larger number of interrupts and lower latencies.
+# https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-message-signaled-interrupts
+if (Confirm "Enable Message-Signaled Interrupts for all devices that support them?" -Auto $true -ConfigKey "Performance.EnableDriverMsi") {
+    $do_priority = Confirm "--> Do you also want to prioritize interrupts from certain devices like the GPU and PCIe controller?" -Auto $true -ConfigKey "Performance.EnableDriverPrio"
+    
+    "- Applying interrupt policies..."
+    
+    $N_MSI = 0
+    $N_Prio = 0
+    $Devices = Get-CimInstance -ClassName Win32_PnPEntity
+    foreach ($Device in $Devices) {
+        # https://powershell.one/wmi/root/cimv2/win32_pnpentity-GetDeviceProperties
+        $Properties = Invoke-CimMethod -MethodName GetDeviceProperties -InputObject $Device | Select-Object -ExpandProperty DeviceProperties
+        
+        $DeviceDesc = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_Device_DeviceDesc' }).Data
+        $InstanceId = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_Device_InstanceId' }).Data
+        
+        # Prioritize interrupts from PCIe controller and graphics card
+        if ($do_priority -and ($DeviceDesc -like "*PCIe Controller*" -or $DeviceDesc -like "*NVIDIA GeForce*")) {
+            "  - Prioritizing interrupts from $DeviceDesc..."
+            RegPut "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\Affinity Policy" -Key DevicePriority -Value 3
+            $N_Prio++
+        }
+        
+        # https://github.com/tpn/winsdk-10/blob/master/Include/10.0.10240.0/shared/pciprop.h#L345
+        # 1 = LineBased, 2 = Msi, 4 = MsiX
+        # Only devices that support MSI should have it enabled. Attempting to enable MSI on a device
+        # that does not support it *can* make Windows unbootable. The "InterruptSupport" key tells us
+        # what interrupt types are supported, so we can ensure they're only enabled where valid
+        $InterruptModes = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_PciDevice_InterruptSupport' }).Data
+        if ($InterruptModes -gt 1) {
+            "  - Enabling MSI mode for $DeviceDesc..."
+            RegPut "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" -Key MSISupported -Value 1
+            $N_MSI++
+        }
+    }
+    "- MSI mode enabled for all $N_MSI supported devices. Restart required to take effect"
+    "- Interrupts prioritized for $N_Prio devices. Restart required to take effect"
+    "- Complete (restart required)"
+}
+
+
+# Disable HPET (high precision event timer)
+# Some systems will benefit from this, some will suffer. Only way is to benchmark and see
+if (Confirm "Disable the high-precision event timer? (May not improve performance on all systems)" -Auto $false -ConfigKey "Performance.DisableHpet") {
+    Get-PnpDevice -FriendlyName "High precision event timer" | Disable-Pnpdevice -Confirm:$false
+    "- Complete"
+}
+
+if (Confirm "Enable hardware-accelerated GPU scheduling?" -Auto $true -ConfigKey "Performance.HwGpuScheduling") {
+    RegPut HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers -Key HwSchMode -Value 2
+    "- Complete (restart required)"
+}
+
+# Multimedia related settings to prioritize audio
+# https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service
+if ($do_all -or (Confirm "Optimize multimedia settings for pro audio?" -Auto $true -ConfigKey "Performance.MultimediaResponsiveness")) {
+    # Scheduling algorithm will reserve 10% (default is 20%) of CPU for low-priority tasks
+    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Key SystemResponsiveness -Value 10
+    
+    # May reduce idling, improving responsiveness
+    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key NoLazyMode -Value 1
+    
+    # Max priority for Pro Audio tasks
+    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key Priority -Value 1
+    RegPut "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Pro Audio" -Key "Scheduling Category" -Value "High" -VType String
+    
+    "- Complete (restart required)"
+}
+
 if (Confirm "Adjust visual settings for better performance?" -Auto $false -ConfigKey "Performance.AdjustVisualEffects") {
     # Mostly from https://superuser.com/a/1246803
     Add-Type -TypeDefinition @"
@@ -1833,49 +1902,7 @@ if (Confirm "Adjust visual settings for better performance?" -Auto $false -Confi
 
 if (Confirm "Disable Fast Startup? (may fix responsiveness issues with some devices)" -Auto $true -ConfigKey "Performance.DisableFastStartup") {
     RegPut "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Key HiberbootEnabled -Value 0
-    "- Complete"
-}
-
-# Enable MSI mode for devices that support it
-# Message-signaled interrupts are an alternative to line-based interrupts,
-# supporting a larger number of interrupts and lower latencies.
-if (Confirm "Enable Message-Signaled Interrupts for all devices that support them?" -Auto $true -ConfigKey "Performance.EnableDriverMsi") {
-    $do_priority = Confirm "--> Do you also want to prioritize interrupts from certain devices like the GPU and PCIe controller?" -Auto $true -ConfigKey "Performance.EnableDriverPrio"
-    
-    "- Applying interrupt policies..."
-    
-    $N_MSI = 0
-    $N_Prio = 0
-    $Devices = Get-CimInstance -ClassName Win32_PnPEntity
-    foreach ($Device in $Devices) {
-        # https://powershell.one/wmi/root/cimv2/win32_pnpentity-GetDeviceProperties
-        $Properties = Invoke-CimMethod -MethodName GetDeviceProperties -InputObject $Device | Select-Object -ExpandProperty DeviceProperties
-        
-        $DeviceDesc = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_Device_DeviceDesc' }).Data
-        $InstanceId = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_Device_InstanceId' }).Data
-        
-        # Prioritize interrupts from PCIe controller and graphics card
-        if ($do_priority -and ($DeviceDesc -like "*PCIe Controller*" -or $DeviceDesc -like "*NVIDIA GeForce*")) {
-            "  - Prioritizing interrupts from $DeviceDesc..."
-            RegPut "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\Affinity Policy" -Key DevicePriority -Value 3
-            $N_Prio++
-        }
-        
-        # https://github.com/tpn/winsdk-10/blob/master/Include/10.0.10240.0/shared/pciprop.h#L345
-        # 1 = LineBased, 2 = Msi, 4 = MsiX
-        # Only devices that support MSI should have it enabled. Attempting to enable MSI on a device
-        # that does not support it *can* make Windows unbootable. The "InterruptSupport" key tells us
-        # what interrupt types are supported, so we can ensure they're only enabled where valid
-        $InterruptModes = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_PciDevice_InterruptSupport' }).Data
-        if ($InterruptModes -gt 1) {
-            "  - Enabling MSI mode for $DeviceDesc..."
-            RegPut "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" -Key MSISupported -Value 1
-            $N_MSI++
-        }
-    }
-    "- MSI mode enabled for all $N_MSI supported devices. Restart required to take effect"
-    "- Interrupts prioritized for $N_Prio devices. Restart required to take effect"
-    "- Complete"
+    "- Complete (takes effect on next restart)"
 }
 
 
@@ -1926,7 +1953,7 @@ if (Confirm "Disable Microsoft telemetry?" -Auto $true -ConfigKey "DisableTeleme
     
     Set-ProcessMitigation -System -Disable SEHOPTelemetry
     
-    "- Complete"
+    "- Complete (restart recommended)"
 }
 
 
@@ -2070,7 +2097,7 @@ if (Confirm "Disable Cortana?" -Auto $true -ConfigKey "Debloat.DisableCortana") 
     RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key DisableWebSearch -Value 1
     RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key ConnectedSearchUseWeb -Value 0
     RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Key ConnectedSearchUseWebOverMeteredConnections -Value 0
-    "- Complete"
+    "- Complete (restart recommended)"
 }
 
 if ($has_win_enterprise -and (Confirm "Disable Windows consumer features?" -Auto $true -ConfigKey "Debloat.DisableConsumerFeatures")) {
@@ -2078,7 +2105,7 @@ if ($has_win_enterprise -and (Confirm "Disable Windows consumer features?" -Auto
     RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent -Key DisableThirdPartySuggestions -Value 1
     RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent -Key DisableThirdPartySuggestions -Value 1
     RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent -Key DisableTailoredExperiencesWithDiagnosticData -Value 1
-    "- Complete"
+    "- Complete (restart required)"
 }
 
 if ($has_win_enterprise -and (Confirm "Disable preinstalled apps?" -Auto $true -ConfigKey "Debloat.DisablePreinstalled")) {
@@ -2090,7 +2117,7 @@ if ($has_win_enterprise -and (Confirm "Disable preinstalled apps?" -Auto $true -
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager -Key PreInstalledAppsEverEnabled -Value 0
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager -Key SystemPaneSuggestionsEnabled -Value 0
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager -Key SoftLandingEnabled -Value 0
-    "- Complete"
+    "- Complete (restart required)"
 }
 
 if (Confirm "Remove configured list of preinstalled apps?" -Auto $true -ConfigKey "Debloat.RemovePreinstalled") {
@@ -2255,7 +2282,7 @@ if (Confirm "Apply high-security system settings? (Attack Surface Reduction, etc
 	}
 	Write-Host "- Applying policies..." -Nonewline
     RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy $(If ($apply_strict_policies) { '/StrictMode'} Else {''}) $(If ($apply_draconian_policies) { '/DraconianMode'} Else {''})"
-    "- Complete"
+    "- Complete (restart required)"
 }
 
 $legal_notice_text = RegGet HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key legalnoticetext
@@ -2267,7 +2294,7 @@ if ($legal_notice_text -eq "") {
     }
 }
 else {
-    "Not applicable: Add a warning screen prior to sign-in (Warning text already exists. Since this is typically used for legal notices, it should not be overwritten.)"
+    PowerWashText "Not applicable: Add a warning screen prior to sign-in (Warning text already exists. Since this is typically used for legal notices, it should not be overwritten.)"
 }
 
 if (Confirm "Configure Windows Defender to run scans only when computer is idle?" -Auto $true -ConfigKey "Defender.DefenderScanOnlyWhenIdle") {
@@ -2314,6 +2341,8 @@ PowerWashText "### CONVENIENCE SETTINGS ###"
 PowerWashText ""
 
 
+$restart_explorer = $false
+
 if (Confirm "Disable app startup delay?" -Auto $true -ConfigKey "Convenience.DisableStartupDelay") {
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize -Key StartupDelayInMSec -Value 0
     "- Complete"
@@ -2322,20 +2351,23 @@ if (Confirm "Disable app startup delay?" -Auto $true -ConfigKey "Convenience.Dis
 # Seconds in taskbar
 if (Confirm "Show seconds in the taskbar clock?" -Auto $false -ConfigKey "Convenience.ShowSecondsInTaskbar") {
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Key ShowSecondsInSystemClock -Value 1
-    "- Complete"
+    $restart_explorer = $true
+	"- Complete (will take effect shortly)"
 }
 
 # Show "Run as different user"
 if (Confirm "Show 'Run as different user' in Start?" -Auto $true -ConfigKey "Convenience.ShowRunAsDifferentUser") {
     RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer -Key ShowRunAsDifferentUserInStart -Value 1
-    "- Complete"
+    $restart_explorer = $true
+	"- Complete (will take effect shortly)"
 }
 
 # Show useful Explorer stuff
 if (Confirm "Show file extensions and hidden files in Explorer?" -Auto $true -ConfigKey "Convenience.ShowHiddenExplorer") {
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Key Hidden -Value 1
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Key HideFileExt -Value 0
-    "- Complete"
+    $restart_explorer = $true
+	"- Complete (will take effect shortly)"
 }
 
 # Clean up taskbar
@@ -2343,9 +2375,8 @@ if (Confirm "Clean up taskbar? (Recommended for a cleaner out-of-box Windows exp
     UnpinApp("Microsoft Store")
     UnpinApp("Microsoft Edge")
     RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" -Key EnableFeeds -Value 0
-    taskkill /f /im explorer.exe | Out-Null
-    Start-Process explorer.exe
-    "- Complete"
+    $restart_explorer = $true
+    "- Complete (will take effect shortly)"
 }
 
 # Configure search box in taskbar
@@ -2372,15 +2403,21 @@ elseif ($searchbox_mode -eq "Hidden") {
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search -Key SearchboxTaskbarMode -Value 0
 }
 if ($searchbox_mode -ne "NoChange") {
-    taskkill /f /im explorer.exe | Out-Null
+    $restart_explorer = $true
+    "- Complete (will take effect shortly)"
+}
+
+if ($restart_explorer) {
+	"Restarting Explorer to apply above settings..."
+	taskkill /f /im explorer.exe | Out-Null
     Start-Process explorer.exe
-    "- Complete"
+	"- Complete"
 }
 
 # Show UAC Prompt on Same Desktop
 if (Confirm "Show UAC prompt on same desktop?" -Auto $true -ConfigKey "Convenience.ShowUacPromptOnSameDesktop") {
     RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key PromptOnSecureDesktop -Value 0
-    "- Complete"
+    "- Complete (restart required)"
 }
 
 
@@ -2424,18 +2461,18 @@ if ((Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online).State -n
             "- Enabling Hyper-V..."
             Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
 
-            "- Complete"
+            "- Complete (restart required)"
         }
     }
     else {
         if (Confirm "Enable Hyper-V?" -Auto $false -ConfigKey "Install.InstallHyperV") {
             Enable-WindowsOptionalFeature -Online -NoRestart -FeatureName Microsoft-Hyper-V -All | Out-Null
-            "-Complete"
+            "-Complete (restart required)"
         }
     }
 }
 else {
-    "Not applicable: Install/Enable Hyper-V (Already enabled on this computer)"
+    PowerWashText "Not applicable: Install/Enable Hyper-V (Already enabled on this computer)"
 }
 
 if (-not $global:has_winget) {
@@ -2462,7 +2499,7 @@ if (-not $global:has_winget) {
     }
 }
 else {
-    "Not applicable: Install Winget package manager (Already installed on this computer)"
+    PowerWashText "Not applicable: Install Winget package manager (Already installed on this computer)"
 }
 
 if ($global:has_winget) {
