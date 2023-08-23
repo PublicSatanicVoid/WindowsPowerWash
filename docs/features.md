@@ -86,18 +86,3 @@ These are some of the most commonly wanted modifications to a standard Windows i
 | System integrity checks             |           ✅           |          ✅           |                   ✅                   | Runs Microsoft's built-in [system file integrity checks](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e) to repair any corrupted system files |
 | Check for IRQ conflicts             |           ✅           |          ✅           |                   ✅                   | Sharing interrupt request lines among multiple devices can degrade performance. This cannot be fixed from within the software.                                                                                                                             |
 | Warn if third-party antivirus found |           ✅           |          ✅           |                   ✅                   | Windows Defender is generally faster and better; third-party antivirus software can slow the system down substantially - must be uninstalled manually, though                                                                                              |
-
-## Suggestions and Tips
-- For a hassle-free Windows experience with the maximum length of support, I recommend following one of the many online guides to installing Windows IoT Enterprise 2021 LTSC. It's the cleanest and most stable out-of-the-box edition of Windows. 
-- I recommend you use programs like [LatencyMon](https://www.resplendence.com/latencymon) and [WhySoSlow](https://www.resplendence.com/whysoslow) to benchmark your system before and after running PowerWash and any other optimizations.
-- This script should be accompanied by a manual review of preinstalled programs, devices, services, etc. to disable or uninstall unwanted software.
-- Adequate thermal management is imperative to stable device functioning. Make sure your device is being cooled adequately.
-- You can also overclock CPU/GPU/RAM if needed, but this is a "brute force" approach and you should try to get performance as high as possible before resorting to this. May also compromise thermals, so make sure to use long-running stability tests like [Prime95](https://www.mersenne.org/download/) (CPU, RAM), [Kombustor](https://geeks3d.com/furmark/kombustor/) (CPU, GPU), and [Memtest86](https://www.memtest86.com/) (RAM).
-- Using SSD instead of HDD, and NVMe instead of SATA, can drastically improve system responsiveness and application load times, though likely won't help with most causes of high interrupt latency.
-- Make sure all drivers are up to date. When installing or reinstalling, __perform clean installs where possible__.
-- Always back up your system before running PowerWash or making any other system configuration changes.
-- After installing a Windows update, you may need to re-run PowerWash as updates have been known to spontaneously re-enable certain features.
-- Obviously, all of this is "use at your own risk"
-
-## Special Thank-Yous
-Now in README for greater visibility
