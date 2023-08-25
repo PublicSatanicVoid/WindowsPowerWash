@@ -82,13 +82,16 @@ $global:do_all = "/all" -in $args
 $global:do_all_auto = "/auto" -in $args
 $global:do_config = "/config" -in $args
 $config_path = ".\PowerWashSettings.yml"
+$switches = @("/all", "/auto", "/config", "/warnconfig", "/stats", "/noinstalls", "/noscans", "/autorestart", "-Confirm")
 $next_is_config_path = $false
 foreach ($arg in $args) {
     if ($arg -eq "/config") {
         $next_is_config_path = $true
     }
     elseif ($next_is_config_path) {
-        $config_path = $arg
+        if ($arg -notin $switches) {
+            $config_path = $arg
+        }
         $next_is_config_path = $false
     }
 }
