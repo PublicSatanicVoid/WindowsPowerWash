@@ -85,7 +85,7 @@ Debloat:
     - "EclipseManager|ActiproSoftwareLLC|AdobeSystemsIncorporated.AdobePhotoshopExpress|Wunderlist|Flipboard"
     - "Duolingo-LearnLanguagesforFree|Sway|Speed Test"
     - "PandoraMediaInc|Twitter|Facebook|Spotify|Dolby"
-    - "CandyCrush|BubbleWitch3Saga|Minecraft|Royal Revolt"
+    - "CandyCrush|BubbleWitch3Saga|Minecraft|Royal Revolt|DisneyMagicKingdoms|HiddenCityMysteryofShadows"
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true

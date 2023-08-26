@@ -79,7 +79,9 @@ Debloat:
     - king.com.FarmHeroesSaga
     - Microsoft.549981C3F5F10 # This is Cortana
     - Microsoft.Advertising.Xaml
+    - Microsoft.BingFinance
     - Microsoft.BingNews
+    - Microsoft.BingSports
     - Microsoft.BingWeather
     - Microsoft.GetHelp
     - Microsoft.GetStarted
@@ -100,6 +102,7 @@ Debloat:
     - Microsoft.Wallet
     - Microsoft.Whiteboard
     #- Microsoft.MicrosoftStickyNotes
+    - Microsoft.Windows.Cortana
     #- Microsoft.Windows.Photos
     - Microsoft.WindowsAlarms
     #- Microsoft.WindowsCalculator
@@ -126,7 +129,7 @@ Debloat:
     - "EclipseManager|ActiproSoftwareLLC|AdobeSystemsIncorporated.AdobePhotoshopExpress|Wunderlist|Flipboard"
     - "Duolingo-LearnLanguagesforFree|Sway|Speed Test"
     - "PandoraMediaInc|Twitter|Facebook|Spotify|Dolby"
-    - "CandyCrush|BubbleWitch3Saga|Minecraft|Royal Revolt"
+    - "CandyCrush|BubbleWitch3Saga|Minecraft|Royal Revolt|DisneyMagicKingdoms|HiddenCityMysteryofShadows"
 
   # Will remove the below list of Windows capabilities/features
   RemoveWindowsCapabilities: true
@@ -167,7 +170,7 @@ WindowsUpdate:
   # Adds a script shortcut to the desktop to toggle Windows Update completely on/off.
   # This is the best compromise for Windows Home users, as it lets them keep updates off
   # except when they specifically want to update.
-  AddUpdateToggleScriptToDesktop: false
+  AddUpdateToggleScriptToDesktop: true
 
 # Settings related to Windows Defender.
 Defender:
