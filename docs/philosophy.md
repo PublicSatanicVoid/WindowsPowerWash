@@ -43,3 +43,8 @@ This comment on a Microsoft blog post sums up many, many users' feelings on the 
 
 > Maybe there wouldn't be so much interest in LTSC if your core offerings weren't so full of bloat. No IT professional asked for your data spigot aka telemetry. You can try and cram Edge down our throats all you want but we don't want it. We didn't ask for nor do we want all the consumer apps suggestions, chibi graphics and gamification. The problem is that you (Microsoft) have an agenda that does not align with the stated needs of IT professionals and advanced users. Rather than deliver the products that we want, you'd rather try to gaslight us into thinking that we're crazy for wanting an unbloated OS. An Xbox app in Windows 10 Enterprise? Really dude? Really?
 - ThatGuyWhoWrites, 2/27/2019. [https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181](https://techcommunity.microsoft.com/t5/windows-it-pro-blog/ltsc-what-is-it-and-when-should-it-be-used/ba-p/293181)
+
+And this one, same blog post:
+
+> You want consumers and IT Admins to stop resorting to an OS you say is intended for medical devices and kiosks? Then stop consistently putting out versions of Windows 10 that break NICs, lose data, reboot sans warning, and come pre-loaded with adware like candy Crush, xbox apps, start menu ads, lock screen ads, and 2 browsers. [...] Stop blaming your users for adopting something that actually works as a viable solution with STABLE updates. Stop using paying customers as beta testers.
+- lord_frith, 12/27/2018
