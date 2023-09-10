@@ -49,4 +49,7 @@ And this one, same blog post:
 > You want consumers and IT Admins to stop resorting to an OS you say is intended for medical devices and kiosks? Then stop consistently putting out versions of Windows 10 that break NICs, lose data, reboot sans warning, and come pre-loaded with adware like candy Crush, xbox apps, start menu ads, lock screen ads, and 2 browsers. [...] Stop blaming your users for adopting something that actually works as a viable solution with STABLE updates. Stop using paying customers as beta testers.
 - lord_frith, 12/27/2018
 
-You can also read [https://www.howtogeek.com/395121/windows-isnt-a-service-its-an-operating-system/](this scathing indictment) of "Windows as a Service" by HowToGeek. 
+You can also read [https://www.howtogeek.com/395121/windows-isnt-a-service-its-an-operating-system/](this scathing indictment) of "Windows as a Service" by HowToGeek.
+
+With PowerWash, you can turn Windows from a bloated service back into a stable operating system.
+
