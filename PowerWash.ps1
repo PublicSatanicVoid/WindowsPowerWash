@@ -998,6 +998,9 @@ if ("/ElevatedAction" -in $args) {
             # Disable "MSS: (AutoReboot) Allow Windows to automatically restart after a system crash (recommended except for highly secure environments)"
             RegPut HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl -Key AutoReboot -Value 0
         }
+		
+		# Enable Local Security Authority (LSA) protection (~MDE)
+		RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key RunAsPPL -Value 1
         
         # Disable new DMA devices when this computer is locked (~MSSB)
         RegPut HKLM:\Software\Policies\Microsoft\FVE -Key DisableExternalDMAUnderLock -Value 1
@@ -1090,13 +1093,13 @@ if ("/ElevatedAction" -in $args) {
         # Scan removable drives
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key DisableRemovableDriveScanning -Value 0
         
-        # Turn off autoplay for non-volume devices (~MSSB, SHB, STIG)
+        # Turn off autoplay for non-volume devices (~MSSB, SHB, STIG, MDE)
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer -Key NoAutoplayfornonVolume -Value 1
         
-        # Prevent autorun commands (~MSSB, SHB, STIG)
+        # Prevent autorun commands (~MSSB, SHB, STIG, MDE)
         RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoAutorun -Value 1
         
-        # Disable autorun for all drive types (~MSSB, SHB, STIG)
+        # Disable autorun for all drive types (~MSSB, SHB, STIG, MDE)
         RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer -Key NoDriveTypeAutoRun -Value 255
         
         # (Legacy) Run Windows Server 2019 File Explorer shell protocol in protected mode (~SHB)
@@ -1156,7 +1159,7 @@ if ("/ElevatedAction" -in $args) {
         RegPut HKLM:\Software\Policies\Microsoft\Windows\Personalization -Key NoLockScreenCamera -Value 1
         RegPut HKLM:\Software\Policies\Microsoft\Windows\Personalization -Key NoLockScreenSlideShow -Value 1
         
-        # Enable local admin password management (~MSSB)
+        # Enable local admin password management (~MSSB, MDE)
         RegPut "HKLM:\Software\Policies\Microsoft Services\AdmPwd" -Key AdmPwdEnabled -Value 1
         
         # Disable WDigest Authentication (stores plaintext passwords in memory) (~MSSB)
@@ -1251,13 +1254,13 @@ if ("/ElevatedAction" -in $args) {
         # Enable Windows Defender Credential Guard with UEFI lock
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key LsaCfgFlags -Value 1
         
-        # Prevent local storage of domain credentials (~SHB)
+        # Prevent local storage of domain credentials (~SHB, MDE)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key DisableDomainCreds -Value 1
         
         # Network access: Do not allow anonymous enumeration of SAM accounts (~SHB, STIG)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key RestrictAnonymousSAM -Value 1
         
-        # Network access: Do not allow anonymous enumeration of SAM accounts and shares (~SHB, STIG)
+        # Network access: Do not allow anonymous enumeration of SAM accounts and shares (~SHB, STIG, MDE)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key RestrictAnonymous -Value 1
         
         # Computer Identity Authentication for NTLM (~SHB)
@@ -1278,7 +1281,7 @@ if ("/ElevatedAction" -in $args) {
         # Network security: Do not store LAN Manager hash value on next password change (~SHB, STIG)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key NoLMHash -Value 1
         
-        # Set "Network Security: LAN Manager Authentication Level" to send NTLMv2 response only, and refuse LM and NTLM (~SHB, STIG)
+        # Set "Network Security: LAN Manager Authentication Level" to send NTLMv2 response only, and refuse LM and NTLM (~SHB, STIG, MDE)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Control\Lsa -Key LmCompatibilityLevel -Value 5
         
         # NTLM sessions that are allowed to fall back to Null (unauthenticated) sessions may gain unauthorized access. (~SHB, STIG)
@@ -1321,7 +1324,7 @@ if ("/ElevatedAction" -in $args) {
         RegPut "HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services" -Key MinEncryptionLevel -Value 3
         
         # Disable Solicited Remote Assistance (~MSSB, STIG)
-        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fAllowToGetHelp -Value 0  # (~SHB too)
+        RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fAllowToGetHelp -Value 0  # (~SHB, MDE too)
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fAllowFullControl -Value 0
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Key fUseMailto -Value 0
         
@@ -1429,7 +1432,7 @@ if ("/ElevatedAction" -in $args) {
         RegPut HKLM:\Software\Policies\Microsoft\Windows\System -Key DontDisplayNetworkSelectionUI -Value 1
 
         # Microsoft network client: Digitally sign communications (always) (~SHB, STIG)
-        RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters -Key RequireSecuritySignature -Value 1
+        RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters -Key RequireSecuritySignature -Value 1 # (~MDE too)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters -Key EnableSecuritySignature -Value 1
         
         # Disable "Microsoft network client: Send unencrypted password to third-party SMB servers" (~SHB, STIG)
@@ -1480,7 +1483,7 @@ if ("/ElevatedAction" -in $args) {
         # Network access: Restrict anonymous access to Named Pipes and Shares (~SHB, STIG)
         RegPut HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters -Key RestrictNullSessAccess -Value 1
         
-        # MSS: (DisableIPSourceRouting) IP source routing protection level (protects against packet spoofing) (~MSS, SHB, STIG)
+        # MSS: (DisableIPSourceRouting) IP source routing protection level (protects against packet spoofing) (~MSS, SHB, STIG, MDE)
         # Set to "Highest protection, source routing is completely disabled"
         RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters -Key DisableIPSourceRouting -Value 2
         RegPut HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters -Key DisableIPSourceRouting -Value 2
@@ -1505,17 +1508,19 @@ if ("/ElevatedAction" -in $args) {
         # Set "MSS: (NoDefaultExempt) Configure IPSec exemptions for various types of network traffic." to "Only ISAKMP is exempt (recommended for Windows Server 2003)"
         RegPut HKLM:\System\CurrentControlSet\Services\IPSEC -Key NoDefaultExempt -Value 3
         
-        # Prevent users and apps from accessing dangerous websites (~MSSB)
+        # Prevent users and apps from accessing dangerous websites (~MSSB, MDE)
         if ($strict) {
             # Block dangerous websites
             RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key EnableNetworkProtection -Value 2
+			Set-MpPreference -EnableNetworkProtection Enabled
         }
         else {
             # Audit Mode
             RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection" -Key EnableNetworkProtection -Value 1
+			Set-MpPreference -EnableNetworkProtection AuditMode
         }
         
-        # Windows Remote Management (WinRM) authentication hardening (~MSSB, SHB)
+        # Windows Remote Management (WinRM) authentication hardening (~MSSB, SHB, MDE)
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service -Key AllowBasic -Value 0
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service -Key AllowUnencryptedTraffic -Value 0
         RegPut HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service -Key DisableRunAs -Value 1
@@ -1605,13 +1610,13 @@ if ("/ElevatedAction" -in $args) {
         RegPut HKLM:\SOFTWARE\Policies\Google\Chrome -Key BackgroundModeEnabled -Value 0
         RegPut HKLM:\SOFTWARE\Policies\BraveSoftware\Brave -Key BackgroundModeEnabled -Value 0
         
-        # IE -- Block files with an invalid signature from running or installing
+        # IE -- Block files with an invalid signature from running or installing (~MDE)
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Download" -Key RunInvalidSignatures -Value 0
         
         # IE -- Disable navigation to file:// URLs from non-file:// URLs
         RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main\FeatureControl" -Key FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION -Value 1
         
-        # IE -- Block outdated ActiveX controls for Internet Explorer
+        # IE -- Block outdated ActiveX controls for Internet Explorer (~MDE)
         RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Ext -Key VersionCheckEnabled -Value 1
         
         # IE -- Prevent per-user installation of ActiveX controls (~MSSB)
@@ -1808,7 +1813,7 @@ if (Confirm "Enable Message-Signaled Interrupts for all devices that support the
         $InstanceId = ($Properties | Where-Object { $_.KeyName -eq 'DEVPKEY_Device_InstanceId' }).Data
         
         # Prioritize interrupts from PCIe controller and graphics card
-        if ($do_priority -and ($DeviceDesc -like "*PCIe Controller*" -or $DeviceDesc -like "*NVIDIA GeForce*")) {
+        if ($do_priority -and ($DeviceDesc -like "*PCIe Controller*" -or $DeviceDesc -like "*NVIDIA GeForce*" -or $DeviceDesc -like "*Ethernet Controller*")) {
             "  - Prioritizing interrupts from $DeviceDesc..."
             RegPut "HKLM:\SYSTEM\CurrentControlSet\Enum\$InstanceId\Device Parameters\Interrupt Management\Affinity Policy" -Key DevicePriority -Value 3
             $N_Prio++
