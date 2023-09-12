@@ -57,6 +57,7 @@ These are some of the most commonly wanted modifications to a standard Windows i
 | Show seconds in taskbar clock                     |           ✅           |          ✅           |                   ✅                   |                                                |
 | Show "Run as different user" in Start menu        |           ✅           |          ✅           |                   ✅                   |                                                |
 | Show file extensions and hidden items in Explorer |           ✅           |          ✅           |                   ✅                   |                                                |
+| Remove 3D Objects / Music / Photos / Videos from File Explorer | ✅ | ✅ | ✅ | |
 | Clean up default taskbar                          |           ✅           |          ✅           |                   ✅                   | Mainly geared toward fresh installs of Windows |
 | Show UAC Prompt on same desktop                   |           ✅           |           ✅          |                   ✅                   | Shows the UAC Prompt ("Do you want to allow this app to make changes to your device?") on the same desktop you are using, rather than distractingly showing the prompt on a blank desktop. Allegedly this is slightly less secure, but it's also much more convenient. |
 
