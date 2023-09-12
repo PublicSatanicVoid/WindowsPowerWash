@@ -2395,6 +2395,8 @@ if (Confirm "Remove 3D Objects / Music / Pictures / Videos from File Explorer?" 
 	
 	Remove-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}"
 	Remove-Item "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}"
+	$restart_explorer = $true
+	"- Complete (will take effect shortly)"
 }
 
 # Clean up taskbar
