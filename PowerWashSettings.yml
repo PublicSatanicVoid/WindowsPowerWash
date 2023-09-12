@@ -221,6 +221,9 @@ Convenience:
   # Shows hidden files in Explorer
   ShowHiddenExplorer: true
 
+  # Removes 3D Objects / Music / Pictures / Videos from File Explorer
+  RemoveFileExplorerCruft: false
+
   # Removes default cruft from the taskbar and collapses the search box.
   CleanupTaskbar: true
 

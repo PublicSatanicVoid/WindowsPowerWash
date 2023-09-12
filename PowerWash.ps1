@@ -235,6 +235,7 @@ $global:feature_verbs = @{
     "Convenience.ShowSecondsInTaskbar"             = "Showing seconds in taskbar";
     "Convenience.ShowRunAsDifferentUser"           = "Showing 'Run as different user' option in start menu";
     "Convenience.ShowHiddenExplorer"               = "Showing hidden files in Explorer";
+	"Convenience.RemoveFileExplorerCruft"          = "Removing unwanted shortcuts from File Explorer";
     "Convenience.CleanupTaskbar"                   = "Cleaning up taskbar";
     "Convenience.ShowUacPromptOnSameDesktop"       = "Showing UAC on same desktop for elevation requests";
     "Scans.CheckIntegrity"                         = "Running system file integrity checks";
@@ -381,6 +382,10 @@ function RegPut ($Path, $Key, $Value, $VType = "DWORD") {
 
 function RegGet($Path, $Key) {
     return (Get-ItemProperty -Path $Path -Name $Key).$Key
+}
+
+function RegDel($Path, $Key) {
+	Remove-ItemProperty -Path "$Path" -Name "$Key" -Force
 }
 
 function RunScriptAsSystem($Path, $ArgString) {
@@ -2376,6 +2381,20 @@ if (Confirm "Show file extensions and hidden files in Explorer?" -Auto $true -Co
     RegPut HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Key HideFileExt -Value 0
     $restart_explorer = $true
     "- Complete (will take effect shortly)"
+}
+
+if (Confirm "Remove 3D Objects / Music / Pictures / Videos from File Explorer?" -Auto $false -ConfigKey "Convenience.RemoveFileExplorerCruft") {
+	Remove-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}"
+	Remove-Item "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}"
+	
+	Remove-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3dfdf296-dbec-4fb4-81d1-6a3438bcf4de}"
+	Remove-Item "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3dfdf296-dbec-4fb4-81d1-6a3438bcf4de}"
+	
+	Remove-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{24ad3ad4-a569-4530-98e1-ab02f9417aa8}"
+	Remove-Item "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{24ad3ad4-a569-4530-98e1-ab02f9417aa8}"
+	
+	Remove-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}"
+	Remove-Item "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}"
 }
 
 # Clean up taskbar
