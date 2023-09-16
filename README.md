@@ -48,6 +48,7 @@ PowerWash should be used as part of a comprehensive approach to optimizing and s
 - Using an enterprise version of Microsoft Defender, such as [Defender for Business](https://www.microsoft.com/en-us/security/business/endpoint-security/microsoft-defender-business)
   - Monthly subscription costs ~$4/month if you have an email under a custom domain name
   - This will allow you to fully benefit from the Attack Surface Reduction and other security rules enabled by PowerWash
+  - Adds Microsoft's 'Advanced Threat Protection' features
   - Third-party antivirus solutions tend to slow down your device substantially and are often intrusive / hard to uninstall. All editions of Defender are from Microsoft and integrate much better with Windows.
 - Using a long-term support version of Windows, such as [IoT Enterprise LTSC](https://www.microsoft.com/en-us/security/business/endpoint-security/microsoft-defender-business)
   - Permanent license keys are available from reputable websites for ~$12
