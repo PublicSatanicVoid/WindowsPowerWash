@@ -14,3 +14,4 @@ This short guide shows you how to configure PowerWash ahead of time with what fe
 - Open a PowerShell prompt as an Administrator
 - `cd` to the directory containing `PowerWash.ps1`, e.g. `cd C:\Users\User\Downloads`
 - Run PowerWash with `.\PowerWash.ps1 /config`. The `/config` option tells PowerWash to use the settings from `PowerWashSettings.yml` rather than prompting the user. You will not be prompted at any point during execution.
+  - NEW: You can also use `.\PowerWash.ps1 /config <filepath>` to specify a different configuration file.
