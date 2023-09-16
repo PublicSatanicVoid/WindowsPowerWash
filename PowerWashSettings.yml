@@ -234,9 +234,12 @@ Convenience:
   # - "Hidden": Hides the search box and icon
   TaskbarSearchboxMode: Hidden
 
-  # Sows the UAC prompt for elevation requests, but on the same desktop
-  # (less disruptive).
-  ShowUacOnSameDesktop: true
+  # Shows the UAC prompt for elevation requests, but on the same desktop
+  # (less disruptive). May be slightly less secure.
+  ShowUacOnSameDesktop: false
+  
+  # Disables mono audio, i.e. summing the left and right channels together.
+  DisableMonoAudio: true
 
 # Optional utilities and commonly loaded programs to install.
 Install:

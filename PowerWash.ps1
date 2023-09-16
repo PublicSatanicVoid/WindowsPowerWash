@@ -11,7 +11,6 @@
 
 $global:ScriptName = $MyInvocation.MyCommand.Name
 
-$hostname = hostname
 $global:sys_account_debug_log = "$env:SystemDrive\PowerWashSysActionsDbg.log"
 $global:is_debug = $false
 if ($global:is_debug) {
@@ -238,6 +237,7 @@ $global:feature_verbs = @{
 	"Convenience.RemoveFileExplorerCruft"          = "Removing unwanted shortcuts from File Explorer";
     "Convenience.CleanupTaskbar"                   = "Cleaning up taskbar";
     "Convenience.ShowUacPromptOnSameDesktop"       = "Showing UAC on same desktop for elevation requests";
+	"Convenience.DisableMonoAudio"                 = "Turning off mono audio";
     "Scans.CheckIntegrity"                         = "Running system file integrity checks";
     "Scans.CheckIRQ"                               = "Checking for IRQ conflicts"
 }
@@ -2298,6 +2298,8 @@ if (Confirm "Apply high-security system settings? (Attack Surface Reduction, etc
     Write-Host "- Applying policies..." -Nonewline
     RunScriptAsSystem -Path "$PSScriptRoot/$global:ScriptName" -ArgString "/ElevatedAction /ApplySecurityPolicy $(If ($apply_strict_policies) { '/StrictMode'} Else {''}) $(If ($apply_draconian_policies) { '/DraconianMode'} Else {''})"
     "- Complete (restart required)"
+	
+	"- NOTE: If you experience problems with applications loading after you restart, you can clear the process mitigation options by setting all bytes to zero in this registry key: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel!MitigationOptions"
 }
 
 $legal_notice_text = RegGet HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Key legalnoticetext
@@ -2450,6 +2452,13 @@ if ($restart_explorer) {
 if (Confirm "Show UAC prompt on same desktop?" -Auto $true -ConfigKey "Convenience.ShowUacPromptOnSameDesktop") {
     RegPut HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Key PromptOnSecureDesktop -Value 0
     "- Complete (restart required)"
+}
+
+# Disable mono audio
+if (Confirm "Disable mono audio?" -Auto $true -ConfigKey "Convenience.DisableMonoAudio") {
+	RegPut HKCU:\Software\Microsoft\Multimedia\Audio -Key AccessibilityMonoMixState -Value 0
+	net.exe stop AudioSrv
+	net.exe start AudioSrv
 }
 
 
