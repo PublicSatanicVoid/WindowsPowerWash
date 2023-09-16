@@ -4,7 +4,7 @@
 
 Microsoft wants Windows to be a service - not something you own, but something you license the temporary right to use under Microsoft's terms. This lets them force updates, reinstall adware whenever they feel like it, and block users from making simple changes like disabling telemetry or uninstalling Microsoft's default browser.
 
-And with the out-of-the-box user experience, your Windows computer really does feel like something you own. You're bombarded with notifications from apps you never chose, told to link everything to a Microsoft account and prompted to let Microsoft collect data from you. Before you did anything but choose a username, Microsoft already installed software you never asked for. And without checking for confirmation, it continues to install software you don't want, through automatic and sometimes disruptive updates. This is Microsoft's vision for Windows: not a clean, obedient operating system but a nosy, disobedient piece of adware that you wish you could get rid of but can't. Why is that their goal? Because advertisement and data brokerage deals are more profitable than the resulting user dissatisfaction is costly.
+And with the out-of-the-box user experience, your Windows computer really doesn't feel like something you own. You're bombarded with notifications from apps you never chose, told to link everything to a Microsoft account and prompted to let Microsoft collect data from you. Before you did anything but choose a username, Microsoft already installed software you never asked for. And without checking for confirmation, it continues to install software you don't want, through automatic and sometimes disruptive updates. This is Microsoft's vision for Windows: not a clean, obedient operating system but a nosy, disobedient piece of adware that is difficult or impossible to get rid of. Why is that their goal? Because advertisement and data brokerage deals are more profitable than the resulting user dissatisfaction is costly.
 
 If you're like me, you are appalled by the gradual shift toward making Windows a service, and you feel strongly that nobody should have control over your operating system but _you_.
 
@@ -51,5 +51,5 @@ And this one, same blog post:
 
 You can also read [https://www.howtogeek.com/395121/windows-isnt-a-service-its-an-operating-system/](this scathing indictment) of "Windows as a Service" by HowToGeek.
 
-With PowerWash, you can turn Windows from a bloated service back into a stable operating system.
+With PowerWash, you can turn Windows from a bloated "service" back into a stable operating system.
 
