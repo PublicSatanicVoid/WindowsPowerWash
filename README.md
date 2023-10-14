@@ -37,7 +37,7 @@ This is helpful for automating the process and lets you configure what programs 
 ### Deployment mode *(most automated)*
 In this mode, PowerWash automatically runs when installing Windows from a USB drive.
 This is helpful for automating the process when you frequently install/reinstall Windows or want to start multiple devices from the same pre-configured point.
-[Guide to deployment mode »](https://universecraft.github.io/WindowsPowerWash/docs/usage/deployment)
+[Guide to deployment mode »](https://publicsatanicvoid.github.io/WindowsPowerWash/docs/usage/deployment)
 
 ## Additional recommendations
 PowerWash should be used as part of a comprehensive approach to optimizing and securing your system.
