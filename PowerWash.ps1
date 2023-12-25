@@ -1585,7 +1585,10 @@ if ("/ElevatedAction" -in $args) {
             # Set "Send file samples when further analysis is required" to "Send safe samples"
             RegPut "HKLM:\Software\Policies\Microsoft\Windows Defender\Spynet" -Key SubmitSamplesConsent -Value 1
         }
-        
+
+		# Enable Microsoft Defender Antivirus email scanning (~MDE)
+		RegPut "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Scan" -Key DisableEmailScanning -Value 0
+
         # Disable "Allow user control over installers" (~MSSB, SHB)
         RegPut HKLM:\Software\Policies\Microsoft\Windows\Installer -Key EnableUserControl -Value 0
         
@@ -1707,7 +1710,7 @@ if ("/ElevatedAction" -in $args) {
         }
         
         
-        SysDebugLog "Security policy version applied: 8/15/2023"
+        SysDebugLog "Security policy version applied: 12/24/2023"
     }
 
     SysDebugLog "ElevatedAction exiting"
